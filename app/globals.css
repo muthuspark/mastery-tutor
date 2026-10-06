@@ -34,6 +34,8 @@ h1, h2, h3 { text-wrap: balance; }
 .button-primary:active { transform: translateY(0); }
 .button-primary:focus-visible, .button-secondary:focus-visible, .text-button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .button-primary:disabled { cursor: wait; opacity: 0.6; transform: none; }
+.status-pulse { display: inline-block; width: 0.55rem; height: 0.55rem; flex: 0 0 auto; border-radius: 999px; background: var(--accent); animation: status-pulse 1.2s ease-in-out infinite; }
+@keyframes status-pulse { 0%, 100% { opacity: 0.35; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1); } }
 .button-secondary { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 0.5rem; background: transparent; color: var(--ink); cursor: pointer; font-family: var(--sans); font-size: 0.84rem; font-weight: 700; padding: 0.65rem 0.9rem; text-decoration: none; transition: background 180ms ease-out, border-color 180ms ease-out; }
 .button-secondary:hover { border-color: var(--ink); background: var(--paper-deep); }
 .text-button { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-family: var(--sans); font-size: 0.78rem; padding: 0; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 0.2em; }

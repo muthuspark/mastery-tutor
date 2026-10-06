@@ -21,12 +21,16 @@ export async function GET(_request: Request, context: RouteContext) {
   if (chapter.status === "locked") return NextResponse.json({ error: { code: "locked", message: "This chapter is locked." } }, { status: 403 });
 
   try {
-    let current = db.select().from(questions).where(eq(questions.chapterId, id)).orderBy(desc(questions.createdAt)).all();
+    let current = db.select().from(questions).where(eq(questions.chapterId, id)).orderBy(desc(questions.createdAt)).all()
+      .filter((question) => question.type === "mcq" && (question.options?.length ?? 0) >= 2)
+      .slice(0, 10);
     const attempt = latestAttempt(id);
-    if (!current.length || (attempt && !attempt.passed && latestAttemptQuestionIds(attempt.id).size >= current.length)) {
+    const latestAttemptIds = attempt ? latestAttemptQuestionIds(attempt.id) : new Set<string>();
+    if (current.length < 10 || (attempt && !attempt.passed && current.some((question) => latestAttemptIds.has(question.id)))) {
       current = await generateQuiz(id);
     }
-    return NextResponse.json({ questions: [...current, ...dueReviewQuestions(chapter.courseId, chapter.idx)] });
+    const exclude = new Set([...current.map((question) => question.id), ...latestAttemptIds]);
+    return NextResponse.json({ questions: [...current, ...dueReviewQuestions(chapter.courseId, chapter.idx, exclude)] });
   } catch (error) {
     return errorResponse(error);
   }

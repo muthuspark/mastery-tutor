@@ -29,20 +29,15 @@ export async function POST(request: Request, context: RouteContext) {
 
   try {
     const reviewIds = new Set(dueReviewQuestions(chapter.courseId, chapter.idx).map((question) => question.id));
-    const graded: Array<{
-      question: typeof questions.$inferSelect;
-      response: string;
-      score: number;
-      feedback: string;
-      missedConcept: string | null;
-    }> = [];
+    const pending: Array<{ question: typeof questions.$inferSelect; response: string }> = [];
     for (const answer of parsed.data.answers) {
       const question = db.select().from(questions).where(eq(questions.id, answer.questionId)).get();
       if (!question || (question.chapterId !== id && !reviewIds.has(question.id))) {
         return NextResponse.json({ error: { code: "invalid_input", message: "The quiz contains an unknown question." } }, { status: 400 });
       }
-      graded.push({ question, response: answer.response, ...(await gradeAnswer(question, answer.response)) });
+      pending.push({ question, response: answer.response });
     }
+    const graded = await Promise.all(pending.map(async ({ question, response }) => ({ question, response, ...(await gradeAnswer(question, response)) })));
     const score = graded.reduce((sum, answer) => sum + answer.score, 0) / graded.length;
     const didPass = passed(score);
     const previous = db.select({ attemptNo: attempts.attemptNo }).from(attempts).where(eq(attempts.chapterId, id)).all();

@@ -11,8 +11,8 @@ Keep the content at 600 words or fewer. Use inline LaTeX like $E=mc^2$ or displa
 `;
 
 export const QUIZ_PROMPT = `
-Create 3 to 5 questions from the chapter objectives, not by copying chapter sentences.
-Include at least one explain-why or new-case application question. For MCQ questions, include an options array; for other questions, set options to null. Return only the requested structured object.
+Create exactly 10 different objective questions from the chapter objectives, not by copying chapter sentences.
+Every question must be multiple choice with exactly one correct answer and 3 or 4 plausible options. Include application and new-case questions, not only definition recall. Return only the requested structured object.
 `;
 
 export const GRADING_PROMPT = `

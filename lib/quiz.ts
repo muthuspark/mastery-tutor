@@ -43,7 +43,7 @@ export async function generateQuiz(chapterId: string) {
   return rows;
 }
 
-export function dueReviewQuestions(courseId: string, chapterIdx: number) {
+export function dueReviewQuestions(courseId: string, chapterIdx: number, excludeQuestionIds = new Set<string>()) {
   return db
     .select({ question: questions })
     .from(reviewItems)
@@ -52,7 +52,8 @@ export function dueReviewQuestions(courseId: string, chapterIdx: number) {
     .orderBy(desc(reviewItems.misses), asc(reviewItems.dueAfterChapterIdx))
     .limit(2)
     .all()
-    .map(({ question }) => ({ ...question, isReview: true }));
+    .map(({ question }) => ({ ...question, isReview: true }))
+    .filter((question) => question.type === "mcq" && (question.options?.length ?? 0) >= 2 && !excludeQuestionIds.has(question.id));
 }
 
 export function latestAttempt(chapterId: string) {

@@ -21,36 +21,20 @@ describe("LLM contracts", () => {
     expect(gradeSchema.safeParse({ score: 1.1, feedback: "No", missedConcept: null }).success).toBe(false);
   });
 
-  it("requires nullable quiz options for Codex structured output compatibility", () => {
+  it("requires ten objective multiple-choice questions", () => {
+    const questions = Array.from({ length: 10 }, (_, index) => ({
+      type: "mcq" as const,
+      prompt: `Choose ${index}.`,
+      options: ["One", "Two", "Three"],
+      modelAnswer: "One",
+      rubric: "Chooses one.",
+      conceptTag: `choice-${index}`,
+    }));
     expect(
-      quizSchema.safeParse({
-        questions: [
-          {
-            type: "short",
-            prompt: "Explain it.",
-            options: null,
-            modelAnswer: "An explanation.",
-            rubric: "Mentions the key idea.",
-            conceptTag: "key-idea",
-          },
-          {
-            type: "mcq",
-            prompt: "Choose one.",
-            options: ["One", "Two"],
-            modelAnswer: "One",
-            rubric: "Chooses one.",
-            conceptTag: "choice",
-          },
-          {
-            type: "explain",
-            prompt: "Why?",
-            options: null,
-            modelAnswer: "Because.",
-            rubric: "Explains why.",
-            conceptTag: "reason",
-          },
-        ],
-      }).success,
+      quizSchema.safeParse({ questions }).success,
     ).toBe(true);
+    expect(quizSchema.safeParse({ questions: questions.slice(0, 9) }).success).toBe(false);
+    expect(quizSchema.safeParse({ questions: questions.map((question) => ({ ...question, type: "short" })) }).success).toBe(false);
+    expect(quizSchema.safeParse({ questions: questions.map((question) => ({ ...question, prompt: "Same question" })) }).success).toBe(false);
   });
 });

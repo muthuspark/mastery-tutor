@@ -25,19 +25,18 @@ export const quizSchema = z.object({
   questions: z
     .array(
       z.object({
-        type: z.enum(["mcq", "short", "explain"]),
+        type: z.literal("mcq"),
         prompt: z.string().trim().min(1),
-        // Codex structured outputs require every object key to be listed in
-        // `required`; nullable keeps non-MCQ questions explicit without
-        // making the response schema invalid.
-        options: z.array(z.string().trim().min(1)).min(2).nullable(),
+        options: z.array(z.string().trim().min(1)).min(2),
         modelAnswer: z.string().trim().min(1),
         rubric: z.string().trim().min(1),
         conceptTag: z.string().trim().min(1),
       }),
     )
-    .min(3)
-    .max(5),
+    .length(10)
+    .refine((questions) => new Set(questions.map((question) => question.prompt.toLowerCase())).size === questions.length, {
+      message: "Quiz questions must be different",
+    }),
 });
 
 export const gradeSchema = z.object({
