@@ -28,6 +28,7 @@ Most learning tools optimize for content consumption. Mastery Tutor is organized
 
 - Generate a dependency-aware syllabus from a plain-language topic.
 - Generate chapter content only when the learner opens it.
+- Render LaTeX formulas with KaTeX and Mermaid diagrams when they improve an explanation.
 - Mix deterministic MCQ grading with rubric-based Codex grading for free text.
 - Keep failed attempts, remediation, and missed-concept review schedules.
 - Unlock the next chapter transactionally after mastery.

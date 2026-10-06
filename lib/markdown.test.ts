@@ -10,4 +10,11 @@ describe("renderMarkdown", () => {
     expect(html).toContain("katex");
     expect(html).toContain("answer");
   });
+
+  it("turns Mermaid fences into client-renderable diagram blocks", async () => {
+    const html = await renderMarkdown("```mermaid\nflowchart TD\n  A[Start] --> B[Learn]\n```");
+    expect(html).toContain('class="mermaid"');
+    expect(html).toContain("flowchart TD");
+    expect(html).not.toContain("language-mermaid");
+  });
 });

@@ -7,7 +7,7 @@ Return only the requested structured object.
 export const CHAPTER_PROMPT = `
 Write one short learning chapter for the requested objective.
 Start with a concrete example or problem. Define terms on first use. Connect to prerequisites.
-Keep the content at 600 words or fewer. Return only the requested structured object.
+Keep the content at 600 words or fewer. Use inline LaTeX like $E=mc^2$ or display LaTeX like $$f(x)=x^2$$ when a formula makes the idea clearer. Use a fenced Mermaid block only when a relationship, sequence, or architecture is genuinely easier to understand as a diagram. Mermaid blocks must use valid syntax, for example \`\`\`mermaid\nflowchart TD\n  A[Start] --> B[Learn]\n\`\`\`. Do not add decorative diagrams or formulas. Return only the requested structured object.
 `;
 
 export const QUIZ_PROMPT = `
