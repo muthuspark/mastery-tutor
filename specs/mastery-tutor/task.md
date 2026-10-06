@@ -1,0 +1,14 @@
+- [x] T1: Complete Scaffold the Next.js App Router TypeScript project, Tailwind, TanStack Query, environment example, lint/test setup, and server-only configuration
+- [x] T2: Add Drizzle SQLite connection, migrations, schema, indexes, foreign keys, and seed/migration commands for courses, chapters, questions, attempts, answers, and review items.
+- [x] T15: Add Zod contracts, prompt builders, server-only Codex CLI invocation, safe error mapping, and mocked adapter test seams; verify CLI flags, model IDs, reasoning options, and authentication behavior.
+- [x] T4: Implement course creation, syllabus generation, validation, persistence, editable pre-start syllabus, course page, chapter stepper, progress bar, and locked/open/passed states.
+- [x] T13: Implement chapter lazy generation, cache behavior, markdown/KaTeX/Shiki rendering, pretest, depth hint, explicit regeneration, loading/error states, and prepare the quiz-prefetch seam for the T6 quiz endpoint.
+- [x] T6: Implement quiz generation, review selection, deterministic MCQ grading, free-text grading, attempt/answer persistence, feedback/results, and retry flow.
+- [x] T7: Implement transactional mastery gating, next-chapter unlock, remediation, missed-concept review scheduling, and course completion.
+- [x] T8: Implement export, explicit regeneration policy, and remaining UI polish/accessibility states.
+- [x] T9: Add unit, route/integration, component, and browser-level tests for all P0/P1 requirements and acceptance criteria.
+- [x] T10: Complete Run migrations, lint, typecheck, tests, and MSDD review; record evidence and any confirmed model/configuration changes
+- [x] T11: Verify Commands to provide and run: `npm run lint`, `npm run typecheck`, `npm test`, route/integration test command, browser test command, and Drizzle migration command
+- [x] T12: Verify Expected evidence: clean type/lint checks; schema and domain tests cover score 0.8 boundary, locks, prerequisites, retries, review scheduling, rollback, and export; route tests prove stable errors and no secret leakage; browser tests prove create -> study -> pass and fail -> retry
+- [x] T3: Verify Operational checks: verify the server can read the existing Codex login when it runs as the same OS user; if not, configure `CODEX_ACCESS_TOKEN` only for the server process; confirm Codex CLI version and `codex exec` capabilities; confirm SQLite file location and migration behavior; confirm model IDs and reasoning parameter against current official documentation before implementation
+- [x] T14: Record deviations here during build with `Evidence:` prefix, including changed model IDs, schema fields, API status codes, and test commands/results.

@@ -1,0 +1,52 @@
+import { z } from "zod";
+
+export const syllabusSchema = z.object({
+  chapters: z
+    .array(
+      z.object({
+        title: z.string().trim().min(1),
+        objectives: z.array(z.string().trim().min(1)).min(1).max(3),
+        prerequisites: z.array(z.number().int().nonnegative()),
+      }),
+    )
+    .min(6)
+    .max(15),
+});
+
+export const chapterSchema = z.object({
+  pretest: z.string().trim().min(1),
+  content: z.string().trim().min(1).refine((value) => value.split(/\s+/).length <= 600, {
+    message: "Chapter content must be 600 words or fewer",
+  }),
+  summary: z.string().trim().min(1),
+});
+
+export const quizSchema = z.object({
+  questions: z
+    .array(
+      z.object({
+        type: z.enum(["mcq", "short", "explain"]),
+        prompt: z.string().trim().min(1),
+        // Codex structured outputs require every object key to be listed in
+        // `required`; nullable keeps non-MCQ questions explicit without
+        // making the response schema invalid.
+        options: z.array(z.string().trim().min(1)).min(2).nullable(),
+        modelAnswer: z.string().trim().min(1),
+        rubric: z.string().trim().min(1),
+        conceptTag: z.string().trim().min(1),
+      }),
+    )
+    .min(3)
+    .max(5),
+});
+
+export const gradeSchema = z.object({
+  score: z.number().min(0).max(1),
+  feedback: z.string().trim().min(1),
+  missedConcept: z.string().trim().nullable(),
+});
+
+export type Syllabus = z.infer<typeof syllabusSchema>;
+export type Chapter = z.infer<typeof chapterSchema>;
+export type Quiz = z.infer<typeof quizSchema>;
+export type Grade = z.infer<typeof gradeSchema>;
