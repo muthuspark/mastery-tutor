@@ -4,7 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { chapters, courses, reviewItems } from "@/lib/db/schema";
 import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
-import { modelFor, runCodexObject } from "@/lib/codex";
+import { agentForRequest, noAgentError, runAgentObject, type Agent } from "@/lib/agent";
 import { CHAPTER_PROMPT } from "@/lib/prompts";
 import { chapterSchema } from "@/lib/schemas";
 import { renderMarkdown } from "@/lib/markdown";
@@ -31,7 +31,7 @@ export function codexErrorResponse(error: unknown) {
   );
 }
 
-async function generateChapter(id: string, force = false) {
+async function generateChapter(id: string, force = false, agent?: Agent) {
   const chapter = await getChapter(id);
   if (!chapter) return NextResponse.json({ error: { code: "not_found", message: "Chapter not found." } }, { status: 404 });
   if (chapter.status === "locked") {
@@ -63,7 +63,9 @@ async function generateChapter(id: string, force = false) {
     `Missed concepts to reinforce: ${missed.map((item) => `${item.conceptTag} (${item.misses})`).join(", ") || "none"}`,
     `Depth hint: ${chapter.depthHint ?? "foundational"}`,
   ].join("\n");
-  const generated = await runCodexObject(prompt, chapterSchema, { model: modelFor("chapter") });
+  const selectedAgent = agent ?? await agentForRequest(new Request("http://localhost"));
+  if (!selectedAgent) throw noAgentError();
+  const generated = await runAgentObject(selectedAgent, "chapter", prompt, chapterSchema);
   const now = new Date();
   db.transaction((tx) => {
     tx.update(chapters)
@@ -75,14 +77,14 @@ async function generateChapter(id: string, force = false) {
   return { ...chapter, ...generated, generatedAt: now };
 }
 
-export function regenerateChapter(id: string) {
-  return generateChapter(id, true);
+export function regenerateChapter(id: string, agent?: Agent) {
+  return generateChapter(id, true, agent);
 }
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   const { id } = await context.params;
   try {
-    const chapter = await generateChapter(id);
+    const chapter = await generateChapter(id, false, await agentForRequest(request));
     if (chapter instanceof NextResponse) return chapter;
     return NextResponse.json({
       chapter,

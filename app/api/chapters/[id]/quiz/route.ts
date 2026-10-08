@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { chapters, questions } from "@/lib/db/schema";
 import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
 import { dueReviewQuestions, generateQuiz, latestAttempt, latestAttemptQuestionIds } from "@/lib/quiz";
+import { agentForRequest, noAgentError } from "@/lib/agent";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -14,7 +15,7 @@ function errorResponse(error: unknown) {
   return NextResponse.json({ error: { code: classified.code, message: classified.message, retryable: classified.retryable } }, { status });
 }
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
   const { id } = await context.params;
   const chapter = db.select().from(chapters).where(eq(chapters.id, id)).get();
   if (!chapter) return NextResponse.json({ error: { code: "not_found", message: "Chapter not found." } }, { status: 404 });
@@ -27,7 +28,9 @@ export async function GET(_request: Request, context: RouteContext) {
     const attempt = latestAttempt(id);
     const latestAttemptIds = attempt ? latestAttemptQuestionIds(attempt.id) : new Set<string>();
     if (current.length < 10 || (attempt && !attempt.passed && current.some((question) => latestAttemptIds.has(question.id)))) {
-      current = await generateQuiz(id);
+      const agent = await agentForRequest(request);
+      if (!agent) throw noAgentError();
+      current = await generateQuiz(id, agent);
     }
     const exclude = new Set([...current.map((question) => question.id), ...latestAttemptIds]);
     return NextResponse.json({ questions: [...current, ...dueReviewQuestions(chapter.courseId, chapter.idx, exclude)] });

@@ -2,7 +2,7 @@ import { and, asc, desc, eq, lte } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { answers, attempts, chapters, questions, reviewItems } from "@/lib/db/schema";
-import { modelFor, runCodexObject } from "@/lib/codex";
+import { runAgentObject, type Agent } from "@/lib/agent";
 import { QUIZ_PROMPT, GRADING_PROMPT } from "@/lib/prompts";
 import { gradeSchema, quizSchema } from "@/lib/schemas";
 
@@ -18,13 +18,14 @@ export function gradeMcq(response: string, modelAnswer: string, options: string[
   return { score: passed ? 1 : 0, feedback: passed ? "Correct." : `The expected answer is: ${modelAnswer}.`, missedConcept: passed ? null : modelAnswer };
 }
 
-export async function generateQuiz(chapterId: string) {
+export async function generateQuiz(chapterId: string, agent: Agent = "codex") {
   const chapter = db.select().from(chapters).where(eq(chapters.id, chapterId)).get();
   if (!chapter) throw new Error("Chapter not found");
-  const generated = await runCodexObject(
+  const generated = await runAgentObject(
+    agent,
+    "quiz",
     `${QUIZ_PROMPT}\nChapter: ${chapter.title}\nObjectives: ${chapter.objectives.join("; ")}`,
     quizSchema,
-    { model: modelFor("quiz") },
   );
   const now = new Date();
   const rows = generated.questions.map((question) => ({
@@ -64,11 +65,12 @@ export function latestAttemptQuestionIds(attemptId: string) {
   return new Set(db.select({ questionId: answers.questionId }).from(answers).where(eq(answers.attemptId, attemptId)).all().map((row) => row.questionId));
 }
 
-export async function gradeAnswer(question: typeof questions.$inferSelect, response: string) {
+export async function gradeAnswer(question: typeof questions.$inferSelect, response: string, agent: Agent = "codex") {
   if (question.type === "mcq") return gradeMcq(response, question.modelAnswer, question.options);
-  return runCodexObject(
+  return runAgentObject(
+    agent,
+    "grading",
     `${GRADING_PROMPT}\nQuestion: ${question.prompt}\nRubric: ${question.rubric}\nModel answer: ${question.modelAnswer}\nLearner response: ${response}`,
     gradeSchema,
-    { model: modelFor("grading") },
   );
 }

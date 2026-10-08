@@ -15,9 +15,10 @@ type RunOptions = {
 
 export type CodexTask = "syllabus" | "chapter" | "quiz" | "grading";
 
-export function modelFor(task: CodexTask) {
-  const configured = process.env[`CODEX_MODEL_${task.toUpperCase()}`];
-  return configured || process.env.CODEX_MODEL;
+export function modelFor(task: CodexTask, agent: "codex" | "claude" = "codex") {
+  const prefix = agent === "claude" ? "CLAUDE" : "CODEX";
+  const configured = process.env[`${prefix}_MODEL_${task.toUpperCase()}`];
+  return configured || process.env[`${prefix}_MODEL`];
 }
 
 type SpawnResult = { exitCode: number | null; stderr: string };

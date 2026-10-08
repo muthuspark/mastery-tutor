@@ -8,6 +8,7 @@ import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
 import { dueReviewQuestions, gradeAnswer } from "@/lib/quiz";
 import { courseIsComplete, passed, prerequisitesPassed, remediation } from "@/lib/gating";
 import { dueChapterIndex } from "@/lib/review";
+import { agentForRequest, noAgentError } from "@/lib/agent";
 
 type RouteContext = { params: Promise<{ id: string }> };
 const attemptSchema = z.object({ answers: z.array(z.object({ questionId: z.string().uuid(), response: z.string().max(5000) })).min(1) });
@@ -37,7 +38,9 @@ export async function POST(request: Request, context: RouteContext) {
       }
       pending.push({ question, response: answer.response });
     }
-    const graded = await Promise.all(pending.map(async ({ question, response }) => ({ question, response, ...(await gradeAnswer(question, response)) })));
+    const agent = await agentForRequest(request);
+    if (!agent) throw noAgentError();
+    const graded = await Promise.all(pending.map(async ({ question, response }) => ({ question, response, ...(await gradeAnswer(question, response, agent)) })));
     const score = graded.reduce((sum, answer) => sum + answer.score, 0) / graded.length;
     const didPass = passed(score);
     const previous = db.select({ attemptNo: attempts.attemptNo }).from(attempts).where(eq(attempts.chapterId, id)).all();

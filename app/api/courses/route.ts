@@ -5,12 +5,13 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { chapters, courses } from "@/lib/db/schema";
 import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
-import { modelFor, runCodexObject } from "@/lib/codex";
+import { agentForRequest, agentSchema, AGENT_COOKIE, noAgentError, runAgentObject } from "@/lib/agent";
 import { SYLLABUS_PROMPT, topicPrompt } from "@/lib/prompts";
 import { syllabusSchema } from "@/lib/schemas";
 
 const createCourseSchema = z.object({
   topic: z.string().trim().min(3).max(500),
+  agent: agentSchema.optional(),
 });
 
 function errorResponse(error: unknown) {
@@ -43,10 +44,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const syllabus = await runCodexObject(
+    const agent = await agentForRequest(request, parsed.data.agent);
+    if (!agent) throw noAgentError();
+    const syllabus = await runAgentObject(
+      agent,
+      "syllabus",
       `${SYLLABUS_PROMPT}\n${topicPrompt(parsed.data.topic)}`,
       syllabusSchema,
-      { model: modelFor("syllabus") },
     );
     const courseId = randomUUID();
     const now = new Date();
@@ -71,7 +75,9 @@ export async function POST(request: Request) {
         .run();
     });
 
-    return NextResponse.json({ courseId }, { status: 201 });
+    const response = NextResponse.json({ courseId }, { status: 201 });
+    response.cookies.set(AGENT_COOKIE, agent, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 31_536_000 });
+    return response;
   } catch (error) {
     return errorResponse(error);
   }

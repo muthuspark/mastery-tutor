@@ -2,7 +2,7 @@
 
 Mastery Tutor turns a learning intention into a focused, chapter-by-chapter path. You name what you want to understand, read a short lesson, answer a few retrieval questions, and unlock the next idea only when you have mastered the current one.
 
-It is deliberately small: one learner, one local SQLite database, and the Codex CLI running server-side for structured course, lesson, quiz, and free-text grading generation.
+It is deliberately small: one learner, one local SQLite database, and a locally installed Codex or Claude CLI running server-side for structured course, lesson, quiz, and free-text grading generation.
 
 ## The experience
 
@@ -38,7 +38,7 @@ Most learning tools optimize for content consumption. Mastery Tutor is organized
 
 - Next.js App Router, React, TypeScript, and Tailwind CSS
 - Drizzle ORM with SQLite via `better-sqlite3`
-- Codex CLI with structured JSON output and Zod validation
+- Codex or Claude CLI with structured JSON output and Zod validation
 - Vitest, Testing Library, and Playwright
 - Unified Markdown, KaTeX, and Shiki rendering
 
@@ -46,9 +46,9 @@ Most learning tools optimize for content consumption. Mastery Tutor is organized
 
 - Node.js 20+
 - npm
-- Codex CLI installed and already authenticated for the same OS user running the server
+- Codex CLI or Claude CLI installed and already authenticated for the same OS user running the server
 
-The normal local path does not need an API key. If the server runs as a different service user, in a container, or in a headless environment, provide a scoped `CODEX_ACCESS_TOKEN` for that process.
+The normal local path does not need an API key. If the server runs as a different service user, in a container, or in a headless environment, configure authentication for the selected CLI in that process. When both CLIs are available, choose between them on the home screen; the selection persists until changed.
 
 ## Run locally
 
@@ -81,12 +81,12 @@ npm run build       # Production build
 The browser talks only to Next.js route handlers. Model work stays on the server:
 
 ```text
-Learner → Next.js UI → Route handler → Codex CLI
+Learner → Next.js UI → Route handler → Codex / Claude CLI
                               ↓
                          SQLite / Drizzle
 ```
 
-Codex is invoked with fixed arguments, a read-only sandbox, a bounded timeout, and a generated JSON Schema. Every response is parsed and validated with Zod before it can be persisted. Prompts, credentials, command lines, and raw CLI output are not exposed to the browser.
+Codex is invoked with fixed arguments, a read-only sandbox, a bounded timeout, and a generated JSON Schema. Claude runs in non-interactive JSON print mode with a bounded timeout. Every response is parsed and validated with Zod before it can be persisted. Prompts, credentials, command lines, and raw CLI output are not exposed to the browser.
 
 ## Project structure
 
