@@ -1,0 +1,7 @@
+- [x] T1: Add a pure assessment-quality module with normalization, integrity checks, balanced position-plan creation, and option reordering; cover its boundaries with unit tests.
+- [x] T2: Update the quiz prompt and Zod contracts to require four distinct relevant options and one answer match.
+- [x] T3: Integrate quality validation, one retry, and atomic persistence into `generateQuiz`; preserve grading semantics and add mocked-agent tests.
+- [x] T4: Update quiz retrieval to identify and replace invalid unattempted cached sets without touching attempted history; add route tests.
+- [x] T5: Complete Run lint, typecheck, unit, and route tests; record results
+- [x] T6: Complete Run the app and use live Chrome to create a new Distributed Systems course, open the first assessment, inspect ten questions and A-D distribution, and record visible distractor-quality evidence
+- [x] T8: Verify **Evidence:** All implementation and verification work is complete. On 2026-10-09, `npm run lint`, `npm run typecheck`, and `npm test` passed (11 files, 24 tests). Chrome DevTools created a Distributed Systems course and verified its 10-question assessment had four options per question with A=3, B=3, C=2, and D=2 correct-answer positions. Route tests verify invalid unattempted cache replacement preserves attempted questions

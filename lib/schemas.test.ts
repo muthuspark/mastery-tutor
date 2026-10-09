@@ -25,7 +25,7 @@ describe("LLM contracts", () => {
     const questions = Array.from({ length: 10 }, (_, index) => ({
       type: "mcq" as const,
       prompt: `Choose ${index}.`,
-      options: ["One", "Two", "Three"],
+      options: ["One", "Two", "Three", "Four"],
       modelAnswer: "One",
       rubric: "Chooses one.",
       conceptTag: `choice-${index}`,
@@ -36,5 +36,7 @@ describe("LLM contracts", () => {
     expect(quizSchema.safeParse({ questions: questions.slice(0, 9) }).success).toBe(false);
     expect(quizSchema.safeParse({ questions: questions.map((question) => ({ ...question, type: "short" })) }).success).toBe(false);
     expect(quizSchema.safeParse({ questions: questions.map((question) => ({ ...question, prompt: "Same question" })) }).success).toBe(false);
+    expect(quizSchema.safeParse({ questions: questions.map((question) => ({ ...question, options: ["One", " one ", "Two", "Three"] })) }).success).toBe(false);
+    expect(quizSchema.safeParse({ questions: questions.map((question) => ({ ...question, modelAnswer: "Missing" })) }).success).toBe(false);
   });
 });

@@ -5,6 +5,8 @@ import { answers, attempts, chapters, questions, reviewItems } from "@/lib/db/sc
 import { runAgentObject, type Agent } from "@/lib/agent";
 import { QUIZ_PROMPT, GRADING_PROMPT } from "@/lib/prompts";
 import { gradeSchema, quizSchema } from "@/lib/schemas";
+import { balanceQuizOptions } from "@/lib/assessment-quality";
+import type { Quiz } from "@/lib/schemas";
 
 export function normalizeAnswer(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
@@ -18,17 +20,33 @@ export function gradeMcq(response: string, modelAnswer: string, options: string[
   return { score: passed ? 1 : 0, feedback: passed ? "Correct." : `The expected answer is: ${modelAnswer}.`, missedConcept: passed ? null : modelAnswer };
 }
 
+export async function generateValidQuiz(
+  agent: Agent,
+  prompt: string,
+  run = runAgentObject,
+): Promise<Quiz> {
+  let generated: Quiz | undefined;
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      generated = await run(agent, "quiz", prompt, quizSchema);
+      break;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (!generated) throw lastError;
+  return { ...generated, questions: balanceQuizOptions(generated.questions) };
+}
+
 export async function generateQuiz(chapterId: string, agent: Agent = "codex") {
   const chapter = db.select().from(chapters).where(eq(chapters.id, chapterId)).get();
   if (!chapter) throw new Error("Chapter not found");
-  const generated = await runAgentObject(
-    agent,
-    "quiz",
-    `${QUIZ_PROMPT}\nChapter: ${chapter.title}\nObjectives: ${chapter.objectives.join("; ")}`,
-    quizSchema,
-  );
+  const prompt = `${QUIZ_PROMPT}\nChapter: ${chapter.title}\nObjectives: ${chapter.objectives.join("; ")}`;
+  const generated = await generateValidQuiz(agent, prompt);
+  const balancedQuestions = generated.questions;
   const now = new Date();
-  const rows = generated.questions.map((question) => ({
+  const rows = balancedQuestions.map((question) => ({
     id: randomUUID(),
     chapterId,
     type: question.type,
