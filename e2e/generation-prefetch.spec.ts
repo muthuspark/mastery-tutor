@@ -35,3 +35,25 @@ test("prefetches the current quiz and next reachable chapter", async ({ page }) 
   await expect.poll(() => quizRequested).toBe(true);
   await expect.poll(() => nextChapterRequested).toBe(true);
 });
+
+test("keeps mastered chapters available for review", async ({ page }) => {
+  await page.route("**/api/courses/course-1", async (route) => {
+    await route.fulfill({
+      json: {
+        course: { topic: "Testing" },
+        chapters: [
+          { id: "chapter-0", idx: 0, title: "Foundations", status: "passed" },
+          { id: "chapter-1", idx: 1, title: "Next idea", status: "open" },
+          { id: "chapter-2", idx: 2, title: "Locked idea", status: "locked" },
+        ],
+        progress: { passed: 1, total: 3 },
+      },
+    });
+  });
+
+  await page.goto("/course/course-1");
+
+  const masteredChapter = page.getByRole("link", { name: /Foundations.*Mastered.*Revisit/ });
+  await expect(masteredChapter).toHaveAttribute("href", "/course/course-1/ch/0");
+  await expect(page.getByRole("link", { name: /Locked idea/ })).toHaveCount(0);
+});
