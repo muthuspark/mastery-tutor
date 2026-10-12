@@ -39,9 +39,11 @@ export async function generateValidQuiz(
   return { ...generated, questions: balanceQuizOptions(generated.questions) };
 }
 
-export async function generateQuiz(chapterId: string, agent: Agent = "codex") {
+export async function generateQuiz(chapterId: string, agent: Agent = "codex", generationVersion?: number) {
   const chapter = db.select().from(chapters).where(eq(chapters.id, chapterId)).get();
   if (!chapter) throw new Error("Chapter not found");
+  const version = generationVersion ?? chapter.contentGenerationVersion;
+  if (version !== chapter.contentGenerationVersion) throw new Error("Quiz generation is stale");
   const prompt = `${QUIZ_PROMPT}\nChapter: ${chapter.title}\nObjectives: ${chapter.objectives.join("; ")}`;
   const generated = await generateValidQuiz(agent, prompt);
   const balancedQuestions = generated.questions;
@@ -55,10 +57,24 @@ export async function generateQuiz(chapterId: string, agent: Agent = "codex") {
     rubric: question.rubric,
     modelAnswer: question.modelAnswer,
     conceptTag: question.conceptTag,
+    generationVersion: version,
     isReview: false,
     createdAt: now,
   }));
-  db.insert(questions).values(rows).run();
+  db.transaction((tx) => {
+    const current = tx.select().from(chapters).where(eq(chapters.id, chapterId)).get();
+    if (!current || current.contentGenerationVersion !== version) throw new Error("Quiz generation is stale");
+    tx.insert(questions).values(rows).run();
+    tx.update(chapters)
+      .set({
+        quizGenerationStatus: "ready",
+        quizGenerationVersion: version,
+        quizGenerationError: null,
+        quizGenerationUpdatedAt: now,
+      })
+      .where(and(eq(chapters.id, chapterId), eq(chapters.contentGenerationVersion, version)))
+      .run();
+  });
   return rows;
 }
 

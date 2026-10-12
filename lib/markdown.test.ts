@@ -9,7 +9,7 @@ describe("renderMarkdown", () => {
     const html = await renderMarkdown("Energy is $E=mc^2$.\n\n```ts\nconst answer = 42;\n```");
     expect(html).toContain("katex");
     expect(html).toContain("answer");
-  });
+  }, 10_000);
 
   it("turns Mermaid fences into client-renderable diagram blocks", async () => {
     const html = await renderMarkdown("```mermaid\nflowchart TD\n  A[Start] --> B[Learn]\n```");

@@ -1,11 +1,14 @@
 import { desc, eq, inArray } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { answers, chapters, questions } from "@/lib/db/schema";
 import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
-import { dueReviewQuestions, generateQuiz, latestAttempt, latestAttemptQuestionIds } from "@/lib/quiz";
-import { agentForRequest, noAgentError } from "@/lib/agent";
+import { dueReviewQuestions, latestAttempt, latestAttemptQuestionIds } from "@/lib/quiz";
 import { isBalancedQuiz } from "@/lib/assessment-quality";
+import { claimGenerationJob, enqueueGenerationJob } from "@/lib/generation";
+import { processGenerationJob } from "@/lib/generation-worker";
+import { recordGenerationEvent } from "@/lib/generation-observability";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -24,11 +27,12 @@ export async function GET(request: Request, context: RouteContext) {
 
   try {
     let current = db.select().from(questions).where(eq(questions.chapterId, id)).orderBy(desc(questions.createdAt)).all()
-      .filter((question) => question.type === "mcq" && (question.options?.length ?? 0) >= 2)
+      .filter((question) => question.generationVersion === chapter.contentGenerationVersion && question.type === "mcq" && (question.options?.length ?? 0) >= 2)
       .slice(0, 10);
     const attempt = latestAttempt(id);
     const latestAttemptIds = attempt ? latestAttemptQuestionIds(attempt.id) : new Set<string>();
     const currentMcqs = current.filter((question): question is typeof question & { options: string[] } => question.type === "mcq" && question.options !== null);
+    if (isBalancedQuiz(currentMcqs)) recordGenerationEvent("artifact_cache_hit", { artifactType: "quiz", targetId: id, generationVersion: chapter.contentGenerationVersion });
     if (!isBalancedQuiz(currentMcqs) && current.length) {
       const answeredIds = new Set(db.select({ questionId: answers.questionId }).from(answers).where(inArray(answers.questionId, current.map((question) => question.id))).all().map((row) => row.questionId));
       const staleIds = current.filter((question) => !answeredIds.has(question.id)).map((question) => question.id);
@@ -36,9 +40,18 @@ export async function GET(request: Request, context: RouteContext) {
       current = [];
     }
     if (current.length < 10 || (attempt && !attempt.passed && current.some((question) => latestAttemptIds.has(question.id)))) {
-      const agent = await agentForRequest(request);
-      if (!agent) throw noAgentError();
-      current = await generateQuiz(id, agent);
+      const hasReadyContent = chapter.contentGenerationStatus === "ready"
+        || (chapter.contentGenerationStatus === "pending" && chapter.contentGenerationVersion === 1 && chapter.generatedAt);
+      if (!chapter.content || !hasReadyContent) {
+        return NextResponse.json({ status: "generating", retryable: true }, { status: 202 });
+      }
+      const job = enqueueGenerationJob("quiz", id, chapter.contentGenerationVersion);
+      const claimed = claimGenerationJob(job.id, `request-${randomUUID()}`);
+      if (!claimed) return NextResponse.json({ status: "generating", retryable: true }, { status: 202 });
+      await processGenerationJob(claimed, claimed.leaseOwner ?? "");
+      current = db.select().from(questions).where(eq(questions.chapterId, id)).orderBy(desc(questions.createdAt)).all()
+        .filter((question) => question.generationVersion === chapter.contentGenerationVersion && question.type === "mcq" && (question.options?.length ?? 0) >= 2)
+        .slice(0, 10);
     }
     const exclude = new Set([...current.map((question) => question.id), ...latestAttemptIds]);
     return NextResponse.json({ questions: [...current, ...dueReviewQuestions(chapter.courseId, chapter.idx, exclude)] });

@@ -1,0 +1,18 @@
+- [x] T14: Add schema and migration for artifact generation status/version and `generation_jobs`.
+- [x] T15: Implement the generation coordinator with idempotency, leases, retries, stale-job recovery, and version checks.
+- [x] T16: Complete Adapt chapter and quiz generation to coordinator operations
+- [x] T17: Implement and start the in-process worker.
+- [x] T18: Complete Enqueue chapter 0 after course creation and quiz work after chapter success
+- [x] T19: Update chapter and quiz GET routes for ready reads, coordinated misses, and fallback behavior.
+- [x] T20: Complete Enqueue the newly unlocked chapter after a successful attempt
+- [x] T21: Complete Version and invalidate feedback/regeneration flows and dependent quizzes
+- [x] T22: Add React Query prefetching for the current quiz and next reachable chapter.
+- [x] T23: Add structured generation/cache metrics and redacted logs.
+- [x] T24: Add unit and integration tests.
+- [x] T25: Add end-to-end coverage for course creation through next-chapter warm-up.
+- [x] T26: Complete Run typecheck, lint, unit, e2e, and migration checks; record evidence and deviations
+- [x] T27: Verify Run `npm run typecheck`, `npm run lint`, `npm test`, and `npm run test:e2e` after implementation
+- [x] T28: Verify clean and existing-database migrations.
+- [x] T29: Verify worker startup, shutdown, lease recovery, and retries with stubbed agents.
+- [x] T30: Verify logs do not contain prompts, answers, or generated content.
+- [x] T31: Record deviations from the single-process SQLite assumption before build completion.

@@ -7,6 +7,8 @@ description: Turn a confirmed MSDD exploration into an implementation-ready spec
 
 Read the feature's `explore.md`, resolve material ambiguity with the user, and record confirmed decisions in the thirteen-section `spec.md`. Keep the `Explanation and Output Artifacts` section audience-focused: choose prose, diagram, interactive HTML, or narrated explainer video and use an 80%-ASD-STE100 writing profile unless the user specifies another level.
 
+Use valid, readable Markdown. Do not compress required lists into a sentence. In particular, write separate Markdown bullets or numbered lines; use `### Goals` and `### Non-goals`, `### Actors` and `### Scenarios`, and the four `###` subsections for Decisions and Constraints. Write the five Explanation and Output Artifacts fields as separate bullets.
+
 In `Technical Design`, make the change easy to understand technically:
 
 - Include a short **Solution Description** with the proposed approach, main flow, and key decision.

@@ -7,21 +7,42 @@ import { useEffect, useState } from "react";
 
 type Question = { id: string; type: "mcq"; prompt: string; options: string[]; isReview: boolean };
 type QuizResponse = { questions: Question[] };
+type CourseChapter = { id: string; idx: number; status: "locked" | "open" | "passed" };
+type CourseResponse = { chapters: CourseChapter[] };
 type Result = { score: number; passed: boolean; answers: { prompt: string; response: string; score: number; feedback: string; modelAnswer: string; missedConcept: string | null }[] };
+
+async function fetchReadyJson<T>(url: string): Promise<T> {
+  const response = await fetch(url);
+  if (response.status === 202) throw new Error("generation_pending");
+  if (!response.ok) throw new Error("Could not load generated content");
+  return response.json();
+}
 
 export function QuizPage() {
   const params = useParams<{ id: string; idx: string }>(); const queryClient = useQueryClient();
   const [currentIndex, setCurrentIndex] = useState(0); const [responses, setResponses] = useState<Record<string, string>>({}); const [result, setResult] = useState<Result | null>(null); const [error, setError] = useState(""); const [isSubmitting, setIsSubmitting] = useState(false); const [gradingStage, setGradingStage] = useState(0);
   const gradingMessages = ["Sending your answers…", "Codex is reading your responses…", "Comparing them with the rubric…", "Saving your result…"];
   useEffect(() => { if (!isSubmitting) return; const timer = window.setInterval(() => setGradingStage((stage) => (stage + 1) % gradingMessages.length), 3500); return () => window.clearInterval(timer); }, [isSubmitting, gradingMessages.length]);
-  const quiz = useQuery<QuizResponse>({ queryKey: ["quiz-v2", params.id, params.idx], queryFn: async () => { const course = await fetch(`/api/courses/${params.id}`).then((response) => response.json()); const chapter = course.chapters.find((item: { idx: number }) => item.idx === Number(params.idx)); return fetch(`/api/chapters/${chapter.id}/quiz`).then((response) => { if (!response.ok) throw new Error("Could not load QnA"); return response.json(); }); } });
+  const courseQuery = useQuery<CourseResponse>({ queryKey: ["course", params.id], queryFn: () => fetchReadyJson(`/api/courses/${params.id}`) });
+  const chapter = courseQuery.data?.chapters.find((item) => item.idx === Number(params.idx));
+  const quiz = useQuery<QuizResponse>({ queryKey: ["quiz-v2", params.id, params.idx], enabled: Boolean(chapter?.id), queryFn: () => fetchReadyJson(`/api/chapters/${chapter?.id}/quiz`), retry: (count, error) => error.message === "generation_pending" && count < 4 });
+  useEffect(() => {
+    if (!quiz.data || !chapter || !courseQuery.data) return;
+    const next = courseQuery.data.chapters.find((item) => item.idx > chapter.idx && item.status === "open");
+    if (next) {
+      void queryClient.prefetchQuery({
+        queryKey: ["chapter", next.id],
+        queryFn: () => fetchReadyJson(`/api/chapters/${next.id}`),
+        retry: (count, error) => error.message === "generation_pending" && count < 4,
+      });
+    }
+  }, [chapter, courseQuery.data, params.id, quiz.data, queryClient]);
   const questions = quiz.data?.questions ?? []; const question = questions[currentIndex];
   async function submit() {
     if (!questions.every((item) => responses[item.id]?.trim())) { setError("Answer each question before submitting."); return; }
     setError(""); setIsSubmitting(true); setGradingStage(0);
     try {
-      const course = await fetch(`/api/courses/${params.id}`).then((response) => response.json());
-      const chapter = course.chapters.find((item: { idx: number }) => item.idx === Number(params.idx));
+      if (!chapter) throw new Error("Could not find chapter");
       const response = await fetch(`/api/chapters/${chapter.id}/attempts`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ answers: questions.map((item) => ({ questionId: item.id, response: responses[item.id] })) }) });
       const body = await response.json();
       if (!response.ok) { setError(body?.error?.message ?? "Could not submit the QnA."); return; }

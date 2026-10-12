@@ -32,12 +32,53 @@ export const chapters = sqliteTable(
       .notNull()
       .default("locked"),
     depthHint: text("depth_hint", { enum: ["easy", "hard"] }),
+    contentGenerationStatus: text("content_generation_status", { enum: ["pending", "generating", "ready", "failed"] })
+      .notNull()
+      .default("pending"),
+    contentGenerationVersion: integer("content_generation_version").notNull().default(1),
+    contentGenerationError: text("content_generation_error"),
+    contentGenerationUpdatedAt: integer("content_generation_updated_at", { mode: "timestamp_ms" }),
+    quizGenerationStatus: text("quiz_generation_status", { enum: ["pending", "generating", "ready", "failed"] })
+      .notNull()
+      .default("pending"),
+    quizGenerationVersion: integer("quiz_generation_version").notNull().default(0),
+    quizGenerationError: text("quiz_generation_error"),
+    quizGenerationUpdatedAt: integer("quiz_generation_updated_at", { mode: "timestamp_ms" }),
     generatedAt: integer("generated_at", { mode: "timestamp_ms" }),
     ...timestamps,
   },
   (table) => ({
     courseIndexUnique: uniqueIndex("chapters_course_idx_unique").on(table.courseId, table.idx),
     courseStatusIndex: index("chapters_course_status_idx").on(table.courseId, table.status),
+  }),
+);
+
+export const generationJobs = sqliteTable(
+  "generation_jobs",
+  {
+    id: text("id").primaryKey(),
+    artifactType: text("artifact_type", { enum: ["chapter", "quiz"] }).notNull(),
+    targetId: text("target_id").notNull(),
+    generationVersion: integer("generation_version").notNull(),
+    status: text("status", { enum: ["pending", "running", "completed", "failed"] })
+      .notNull()
+      .default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    nextRunAt: integer("next_run_at", { mode: "timestamp_ms" }).notNull(),
+    leaseOwner: text("lease_owner"),
+    leaseExpiresAt: integer("lease_expires_at", { mode: "timestamp_ms" }),
+    lastError: text("last_error"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => ({
+    targetVersionUnique: uniqueIndex("generation_jobs_target_version_unique").on(
+      table.artifactType,
+      table.targetId,
+      table.generationVersion,
+    ),
+    readyIndex: index("generation_jobs_status_next_run_idx").on(table.status, table.nextRunAt),
+    leaseIndex: index("generation_jobs_lease_expiry_idx").on(table.leaseExpiresAt),
   }),
 );
 
@@ -54,6 +95,7 @@ export const questions = sqliteTable(
     rubric: text("rubric").notNull(),
     modelAnswer: text("model_answer").notNull(),
     conceptTag: text("concept_tag").notNull(),
+    generationVersion: integer("generation_version").notNull().default(1),
     isReview: integer("is_review", { mode: "boolean" }).notNull().default(false),
     ...timestamps,
   },

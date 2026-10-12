@@ -3,17 +3,41 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useEffect } from "react";
 import { MermaidContent } from "@/components/mermaid-content";
 
 type CourseChapter = { id: string; idx: number; title: string; status: "locked" | "open" | "passed" };
 type CourseResponse = { course: { topic: string }; chapters: CourseChapter[] };
 type ChapterResponse = { chapter: CourseChapter & { pretest: string | null }; html: string };
 
+async function fetchReadyJson<T>(url: string): Promise<T> {
+  const response = await fetch(url);
+  if (response.status === 202) throw new Error("generation_pending");
+  if (!response.ok) throw new Error("Could not load generated content");
+  return response.json();
+}
+
 export function ChapterPage() {
   const params = useParams<{ id: string; idx: string }>(); const queryClient = useQueryClient();
   const courseQuery = useQuery<CourseResponse>({ queryKey: ["course", params.id], queryFn: () => fetch(`/api/courses/${params.id}`).then((response) => response.json()) });
   const chapter = courseQuery.data?.chapters.find((item) => item.idx === Number(params.idx));
-  const chapterQuery = useQuery<ChapterResponse>({ queryKey: ["chapter", chapter?.id], enabled: Boolean(chapter?.id), queryFn: () => fetch(`/api/chapters/${chapter?.id}`).then((response) => { if (!response.ok) throw new Error("Could not load chapter"); return response.json(); }) });
+  const chapterQuery = useQuery<ChapterResponse>({ queryKey: ["chapter", chapter?.id], enabled: Boolean(chapter?.id), queryFn: () => fetchReadyJson(`/api/chapters/${chapter?.id}`), retry: (count, error) => error.message === "generation_pending" && count < 4 });
+  useEffect(() => {
+    if (!chapter || !chapterQuery.data || !courseQuery.data) return;
+    void queryClient.prefetchQuery({
+      queryKey: ["quiz-v2", params.id, params.idx],
+      queryFn: () => fetchReadyJson(`/api/chapters/${chapter.id}/quiz`),
+      retry: (count, error) => error.message === "generation_pending" && count < 4,
+    });
+    const next = courseQuery.data.chapters.find((item) => item.idx > chapter.idx && item.status === "open");
+    if (next) {
+      void queryClient.prefetchQuery({
+        queryKey: ["chapter", next.id],
+        queryFn: () => fetchReadyJson(`/api/chapters/${next.id}`),
+        retry: (count, error) => error.message === "generation_pending" && count < 4,
+      });
+    }
+  }, [chapter, chapterQuery.data, courseQuery.data, params.id, params.idx, queryClient]);
   const feedback = useMutation({ mutationFn: (difficulty: "easy" | "hard") => fetch(`/api/chapters/${chapter?.id}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ difficulty }) }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chapter", chapter?.id] }) });
   const regenerate = useMutation({ mutationFn: () => fetch(`/api/chapters/${chapter?.id}/regenerate`, { method: "POST" }), onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chapter", chapter?.id] }) });
   if (courseQuery.isLoading || chapterQuery.isLoading) return <main className="reading-shell ui text-sm text-[var(--muted)]">Loading chapter…</main>;

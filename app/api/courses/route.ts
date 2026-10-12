@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { chapters, courses } from "@/lib/db/schema";
 import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
 import { agentForRequest, agentSchema, AGENT_COOKIE, noAgentError, runAgentObject } from "@/lib/agent";
+import { enqueueGenerationJob } from "@/lib/generation";
 import { SYLLABUS_PROMPT, topicPrompt } from "@/lib/prompts";
 import { syllabusSchema } from "@/lib/schemas";
 
@@ -54,26 +55,24 @@ export async function POST(request: Request) {
     );
     const courseId = randomUUID();
     const now = new Date();
+    const chapterRows = syllabus.chapters.map((chapter, idx) => ({
+      id: randomUUID(),
+      courseId,
+      idx,
+      title: chapter.title,
+      objectives: chapter.objectives,
+      prerequisites: chapter.prerequisites,
+      status: idx === 0 ? "open" as const : "locked" as const,
+      createdAt: now,
+    }));
 
     db.transaction((tx) => {
       tx.insert(courses)
         .values({ id: courseId, topic: parsed.data.topic, level: "foundational", createdAt: now })
         .run();
-      tx.insert(chapters)
-        .values(
-          syllabus.chapters.map((chapter, idx) => ({
-            id: randomUUID(),
-            courseId,
-            idx,
-            title: chapter.title,
-            objectives: chapter.objectives,
-            prerequisites: chapter.prerequisites,
-            status: idx === 0 ? "open" as const : "locked" as const,
-            createdAt: now,
-          })),
-        )
-        .run();
+      tx.insert(chapters).values(chapterRows).run();
     });
+    if (chapterRows[0]) enqueueGenerationJob("chapter", chapterRows[0].id, 1, now);
 
     const response = NextResponse.json({ courseId }, { status: 201 });
     response.cookies.set(AGENT_COOKIE, agent, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 31_536_000 });

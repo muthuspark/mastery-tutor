@@ -9,6 +9,7 @@ import { dueReviewQuestions, gradeAnswer } from "@/lib/quiz";
 import { courseIsComplete, passed, prerequisitesPassed, remediation } from "@/lib/gating";
 import { dueChapterIndex } from "@/lib/review";
 import { agentForRequest, noAgentError } from "@/lib/agent";
+import { enqueueGenerationJob } from "@/lib/generation";
 
 type RouteContext = { params: Promise<{ id: string }> };
 const attemptSchema = z.object({ answers: z.array(z.object({ questionId: z.string().uuid(), response: z.string().max(5000) })).min(1) });
@@ -75,6 +76,12 @@ export async function POST(request: Request, context: RouteContext) {
         }
       }
     });
+    if (nextChapterIdx !== null) {
+      const next = db.select().from(chapters)
+        .where(and(eq(chapters.courseId, chapter.courseId), eq(chapters.idx, nextChapterIdx)))
+        .get();
+      if (next) enqueueGenerationJob("chapter", next.id, next.contentGenerationVersion, now);
+    }
     return NextResponse.json({ attemptId, score, passed: didPass, complete, nextChapterIdx, remediation: didPass ? null : remediation(graded.flatMap((answer) => answer.missedConcept ? [answer.missedConcept] : [])), answers: graded.map(({ question, response, score: answerScore, feedback, missedConcept }) => ({ questionId: question.id, prompt: question.prompt, response, score: answerScore, feedback, modelAnswer: question.modelAnswer, missedConcept })) });
   } catch (error) {
     return errorResponse(error);

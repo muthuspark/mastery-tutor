@@ -33,7 +33,7 @@ describe("quiz route cache validation", () => {
     createdCourses.push(courseId);
     const now = new Date();
     db.insert(courses).values({ id: courseId, topic: "test topic", level: "foundational", createdAt: now }).run();
-    db.insert(chapters).values({ id: chapterId, courseId, idx: 0, title: "Test", objectives: ["Test"], prerequisites: [], status: "open", createdAt: now }).run();
+    db.insert(chapters).values({ id: chapterId, courseId, idx: 0, title: "Test", objectives: ["Test"], prerequisites: [], content: "Ready chapter", summary: "Summary", status: "open", generatedAt: now, createdAt: now }).run();
     const invalid = { chapterId, type: "mcq" as const, prompt: "Invalid", options: ["Correct", "Wrong"], rubric: "Rule", modelAnswer: "Correct", conceptTag: "test", isReview: false, createdAt: now };
     db.insert(questions).values([{ ...invalid, id: attemptedId }, { ...invalid, id: staleId }]).run();
     db.insert(attempts).values({ id: attemptId, chapterId, attemptNo: 1, score: 0, passed: false, createdAt: now }).run();
@@ -51,6 +51,6 @@ describe("quiz route cache validation", () => {
     expect(response.status).toBe(200);
     expect(db.select().from(questions).where(eq(questions.id, staleId)).get()).toBeUndefined();
     expect(db.select().from(questions).where(eq(questions.id, attemptedId)).get()).toBeDefined();
-    expect(generateQuiz).toHaveBeenCalledWith(chapterId, "codex");
+    expect(generateQuiz).toHaveBeenCalledWith(chapterId, "codex", 1);
   });
 });
