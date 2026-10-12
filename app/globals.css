@@ -38,13 +38,26 @@ h1, h2, h3 { text-wrap: balance; }
 @keyframes status-pulse { 0%, 100% { opacity: 0.35; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1); } }
 .button-secondary { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 0.5rem; background: transparent; color: var(--ink); cursor: pointer; font-family: var(--sans); font-size: 0.84rem; font-weight: 700; padding: 0.65rem 0.9rem; text-decoration: none; transition: background 180ms ease-out, border-color 180ms ease-out; }
 .button-secondary:hover { border-color: var(--ink); background: var(--paper-deep); }
+.button-secondary:disabled { cursor: wait; opacity: 0.6; }
 .text-button { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-family: var(--sans); font-size: 0.78rem; padding: 0; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 0.2em; }
 .text-button:hover { color: var(--ink); text-decoration-color: var(--ink); }
+.revisit-dialog-backdrop { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; overflow-y: auto; background: rgba(26, 26, 26, 0.48); padding: 1.5rem; }
+.revisit-dialog { width: min(100%, 31rem); border: 1px solid var(--line); background: var(--paper); box-shadow: 0 8px 0 rgba(26, 26, 26, 0.12); padding: clamp(1.5rem, 5vw, 2.5rem); }
+.revisit-dialog__mark { display: grid; width: 2.5rem; height: 2.5rem; margin-bottom: 1.25rem; place-items: center; border: 1px solid var(--accent); border-radius: 999px; color: var(--accent); font-family: var(--sans); font-size: 1.35rem; }
+.revisit-dialog__title { margin-top: 0.55rem; font-size: clamp(2.2rem, 7vw, 3.5rem); line-height: 0.95; }
+.revisit-dialog__description { margin-top: 1.25rem; color: var(--muted); font-size: 1.05rem; line-height: 1.5; }
+.revisit-dialog__details { display: grid; gap: 0.7rem; margin-top: 1.5rem; border-block: 1px solid var(--line); padding-block: 0.9rem; font-size: 0.78rem; }
+.revisit-dialog__details div { display: flex; justify-content: space-between; gap: 1rem; }
+.revisit-dialog__details span { color: var(--muted); }
+.revisit-dialog__details strong { color: var(--ink); font-weight: 700; }
+.revisit-dialog__error { margin-top: 1rem; color: var(--accent-dark); font-size: 0.82rem; }
+.revisit-dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.75rem; margin-top: 1.75rem; }
+@media (max-width: 480px) { .revisit-dialog-backdrop { align-items: end; padding: 0; } .revisit-dialog { width: 100%; padding: 1.5rem; } .revisit-dialog__actions { flex-direction: column-reverse; } .revisit-dialog__actions button { width: 100%; } }
 .field { display: block; width: 100%; resize: vertical; border: 1px solid var(--line); border-radius: 0.5rem; background: #fff; color: var(--ink); font-family: var(--serif); font-size: 1.2rem; line-height: 1.45; padding: 1rem 1.1rem; }
 .field::placeholder { color: #827b73; opacity: 1; }
 .field:focus { border-color: var(--accent); }
 .prose-editorial { color: var(--ink); }
-.prose-editorial p:first-of-type::first-letter { float: left; color: var(--accent); font-family: var(--display); font-size: 4.3rem; font-weight: 700; line-height: 0.78; margin: 0.12rem 0.35rem 0 0; }
+.prose-editorial > p:first-of-type::first-letter { float: left; color: var(--accent); font-family: var(--display); font-size: 4.3rem; font-weight: 700; line-height: 0.78; margin: 0.12rem 0.35rem 0 0; }
 .prose-editorial blockquote { border-inline-start: 2px solid var(--accent); color: var(--brown); font-family: var(--display); font-size: 1.55rem; font-style: italic; margin: 2rem 0; padding-inline-start: 1.25rem; }
 .prose-editorial .mermaid { margin: 2rem 0; overflow-x: auto; border-block: 1px solid var(--line); background: var(--paper-deep); padding: 1.25rem; text-align: center; }
 .prose-editorial .mermaid svg { height: auto; max-width: 100%; }

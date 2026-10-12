@@ -73,12 +73,16 @@ test("confirms before resetting a mastered chapter", async ({ page }) => {
     revisitRequested = true;
     await route.fulfill({ json: { reset: true, chapterId: "chapter-0" } });
   });
-  page.on("dialog", async (dialog) => {
-    expect(dialog.message()).toContain("mastery result and quiz questions will be reset");
-    await dialog.accept();
-  });
-
   await page.goto("/course/course-1");
   await page.getByRole("link", { name: /Foundations.*Mastered.*Revisit/ }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("mastery result and quiz questions will be cleared");
+  await dialog.getByRole("button", { name: "Keep mastered" }).click();
+  await expect(dialog).toBeHidden();
+  await expect.poll(() => revisitRequested).toBe(false);
+
+  await page.getByRole("link", { name: /Foundations.*Mastered.*Revisit/ }).click();
+  await dialog.getByRole("button", { name: "Reset and revisit" }).click();
   await expect.poll(() => revisitRequested).toBe(true);
 });
