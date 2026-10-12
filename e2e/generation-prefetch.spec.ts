@@ -57,3 +57,28 @@ test("keeps mastered chapters available for review", async ({ page }) => {
   await expect(masteredChapter).toHaveAttribute("href", "/course/course-1/ch/0");
   await expect(page.getByRole("link", { name: /Locked idea/ })).toHaveCount(0);
 });
+
+test("confirms before resetting a mastered chapter", async ({ page }) => {
+  let revisitRequested = false;
+  await page.route("**/api/courses/course-1", async (route) => {
+    await route.fulfill({
+      json: {
+        course: { topic: "Testing" },
+        chapters: [{ id: "chapter-0", idx: 0, title: "Foundations", status: "passed" }],
+        progress: { passed: 1, total: 1 },
+      },
+    });
+  });
+  await page.route("**/api/chapters/chapter-0/revisit", async (route) => {
+    revisitRequested = true;
+    await route.fulfill({ json: { reset: true, chapterId: "chapter-0" } });
+  });
+  page.on("dialog", async (dialog) => {
+    expect(dialog.message()).toContain("mastery result and quiz questions will be reset");
+    await dialog.accept();
+  });
+
+  await page.goto("/course/course-1");
+  await page.getByRole("link", { name: /Foundations.*Mastered.*Revisit/ }).click();
+  await expect.poll(() => revisitRequested).toBe(true);
+});
