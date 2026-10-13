@@ -10,31 +10,46 @@ type CourseChapter = { id: string; idx: number; title: string; status: "locked" 
 type CourseResponse = { course: { topic: string }; chapters: CourseChapter[] };
 type ChapterResponse = { chapter: CourseChapter & { pretest: string | null }; html: string };
 
+class ReadyContentError extends Error {
+  constructor(message: string, readonly retryable: boolean) {
+    super(message);
+    this.name = "ReadyContentError";
+  }
+}
+
 async function fetchReadyJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
-  if (response.status === 202) throw new Error("generation_pending");
-  if (!response.ok) throw new Error("Could not load generated content");
+  if (response.status === 202) throw new ReadyContentError("generation_pending", true);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { error?: { message?: string; retryable?: boolean } } | null;
+    throw new ReadyContentError(body?.error?.message ?? "Could not load generated content", body?.error?.retryable === true);
+  }
   return response.json();
 }
+
+const retryReadyContent = (failureCount: number, error: Error) => error instanceof ReadyContentError && error.retryable && failureCount < 45;
+const retryReadyContentDelay = () => 2_000;
 
 export function ChapterPage() {
   const params = useParams<{ id: string; idx: string }>(); const queryClient = useQueryClient();
   const courseQuery = useQuery<CourseResponse>({ queryKey: ["course", params.id], queryFn: () => fetch(`/api/courses/${params.id}`).then((response) => response.json()) });
   const chapter = courseQuery.data?.chapters.find((item) => item.idx === Number(params.idx));
-  const chapterQuery = useQuery<ChapterResponse>({ queryKey: ["chapter", chapter?.id], enabled: Boolean(chapter?.id), queryFn: () => fetchReadyJson(`/api/chapters/${chapter?.id}`), retry: (count, error) => error.message === "generation_pending" && count < 4 });
+  const chapterQuery = useQuery<ChapterResponse>({ queryKey: ["chapter", chapter?.id], enabled: Boolean(chapter?.id), queryFn: () => fetchReadyJson(`/api/chapters/${chapter?.id}`), retry: retryReadyContent, retryDelay: retryReadyContentDelay });
   useEffect(() => {
     if (!chapter || !chapterQuery.data || !courseQuery.data) return;
     void queryClient.prefetchQuery({
       queryKey: ["quiz-v2", params.id, params.idx],
       queryFn: () => fetchReadyJson(`/api/chapters/${chapter.id}/quiz`),
-      retry: (count, error) => error.message === "generation_pending" && count < 4,
+      retry: retryReadyContent,
+      retryDelay: retryReadyContentDelay,
     });
     const next = courseQuery.data.chapters.find((item) => item.idx > chapter.idx && item.status === "open");
     if (next) {
       void queryClient.prefetchQuery({
         queryKey: ["chapter", next.id],
         queryFn: () => fetchReadyJson(`/api/chapters/${next.id}`),
-        retry: (count, error) => error.message === "generation_pending" && count < 4,
+        retry: retryReadyContent,
+        retryDelay: retryReadyContentDelay,
       });
     }
   }, [chapter, chapterQuery.data, courseQuery.data, params.id, params.idx, queryClient]);
