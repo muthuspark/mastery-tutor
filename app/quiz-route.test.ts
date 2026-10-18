@@ -26,16 +26,56 @@ vi.mock("@/lib/quiz", () => ({
 import { GET } from "@/app/api/chapters/[id]/quiz/route";
 import { db } from "@/lib/db";
 import { answers, attempts, chapters, courses, questions } from "@/lib/db/schema";
-import { generateQuiz } from "@/lib/quiz";
+import { dueReviewQuestions, generateQuiz } from "@/lib/quiz";
 
 const createdCourses: string[] = [];
 
 afterEach(() => {
   for (const id of createdCourses.splice(0)) db.delete(courses).where(eq(courses.id, id)).run();
   vi.clearAllMocks();
+  vi.mocked(dueReviewQuestions).mockReturnValue([]);
 });
 
 describe("quiz route cache validation", () => {
+  it.each(["cached", "generated"])("delivers only rendering fields for %s current and review questions", async (source) => {
+    const courseId = randomUUID();
+    const chapterId = randomUUID();
+    const now = new Date();
+    createdCourses.push(courseId);
+    db.insert(courses).values({ id: courseId, topic: "Differential equations", createdAt: now }).run();
+    db.insert(chapters).values({ id: chapterId, courseId, idx: 1, title: "Separation", objectives: [], prerequisites: [], content: "Ready chapter", contentGenerationStatus: "ready", status: "open", createdAt: now }).run();
+    const current = Array.from({ length: 10 }, (_, index) => ({
+      id: randomUUID(), chapterId, type: "mcq" as const, prompt: `Solve equation ${index}`,
+      options: ["Solution A", "Solution B", "Solution C", "Solution D"],
+      modelAnswer: ["Solution A", "Solution B", "Solution C", "Solution D"][index % 4],
+      rubric: "Private grading rule", conceptTag: "separation", isReview: false,
+      generationVersion: 1, createdAt: now,
+    }));
+    const review = { ...current[0], id: randomUUID(), isReview: true, prompt: "Review equation" };
+    vi.mocked(dueReviewQuestions).mockReturnValue([review]);
+    if (source === "cached") db.insert(questions).values(current).run();
+    else vi.mocked(generateQuiz).mockImplementationOnce(async () => {
+      db.insert(questions).values(current).run();
+      return current;
+    });
+
+    const response = await GET(new Request("http://localhost"), { params: Promise.resolve({ id: chapterId }) });
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.questions).toHaveLength(11);
+    for (const delivered of body.questions) {
+      const stored = [...current, review].find((question) => question.id === delivered.id)!;
+      expect(delivered).toEqual({ id: stored.id, type: stored.type, prompt: stored.prompt, options: stored.options, isReview: stored.isReview });
+      expect(delivered).not.toHaveProperty("modelAnswer");
+      expect(delivered).not.toHaveProperty("rubric");
+    }
+    expect(body.questions.filter((question: { isReview: boolean }) => question.isReview)).toEqual([
+      { id: review.id, type: review.type, prompt: review.prompt, options: review.options, isReview: true },
+    ]);
+    expect(db.select().from(questions).where(eq(questions.id, current[0].id)).get()).toMatchObject({ modelAnswer: current[0].modelAnswer, rubric: current[0].rubric });
+    expect(generateQuiz).toHaveBeenCalledTimes(source === "generated" ? 1 : 0);
+  });
+
   it("replaces unattempted invalid cache rows while retaining attempted rows", async () => {
     const courseId = randomUUID();
     const chapterId = randomUUID();

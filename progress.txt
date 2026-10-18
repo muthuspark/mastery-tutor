@@ -1217,3 +1217,329 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Grade MCQ-only attempts without agent discovery\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 1"
 }
+
+[2026-10-18T13:39:12.728Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 2,
+  "phase": "discover"
+}
+
+[2026-10-18T13:40:07.663Z] 20261018123858542-ec1e3550 — Five candidates generated and ranked
+{
+  "formula": "impact * confidence / (effort * risk)",
+  "ranked": [
+    {
+      "title": "Keep answer keys out of quiz delivery responses",
+      "category": "reliability",
+      "rationale": "Return only the fields needed to render unanswered questions. This protects assessment evidence from answer keys delivered alongside the quiz. The exposure is established by source inspection; no browser exploitation was performed.",
+      "evidence": [
+        "app/api/chapters/[id]/quiz/route.ts:29–31 selects complete question records.",
+        "app/api/chapters/[id]/quiz/route.ts:57 serializes those records directly, including appended review questions.",
+        "lib/db/schema.ts:101–103 includes rubric and modelAnswer in question records.",
+        "components/quiz-page.tsx:8 requires only id, type, prompt, options, and isReview."
+      ],
+      "acceptanceCriteria": [
+        "Quiz GET responses contain only explicitly allowed rendering fields for both current and review questions.",
+        "Route tests assert that modelAnswer and rubric are absent from every delivered question.",
+        "Server-side deterministic MCQ grading still uses the stored answer key.",
+        "A host-run fixture quiz verifies that answering and post-submission feedback continue to work."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 1,
+      "risk": 1,
+      "index": 1,
+      "score": 25
+    },
+    {
+      "title": "Make unanswered quiz questions recoverable",
+      "category": "usability",
+      "rationale": "Prevent learners from reaching an unrecoverable submission error after skipping a question. Add backward navigation and direct learners to the first unanswered question. The dead end follows from the source; its frequency has not been measured.",
+      "evidence": [
+        "components/quiz-page.tsx:42 rejects submission whenever any response is missing.",
+        "components/quiz-page.tsx:56 allows Next question without selecting an option.",
+        "components/quiz-page.tsx:56 provides no previous-question control or question navigator."
+      ],
+      "acceptanceCriteria": [
+        "A learner can return to a previous question and change an answer while other selections remain intact.",
+        "Submitting with missing answers shows an accessible error and displays the first unanswered question.",
+        "Question changes move keyboard focus to the question heading, and navigation controls have accessible names.",
+        "Host-run Playwright coverage uses the prepared MCQ fixture to skip, recover, answer every question, and submit successfully."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "index": 2,
+      "score": 10
+    },
+    {
+      "title": "Record concept gaps even when a quiz passes",
+      "category": "user value",
+      "rationale": "Keep adaptation grounded in every incorrect answer. Currently, passing attempts discard their missed concepts, and MCQ misses use answer text as the concept identifier. Correcting both makes existing remediation more meaningful without changing mastery thresholds. Learning benefits remain unmeasured.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:59–78 updates reviewItems only in the failed-attempt branch.",
+        "lib/quiz.ts:16–21 returns modelAnswer as missedConcept for incorrect MCQs.",
+        "lib/quiz.ts:60 already persists each question's conceptTag; lib/chapter.ts:31–46 uses reviewItems to guide instruction."
+      ],
+      "acceptanceCriteria": [
+        "A test-owned 8/10 passing attempt records both missed concepts while preserving chapter progression.",
+        "Incorrect responses are associated with question.conceptTag rather than model-answer text.",
+        "Two missed questions sharing a concept update one course/concept review item; an all-correct attempt creates no misses.",
+        "Route tests verify persisted records across a subsequent database read without modifying historical learner records."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "index": 0,
+      "score": 6.25
+    },
+    {
+      "title": "Bound quiz history reads before loading records",
+      "category": "performance",
+      "rationale": "Filter eligible questions and limit results in SQLite instead of loading every historical question on each quiz request. This reduces application-side materialization as retries accumulate; latency improvement is a hypothesis requiring measurement.",
+      "evidence": [
+        "app/api/chapters/[id]/quiz/route.ts:29–31 loads all chapter questions, then filters generation/type/options and slices to ten.",
+        "app/api/chapters/[id]/quiz/route.ts:52–54 repeats the same unrestricted read after generation.",
+        "lib/quiz.ts:65–68 inserts new question records for generated quizzes, allowing history to accumulate."
+      ],
+      "acceptanceCriteria": [
+        "Both question-selection paths apply generation version, MCQ eligibility, valid option count, ordering, and LIMIT 10 before materializing rows.",
+        "An isolated fixture with extensive historical questions returns the same eligible ten questions as the existing selection rules.",
+        "Query inspection confirms each selection materializes at most ten question records without deleting history or changing schemas.",
+        "Record before/after measurements on the isolated fixture; report observed timings without imposing an invented speedup target."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "index": 3,
+      "score": 3
+    },
+    {
+      "title": "Offer a private replay of the last mistake",
+      "category": "creative wildcard",
+      "rationale": "Add a small chapter activity that hides the solution to the latest recorded mistake until the learner tries recalling it. Reuse persisted answers for a focused reflection exercise without grading it or claiming new mastery evidence. Retention benefits would require later evaluation.",
+      "evidence": [
+        "lib/db/schema.ts:134–147 persists learner responses, scores, feedback, and timestamps linked to questions.",
+        "lib/quiz.ts:95–100 already provides helpers for retrieving the latest attempt and its question IDs.",
+        "components/quiz-page.tsx:55 immediately displays feedback and model answers, with no later recall interaction."
+      ],
+      "acceptanceCriteria": [
+        "A chapter exposes at most one replay drawn from an actual persisted incorrect answer, including its attempt date.",
+        "The recorded answer, feedback, and model answer remain hidden until the learner activates an accessible reveal control.",
+        "The activity explicitly states that it is ungraded and writes no attempts, scores, or mastery evidence.",
+        "Reloading retains access through persisted evidence; chapters without incorrect answers show no replay.",
+        "Host-run fixture coverage completes a quiz with a mistake, revisits the chapter, and verifies reveal behavior without altering existing learner data."
+      ],
+      "impact": 3,
+      "confidence": 3,
+      "effort": 3,
+      "risk": 1,
+      "index": 4,
+      "score": 3
+    }
+  ]
+}
+
+[2026-10-18T13:40:07.664Z] 20261018123858542-ec1e3550 — Candidate selected
+{
+  "iteration": 2,
+  "candidate": {
+    "title": "Keep answer keys out of quiz delivery responses",
+    "category": "reliability",
+    "rationale": "Return only the fields needed to render unanswered questions. This protects assessment evidence from answer keys delivered alongside the quiz. The exposure is established by source inspection; no browser exploitation was performed.",
+    "evidence": [
+      "app/api/chapters/[id]/quiz/route.ts:29–31 selects complete question records.",
+      "app/api/chapters/[id]/quiz/route.ts:57 serializes those records directly, including appended review questions.",
+      "lib/db/schema.ts:101–103 includes rubric and modelAnswer in question records.",
+      "components/quiz-page.tsx:8 requires only id, type, prompt, options, and isReview."
+    ],
+    "acceptanceCriteria": [
+      "Quiz GET responses contain only explicitly allowed rendering fields for both current and review questions.",
+      "Route tests assert that modelAnswer and rubric are absent from every delivered question.",
+      "Server-side deterministic MCQ grading still uses the stored answer key.",
+      "A host-run fixture quiz verifies that answering and post-submission feedback continue to work."
+    ],
+    "impact": 5,
+    "confidence": 5,
+    "effort": 1,
+    "risk": 1
+  },
+  "score": 25,
+  "reason": "Highest score among candidates whose titles have not been completed; ties use higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-18T13:40:07.682Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 2,
+  "phase": "implement"
+}
+
+[2026-10-18T13:41:09.014Z] 20261018123858542-ec1e3550 — Implementation completed; verification required
+{
+  "summary": "Implemented quiz response allowlist for current and review questions. All 12 focused tests, lint, typecheck, and diff checks pass. Host fixture browser verification remains pending; build/full suite not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/quiz-delivery-allowlist.md.",
+  "decisions": [
+    {
+      "decision": "Deliver only id, type, prompt, options, and isReview.",
+      "reason": "Supports quiz rendering without exposing grading metadata."
+    },
+    {
+      "decision": "Apply one allowlist after combining current and review questions.",
+      "reason": "Covers cached, generated, and review delivery paths."
+    },
+    {
+      "decision": "Preserve stored answer keys and grading behavior.",
+      "reason": "Maintains deterministic grading and post-submission feedback."
+    }
+  ]
+}
+
+[2026-10-18T13:41:09.036Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 2,
+  "phase": "verify"
+}
+
+[2026-10-18T13:41:11.716Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 2,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/2-verify-1792330869036-18-lint.log"
+}
+
+[2026-10-18T13:41:13.411Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 2,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/2-verify-1792330871721-19-typecheck.log"
+}
+
+[2026-10-18T13:41:31.997Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 2,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/2-verify-1792330873416-20-test.log"
+}
+
+[2026-10-18T13:41:38.562Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 2,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/2-verify-1792330892001-21-build.log"
+}
+
+[2026-10-18T13:41:38.567Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-18T13:41:38.585Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 2,
+  "phase": "browser-prepare"
+}
+
+[2026-10-18T13:42:35.775Z] 20261018123858542-ec1e3550 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-2.spec.ts",
+  "summary": "Created iteration-2.spec.ts. TypeScript and diff checks passed. Browser execution remains for the host; this spec has not run.",
+  "decisions": [
+    {
+      "decision": "Inspect real quiz responses for current and due review questions, including after reload.",
+      "reason": "Verifies the exact rendering-field allowlist and absence of modelAnswer and rubric without mocking."
+    },
+    {
+      "decision": "Submit ten correct answers and one incorrect review answer.",
+      "reason": "Checks stored-key grading, visible scores, and post-submission corrective feedback."
+    },
+    {
+      "decision": "Verify reloaded course progress and persisted answers using self-cleaning fixtures.",
+      "reason": "Confirms persistence while isolating all writes to test-owned data and avoiding generation."
+    }
+  ]
+}
+
+[2026-10-18T13:42:38.421Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 2,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/2-browser-prepare-1792330955776-26-lint.log"
+}
+
+[2026-10-18T13:42:40.108Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 2,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/2-browser-prepare-1792330958426-27-typecheck.log"
+}
+
+[2026-10-18T13:42:40.131Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 2,
+  "phase": "browser-run"
+}
+
+[2026-10-18T13:42:45.899Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 1,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-2.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/2-browser-run-1792330960164-28-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/2-browser-run-1792330960164-28-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/2-browser-run-1792330960164-28-playwright/artifacts"
+}
+
+[2026-10-18T13:42:45.918Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 2,
+  "phase": "review"
+}
+
+[2026-10-18T13:43:25.052Z] 20261018123858542-ec1e3550 — Independent review decision
+{
+  "summary": "Review passed. No unresolved defects found in the selected increment.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "The response allowlist covers both current and appended review questions.",
+    "Cached and generated route tests assert exact rendering fields and absence of modelAnswer and rubric.",
+    "Stored answer keys remain intact; deterministic grading tests pass.",
+    "Host fixture verification confirms answering, submission, corrective feedback, and persisted progress.",
+    "Independently reran 12 focused tests, lint, typecheck, and diff checks successfully. Host logs also record 81 tests and production build passing."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-2.spec.ts, results.json, screenshot, and trace archive.",
+    "Host Playwright: 1 passed, no skips, retries, or failures.",
+    "Coverage checks current and review response fields after reload, submits ten correct answers and one incorrect review answer, and verifies feedback and persistence."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-18T13:43:25.071Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 2,
+  "phase": "commit"
+}
+
+[2026-10-18T13:43:25.075Z] 20261018123858542-ec1e3550 — Verified iteration approved for commit
+{
+  "iteration": 2,
+  "candidate": "Keep answer keys out of quiz delivery responses",
+  "summary": "Implemented quiz response allowlist for current and review questions. All 12 focused tests, lint, typecheck, and diff checks pass. Host fixture browser verification remains pending; build/full suite not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/quiz-delivery-allowlist.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Keep answer keys out of quiz delivery responses\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 2"
+}
