@@ -3,6 +3,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 
 vi.mock("server-only", () => ({}));
+// Never share fixture writes or generation-job leases with the running app.
+vi.mock("@/lib/db", async () => {
+  const { default: Database } = await import("better-sqlite3");
+  const { drizzle } = await import("drizzle-orm/better-sqlite3");
+  const { migrate } = await import("drizzle-orm/better-sqlite3/migrator");
+  const schema = await import("@/lib/db/schema");
+  const sqlite = new Database(":memory:");
+  sqlite.pragma("foreign_keys = ON");
+  const db = drizzle(sqlite, { schema });
+  migrate(db, { migrationsFolder: "./drizzle" });
+  return { db };
+});
 vi.mock("@/lib/agent", () => ({ agentForRequest: vi.fn().mockResolvedValue("codex"), noAgentError: vi.fn() }));
 vi.mock("@/lib/quiz", () => ({
   dueReviewQuestions: vi.fn().mockReturnValue([]),

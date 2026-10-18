@@ -1,3 +1,6 @@
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -15,6 +18,15 @@ import { startGenerationWorker } from "./generation-worker";
 import { recordGenerationEvent } from "./generation-observability";
 
 vi.mock("server-only", () => ({}));
+// Keep coordinator transactions and worker polling isolated from parallel suites.
+vi.mock("./db", async () => {
+  const schema = await import("./db/schema");
+  const sqlite = new Database(":memory:");
+  sqlite.pragma("foreign_keys = ON");
+  const db = drizzle(sqlite, { schema });
+  migrate(db, { migrationsFolder: "drizzle" });
+  return { db };
+});
 
 const cleanup: Array<{ courseId: string; chapterId: string }> = [];
 

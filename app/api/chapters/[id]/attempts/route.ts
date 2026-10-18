@@ -39,8 +39,9 @@ export async function POST(request: Request, context: RouteContext) {
       }
       pending.push({ question, response: answer.response });
     }
-    const agent = await agentForRequest(request);
-    if (!agent) throw noAgentError();
+    const needsAgent = pending.some(({ question }) => question.type !== "mcq");
+    const agent = needsAgent ? await agentForRequest(request) : undefined;
+    if (needsAgent && !agent) throw noAgentError();
     const graded = await Promise.all(pending.map(async ({ question, response }) => ({ question, response, ...(await gradeAnswer(question, response, agent)) })));
     const score = graded.reduce((sum, answer) => sum + answer.score, 0) / graded.length;
     const didPass = passed(score);

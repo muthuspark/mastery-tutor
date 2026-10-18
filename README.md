@@ -117,19 +117,37 @@ The Ralph script uses your installed, authenticated Codex CLI to improve this re
 
 ```bash
 npm run ralph -- --goal "Improve learner retention" --iterations 10
-npm run ralph -- --goal-file loop-prd.md
+npm run ralph -- --goal-file loop-prd.md --base-url http://localhost:3000
 npm run ralph -- --resume <run-id>
 npm run ralph -- --help
 ```
 
 Start from a clean Git working tree, including untracked files. Commit the script and any existing goal/progress files you want to keep before starting; the script never stashes existing changes. A goal file outside the repository is also supported. Ralph creates and stays on a local `ralph/<run-id>` branch, with one commit per verified iteration. It never pushes, merges, or deploys. Review the resulting branch yourself before merging.
 
-The default run completes **10 verified iterations**. Use `--iterations 0` to continue until stopped, `--model <model>` to override your Codex configuration, `--max-fix-attempts <N>` to change the default three repair rounds, or `--phase-timeout-minutes <N>` to change the default 30-minute timeout per agent/check command. Codex runs with approvals disabled, read-only access for discovery/review, and workspace-write access for implementation/repair. Missing permissions or unavailable external services are blockers rather than reasons to bypass the sandbox.
+The default run completes **10 verified iterations**. Use `--iterations 0` to continue until stopped, `--model <model>` to override your Codex configuration, `--max-fix-attempts <N>` to change the default three repair rounds, or `--phase-timeout-minutes <N>` to change the default 30-minute timeout per agent/check command. Codex runs with approvals disabled, read-only access for discovery/review, and workspace-write access for implementation/repair. Missing permissions or unavailable external services are blockers rather than reasons to silently change the sandbox. If this machine cannot initialize the Codex sandbox, `--agent-sandbox danger-full-access` explicitly selects host execution for child sessions; it can accompany start or resume and is saved and logged. This grants the agents the current OS user’s filesystem and network access. There is no automatic fallback. `--agent-sandbox phase-default` restores the default read-only/workspace-write policies; working-tree change detection still applies to discovery and review in either mode.
 
-Lint, typecheck, tests, and production build run before the first iteration and after every implementation/repair. Changes to user-facing flows also require browser evidence checked by the review session. Configure working browser tooling and any required local services before running. Failed checks or unresolved defects block new features; exhausted repairs stop the run with unfinished changes preserved. The initial goal checklist is a direction for improvement, not an automatic termination signal.
+Lint, typecheck, tests, and production build run before the first iteration and after every implementation/repair. Ralph then prepares a feature-specific Playwright spec under `e2e/ralph/<run-id>/`, validates its lint/types, and executes it from the **host Node process**, outside the Codex sandbox. The reviewer inspects the spec, JSON results, screenshots, and traces before approving the increment. Tests must cover actual changed flows; mocked APIs do not establish real grading or persistence. A smoke test alone does not establish feature acceptance.
+
+Keep the app running from the same checkout at `http://localhost:3000` (or pass `--base-url URL`). Ralph's browser configuration never starts, stops, or changes the environment of your server. Install Chromium once if necessary with `npx playwright install chromium`. Tests use only test-owned fixtures and must preserve existing learner data. You can check the host setup without a paid agent run:
+
+```bash
+npm run test:e2e:ralph -- smoke.spec.ts
+```
+
+This read-only smoke test opens the app, navigates to settings, and reloads. Its JSON report, HTML report, screenshots, and traces go to `.ralph/manual-browser/`. Iteration evidence goes to `.ralph/<run-id>/*-playwright/`. To use a different URL for a standalone test, set `RALPH_BASE_URL`; `RALPH_BROWSER_OUTPUT` overrides its output directory. The ordinary `npm run test:e2e` setup continues to use port 3100.
+
+Browser assertion failures enter the bounded repair loop. An unreachable server, missing Chromium, socket permission errors, missing reports, zero tests, or skipped tests stop at `browser-run` without consuming a repair attempt. Fix that environment issue, then use the ordinary resume command to retry host verification. Failed checks or unresolved defects block new features; exhausted code repairs stop the run with unfinished changes preserved. The initial goal checklist is a direction for improvement, not an automatic termination signal.
 
 Every decision is appended with a timestamp and run ID to root `progress.txt`: all five candidates and scores, selection reasoning, implementation summaries, check outcomes, review evidence and findings, repairs, resume actions, and stop decisions. Existing contents are preserved. The log is included in each verified iteration’s commit; an interrupted run preserves its pending log entries alongside unfinished code. Commit hashes are recorded in the run state.
 
 Prompts, raw CLI events, check logs, candidate rankings, and atomic state checkpoints are saved in ignored `.ralph/<run-id>/`. Ctrl+C stops the active child process and preserves work. Resume with the printed command on the same branch, without editing the recorded changes or HEAD; saved options and the goal snapshot are reused. Interrupted implementations resume as repairs, while checks and reviews can be repeated. After an abrupt machine/process crash, uncheckpointed edits may require manual reconciliation; the script refuses mismatched state rather than resetting files. A lock prevents simultaneous runs in the same working tree.
+
+For a run created before host browser verification, or after manually repairing code, explicitly request full verification of the current working tree:
+
+```bash
+npm run ralph -- --resume <run-id> --retry-verification --base-url http://localhost:3000
+```
+
+`--retry-verification` backs up the old checkpoint, accepts the current edits on the recorded branch and HEAD, and restarts checks, host Playwright execution, and review. An existing iteration spec is reused, preserving manual test fixes; browser coverage preparation runs when that spec is missing. The reviewer still checks coverage. It does **not** reset the repair count or bypass acceptance. Use it only when you intend the current edits to belong to that increment. `--base-url` can also accompany ordinary resume; changing it invalidates prior browser evidence. Other run options remain saved.
 
 Creating or testing this script does not start a paid agent run. Its automated tests use fake Codex/npm executables and temporary Git repositories.

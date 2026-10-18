@@ -22,6 +22,7 @@ async function mode(value: string) { await writeFile(path.join(root, "bin", "mod
 beforeEach(async () => {
   vi.spyOn(console, "log").mockImplementation(() => {});
   vi.spyOn(console, "error").mockImplementation(() => {});
+  vi.stubGlobal("fetch", vi.fn(async () => new Response("app", { status: 200 })));
   root = await mkdtemp(path.join(tmpdir(), "ralph-test-"));
   await mkdir(path.join(root, "bin"));
   await writeFile(path.join(root, ".gitignore"), ".ralph/\nbin/\n");
@@ -39,7 +40,7 @@ fs.appendFileSync(path.join(root, 'bin/calls'), JSON.stringify(args) + '\\n');
 let input = '';
 process.stdin.on('data', c => input += c);
 process.stdin.on('end', () => {
-  const phase = /PHASE: (\\w+)/.exec(input)[1];
+  const phase = /PHASE: ([\\w-]+)/.exec(input)[1];
   const output = args[args.indexOf('--output-last-message') + 1];
   fs.appendFileSync(path.join(root, 'bin/phases'), phase + '\\n');
   if (mode === 'auth') { console.error('Authentication required'); process.exit(1); }
@@ -49,6 +50,11 @@ process.stdin.on('end', () => {
     const candidates = names.map((title,i) => ({title,category:'reliability',rationale:'Useful',evidence:['fixture.txt'],acceptanceCriteria:['Fixture improves'],impact:5-i,confidence:4,effort:1,risk:1}));
     if (mode === 'four') candidates.pop();
     fs.writeFileSync(output, JSON.stringify({ candidates }));
+  } else if (phase === 'browser-prepare') {
+    const task = JSON.parse(input.split('TASK DATA (JSON):')[1].split('\\n\\n')[0]);
+    fs.mkdirSync(path.dirname(path.join(root, task.browserSpec)), {recursive:true});
+    fs.writeFileSync(path.join(root, task.browserSpec), '// Generated feature test\\n');
+    fs.writeFileSync(output, JSON.stringify({summary:'Prepared browser test',decisions:[{decision:'Assert feature outcomes',reason:'Host supplies actual browser evidence'}]}));
   } else if (phase === 'implement' || phase === 'repair') {
     if (mode !== 'no-op') fs.writeFileSync(path.join(root, 'fixture.txt'), 'improved by ' + phase + ' ' + fs.readFileSync(path.join(root, 'bin/phases'), 'utf8').length + '\\n');
     if (mode === 'timeout' || mode === 'interrupt') { setInterval(() => {}, 1000); return; }
@@ -63,6 +69,14 @@ process.stdin.on('end', () => {
 const fs = require('node:fs');
 const mode = fs.readFileSync('bin/mode','utf8');
 fs.appendFileSync('bin/checks', process.argv.slice(2).join(' ')+'\\n');
+if (process.argv[3] === 'test:e2e:ralph') {
+  fs.appendFileSync('bin/browser-urls', process.env.RALPH_BASE_URL+'\\n');
+  if (mode === 'browser-no-report') process.exit(0);
+  const blocked = mode === 'browser-blocked', failed = mode === 'browser-fail', empty = mode === 'browser-empty';
+  const report = {stats:{expected:blocked||failed||empty?0:1,unexpected:blocked||failed?1:0,flaky:0,skipped:0},errors:[],suites:blocked||failed?[{error:{message:blocked?"browserType.launch: Executable doesn't exist":"Expected quiz results to be visible"}}]:[]};
+  fs.writeFileSync(require('node:path').join(process.env.RALPH_BROWSER_OUTPUT,'results.json'),JSON.stringify(report));
+  process.exit(blocked||failed?1:0);
+}
 if (mode === 'checks-fail' && fs.readFileSync('fixture.txt','utf8').startsWith('improved')) process.exit(1);
 if (mode === 'baseline-fail') process.exit(1);
 `);
@@ -72,7 +86,7 @@ if (mode === 'baseline-fail') process.exit(1);
   git("init", "-q"); git("config", "user.email", "ralph@example.test"); git("config", "user.name", "Ralph Test");
   git("add", "."); git("commit", "-qm", "initial");
 });
-afterEach(async () => { vi.restoreAllMocks(); vi.unstubAllEnvs(); await rm(root, { recursive: true, force: true }); });
+afterEach(async () => { vi.restoreAllMocks(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); await rm(root, { recursive: true, force: true }); });
 
 describe("options and ranking", () => {
   it("requires one goal, validates limits, and isolates resume", () => {
@@ -81,6 +95,9 @@ describe("options and ranking", () => {
     expect(() => parseOptions(["--goal", "a", "--iterations", "-1"])).toThrow("nonnegative");
     expect(() => parseOptions(["--resume", "../bad"])).toThrow("alone");
     expect(() => parseOptions(["--resume", "abc", "--model", "m"])).toThrow("alone");
+    expect(() => parseOptions(["--goal", "a", "--retry-verification"])).toThrow("requires --resume");
+    expect(() => parseOptions(["--goal", "a", "--base-url", "file:///tmp/app"])).toThrow("HTTP(S)");
+    expect(parseOptions(["--resume", "abc", "--retry-verification"]).retryVerification).toBe(true);
     expect(options().maxFixAttempts).toBe(3);
     expect(parseOptions(["--goal", "a"]).iterations).toBe(10);
   });
@@ -107,12 +124,12 @@ it("runs real subprocesses, commits a verified iteration, and resumes a finished
   expect(progress).toContain("Satisfies the selected acceptance criterion");
   expect(progress).toContain("iteration limit reached");
   expect(git("show", "HEAD:progress.txt")).toBe(progress.trim());
-  expect(await readFile(path.join(root, "bin", "phases"), "utf8")).toBe("discover\nimplement\nreview\n");
+  expect(await readFile(path.join(root, "bin", "phases"), "utf8")).toBe("discover\nimplement\nbrowser-prepare\nreview\n");
   const calls = await readFile(path.join(root, "bin", "calls"), "utf8");
   expect(calls).toContain("workspace-write");
   expect(calls).toContain("read-only");
   expect(calls).toContain("never");
-  expect(await readFile(path.join(root, "bin", "checks"), "utf8")).toBe("run lint\nrun typecheck\nrun test\nrun build\n".repeat(2));
+  expect(await readFile(path.join(root, "bin", "checks"), "utf8")).toBe("run lint\nrun typecheck\nrun test\nrun build\n".repeat(2) + `run lint\nrun typecheck\nrun test:e2e:ralph -- e2e/ralph/${saved.id}/iteration-1.spec.ts\n`);
   await runRalph(parseOptions(["--resume", saved.id]), root);
   expect(git("rev-list", "--count", "HEAD")).toBe("2");
 });
@@ -247,4 +264,91 @@ it("does not count progress logging as a feature change", async () => {
   await expect(runRalph(options(), root)).rejects.toThrow("No changes to commit");
   expect(git("rev-list", "--count", "HEAD")).toBe("1");
   expect(await readFile(path.join(root, "progress.txt"), "utf8")).toContain("No changes to commit");
+});
+
+
+it("runs browser tests on the host with the selected URL and passes artifacts to review", async () => {
+  await runRalph({ ...options(), baseUrl: "http://localhost:4321" }, root);
+  expect(await readFile(path.join(root, "bin", "browser-urls"), "utf8")).toBe("http://localhost:4321\n");
+  const saved = await state();
+  const files = await readdir(path.join(root, ".ralph", saved.id));
+  const reviewPrompt = files.find(file => file.includes("-review-") && file.endsWith("prompt.txt"))!;
+  const prompt = await readFile(path.join(root, ".ralph", saved.id, reviewPrompt), "utf8");
+  expect(prompt).toContain('"browserResult":{"spec":');
+  expect(prompt).toContain("results.json");
+  expect(prompt).toContain("do not launch a server or browser here");
+  expect(await readFile(path.join(root, "progress.txt"), "utf8")).toContain("Host Playwright verification");
+});
+
+it.each(["browser-blocked", "browser-empty", "browser-no-report"])("preserves browser phase and repair budget for %s", async value => {
+  await mode(value);
+  await expect(runRalph(options(), root)).rejects.toThrow("Browser verification blocked");
+  const saved = await state();
+  expect(saved.data.phase).toBe("browser-run");
+  expect(saved.data.repairs).toBe(0);
+  await mode("success");
+  await runRalph(parseOptions(["--resume", saved.id]), root);
+  expect((await state()).data.completed).toBe(1);
+});
+
+it("waits for an existing server without starting one or spending repairs", async () => {
+  vi.mocked(fetch).mockRejectedValue(new Error("ECONNREFUSED"));
+  await expect(runRalph(options(), root)).rejects.toThrow("existing app");
+  const saved = await state();
+  expect(saved.data.phase).toBe("browser-run");
+  expect(saved.data.repairs).toBe(0);
+  await expect(readFile(path.join(root, "bin", "browser-urls"))).rejects.toThrow();
+});
+
+it("routes real browser assertion failures into bounded code repairs", async () => {
+  await mode("browser-fail");
+  await expect(runRalph({ ...options(), maxFixAttempts: 1 }, root)).rejects.toThrow("Repair limit");
+  const saved = await state();
+  expect(saved.data.repairs).toBe(1);
+  expect(saved.data.feedback[0]).toContain("Playwright acceptance test failed");
+});
+
+it("allows explicit re-verification of changed edits and old exhausted runs without resetting repairs", async () => {
+  await mode("review-fail");
+  await expect(runRalph({ ...options(), maxFixAttempts: 1 }, root)).rejects.toThrow("Repair limit");
+  const saved = await state();
+  // A version-one checkpoint predating browser support remains readable.
+  delete saved.data.baseUrl;
+  delete saved.data.browserResult;
+  await writeFile(path.join(root, ".ralph", saved.id, "state.json"), JSON.stringify(saved.data));
+  await writeFile(path.join(root, "fixture.txt"), "manual improvement\n");
+  const spec = path.join(root, "e2e", "ralph", saved.id, "iteration-1.spec.ts");
+  await writeFile(spec, "// Manually corrected browser locator\n");
+  await mode("success");
+  await runRalph(parseOptions(["--resume", saved.id, "--retry-verification", "--base-url", "http://localhost:3000"]), root);
+  expect((await state()).data.completed).toBe(1);
+  expect(await readFile(spec, "utf8")).toBe("// Manually corrected browser locator\n");
+  const phases = (await readFile(path.join(root, "bin", "phases"), "utf8")).trim().split("\n");
+  expect(phases.filter(phase => phase === "browser-prepare")).toHaveLength(1);
+  const backups = (await readdir(path.join(root, ".ralph", saved.id))).filter(file => file.startsWith("state-before-reverify-"));
+  expect(backups).toHaveLength(1);
+  const progress = await readFile(path.join(root, "progress.txt"), "utf8");
+  expect(progress).toContain('"reverifyCurrentEdits": true');
+  expect(progress).toContain('"repairs": 1');
+});
+
+
+it("does not allow re-verification to accept an unexpected HEAD", async () => {
+  await mode("browser-blocked");
+  await expect(runRalph(options(), root)).rejects.toThrow("Browser verification blocked");
+  const saved = await state();
+  git("add", "."); git("commit", "-qm", "external commit");
+  await expect(runRalph(parseOptions(["--resume", saved.id, "--retry-verification"]), root)).rejects.toThrow("Repository changed");
+  expect((await state()).data).toEqual(saved.data);
+});
+
+
+it("uses host execution only when explicitly selected and records the choice", async () => {
+  expect(() => parseOptions(["--goal", "x", "--agent-sandbox", "automatic"])).toThrow();
+  await runRalph({ ...options(), agentSandbox: "danger-full-access" }, root);
+  const saved = await state();
+  expect(saved.data.agentSandbox).toBe("danger-full-access");
+  const calls = (await readFile(path.join(root, "bin", "calls"), "utf8")).trim().split("\n").map(line => JSON.parse(line) as string[]);
+  expect(calls.every(args => args[args.indexOf("--sandbox") + 1] === "danger-full-access")).toBe(true);
+  expect(await readFile(path.join(root, "progress.txt"), "utf8")).toContain('"agentSandbox": "danger-full-access"');
 });
