@@ -1543,3 +1543,423 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Keep answer keys out of quiz delivery responses\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 2"
 }
+
+[2026-10-18T13:43:25.106Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 3,
+  "phase": "discover"
+}
+
+[2026-10-18T13:44:21.034Z] 20261018123858542-ec1e3550 — Five candidates generated and ranked
+{
+  "formula": "impact * confidence / (effort * risk)",
+  "ranked": [
+    {
+      "title": "Grade numeric MCQ option text without reinterpreting it as an index",
+      "category": "reliability",
+      "rationale": "Protect deterministic assessment evidence for mathematical topics. Source inspection reveals ambiguous numeric parsing; runtime impact has not been measured.",
+      "evidence": [
+        "lib/quiz.ts:16–21 uses parseInt(response) to select an option before comparing answers.",
+        "components/quiz-page.tsx:56 submits option text. With options ['2','3','0','1'], selecting '2' is compared as '0'."
+      ],
+      "acceptanceCriteria": [
+        "Exact normalized option-text matches take precedence over any supported legacy index format.",
+        "Tests cover numeric answers, expressions beginning with digits, ordinary text, and legacy index compatibility.",
+        "A host browser test using a self-cleaning MCQ fixture verifies that selecting the correct numeric option persists a correct score."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 1,
+      "risk": 2,
+      "index": 0,
+      "score": 12.5
+    },
+    {
+      "title": "Let learners revisit skipped quiz questions",
+      "category": "usability",
+      "rationale": "Make incomplete submissions recoverable within the quiz. The current forward-only flow can strand learners at the final question; this is a source-derived finding, not a browser observation.",
+      "evidence": [
+        "components/quiz-page.tsx:42 rejects submission when any response is missing.",
+        "components/quiz-page.tsx:56 advances currentIndex without requiring an answer and renders no previous-question control."
+      ],
+      "acceptanceCriteria": [
+        "A keyboard-accessible previous-question control preserves existing selections.",
+        "Submitting an incomplete quiz navigates to the first unanswered question and announces the error.",
+        "A host browser fixture test skips an early question, reaches submission, returns to answer it, and completes the real grading flow.",
+        "Controls remain usable at mobile width and are disabled appropriately during submission."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "index": 2,
+      "score": 10
+    },
+    {
+      "title": "Track missed concepts even when the overall quiz passes",
+      "category": "user value",
+      "rationale": "Preserve gaps hidden by aggregate passing scores and group mistakes under the question's concept. This improves evidence fidelity; learning benefits remain unmeasured.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:59–78 records review items only in the failed-attempt branch.",
+        "lib/quiz.ts:21 returns the model answer as missedConcept, while lib/quiz.ts:60 persists a separate question.conceptTag.",
+        "The attempt route stores missedConcept directly as reviewItems.conceptTag at lines 69–75."
+      ],
+      "acceptanceCriteria": [
+        "An incorrect MCQ creates or updates a review item keyed by question.conceptTag regardless of overall pass status.",
+        "Two incorrect questions with the same concept tag update the same course-level review item.",
+        "Correct answers create no new misses, and passing/unlocking behavior remains unchanged.",
+        "Isolated route tests verify persistence across database reopen without rewriting existing learner records."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "index": 1,
+      "score": 6.25
+    },
+    {
+      "title": "Explain review questions with a small evidence receipt",
+      "category": "creative wildcard",
+      "rationale": "Give learners a concrete explanation for repeated material using existing review provenance. This makes adaptation visible without claiming that chapter-based repetition proves delayed retention.",
+      "evidence": [
+        "lib/quiz.ts:82–92 selects review questions from persisted review items and marks them isReview.",
+        "app/api/chapters/[id]/quiz/route.ts:57–58 already delivers isReview.",
+        "components/quiz-page.tsx:8 declares isReview, but the question rendering at line 56 never displays it.",
+        "lib/review.ts:1–3 schedules reviews by chapter index rather than elapsed time."
+      ],
+      "acceptanceCriteria": [
+        "Review questions display an accessible explanation identifying them as practice from an earlier recorded miss.",
+        "Any displayed source chapter or miss count comes from the persisted review item and question relationship.",
+        "Ordinary questions show no review explanation, and delivery still excludes answer keys and rubrics.",
+        "A host browser fixture test verifies the explanation and successfully submits the review answer.",
+        "Copy avoids claims of proven retention, transfer, or durable mastery."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 1,
+      "index": 4,
+      "score": 6
+    },
+    {
+      "title": "Bound current-quiz database reads before materializing question history",
+      "category": "performance",
+      "rationale": "Avoid loading every historical question on each quiz request. Reduced row materialization is expected from the query structure; latency improvement requires measurement.",
+      "evidence": [
+        "app/api/chapters/[id]/quiz/route.ts:29–31 loads all chapter questions, then filters generation version/type/options and slices to ten in JavaScript.",
+        "The same unbounded read repeats after generation at lines 52–54.",
+        "lib/quiz.ts:68 inserts generated questions, allowing chapter question history to accumulate."
+      ],
+      "acceptanceCriteria": [
+        "Push generation-version and MCQ eligibility predicates into SQL and limit eligible results to ten.",
+        "Preserve newest-first ordering, malformed-option exclusion, balancing checks, and the existing response allowlist.",
+        "An isolated fixture with many historical versions verifies identical delivered question IDs and bounded returned rows.",
+        "Record before/after query measurements on the fixture without claiming unmeasured production gains."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "index": 3,
+      "score": 3
+    }
+  ]
+}
+
+[2026-10-18T13:44:21.034Z] 20261018123858542-ec1e3550 — Candidate selected
+{
+  "iteration": 3,
+  "candidate": {
+    "title": "Grade numeric MCQ option text without reinterpreting it as an index",
+    "category": "reliability",
+    "rationale": "Protect deterministic assessment evidence for mathematical topics. Source inspection reveals ambiguous numeric parsing; runtime impact has not been measured.",
+    "evidence": [
+      "lib/quiz.ts:16–21 uses parseInt(response) to select an option before comparing answers.",
+      "components/quiz-page.tsx:56 submits option text. With options ['2','3','0','1'], selecting '2' is compared as '0'."
+    ],
+    "acceptanceCriteria": [
+      "Exact normalized option-text matches take precedence over any supported legacy index format.",
+      "Tests cover numeric answers, expressions beginning with digits, ordinary text, and legacy index compatibility.",
+      "A host browser test using a self-cleaning MCQ fixture verifies that selecting the correct numeric option persists a correct score."
+    ],
+    "impact": 5,
+    "confidence": 5,
+    "effort": 1,
+    "risk": 2
+  },
+  "score": 12.5,
+  "reason": "Highest score among candidates whose titles have not been completed; ties use higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-18T13:44:21.053Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 3,
+  "phase": "implement"
+}
+
+[2026-10-18T13:45:23.479Z] 20261018123858542-ec1e3550 — Implementation completed; verification required
+{
+  "summary": "Fixed numeric MCQ grading. All 30 focused tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; no browser or server launched. Evidence: .ralph/20261018123858542-ec1e3550/evidence/numeric-mcq-grading.md.",
+  "decisions": [
+    {
+      "decision": "Give normalized option text precedence over indices.",
+      "reason": "Preserves the learner’s selected numeric answer."
+    },
+    {
+      "decision": "Accept only whole nonnegative integers as unmatched legacy indices.",
+      "reason": "Prevents expressions and decimals from being parsed as indices."
+    },
+    {
+      "decision": "Verify persisted scores with isolated route tests.",
+      "reason": "Checks correct and incorrect numeric selections without touching learner data."
+    }
+  ]
+}
+
+[2026-10-18T13:45:23.500Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 3,
+  "phase": "verify"
+}
+
+[2026-10-18T13:45:26.133Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-verify-1792331123500-42-lint.log"
+}
+
+[2026-10-18T13:45:27.846Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-verify-1792331126137-43-typecheck.log"
+}
+
+[2026-10-18T13:45:45.980Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-verify-1792331127851-44-test.log"
+}
+
+[2026-10-18T13:45:53.810Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-verify-1792331145985-45-build.log"
+}
+
+[2026-10-18T13:45:53.815Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-18T13:45:53.834Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 3,
+  "phase": "browser-prepare"
+}
+
+[2026-10-18T13:46:49.298Z] 20261018123858542-ec1e3550 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-3.spec.ts",
+  "summary": "Created iteration-3.spec.ts. TypeScript syntax check passed; browser execution remains for the host.",
+  "decisions": [
+    {
+      "decision": "Exercise numeric options, four digit-leading expressions, ordinary text, and an incorrect numeric choice through real grading.",
+      "reason": "Checks correct scores and prevents false credit caused by index reinterpretation."
+    },
+    {
+      "decision": "Assert visible feedback, reloaded course progress, and persisted answer scores.",
+      "reason": "Verifies learner-facing results and saved evidence agree."
+    },
+    {
+      "decision": "Use a self-cleaning fixture; leave legacy-index coverage to existing unit tests.",
+      "reason": "Protects learner data and matches the UI’s option-text submission behavior."
+    }
+  ]
+}
+
+[2026-10-18T13:46:51.979Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 3,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-browser-prepare-1792331209299-50-lint.log"
+}
+
+[2026-10-18T13:46:54.108Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 3,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-browser-prepare-1792331211984-51-typecheck.log"
+}
+
+[2026-10-18T13:46:54.132Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 3,
+  "phase": "browser-run"
+}
+
+[2026-10-18T13:47:01.114Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "failed",
+  "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { level: 1 })\nExpected: \u001b[32m\"Ralph MCQ fixture 10\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('heading', { level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { level: 1 })\u001b[22m\n\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { level: 1 })\nExpected: \u001b[32m\"Ralph MCQ fixture 10\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('heading', { level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { level: 1 })\u001b[22m\n\n\n  49 |     const delivered = [...cases].reverse();\n  50 |     for (const [index, question] of delivered.entries()) {\n> 51 |       await expect(page.getByRole(\"heading\", { level: 1 })).toHaveText(question.prompt);\n     |                                                             ^\n  52 |       await expect(page.getByRole(\"radio\")).toHaveCount(4);\n  53 |       const selected = question.options.indexOf(question.response);\n  54 |       const radio = page.getByRole(\"radio\", {\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261018123858542-ec1e3550/iteration-3.spec.ts:51:61",
+  "passed": 0,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-3.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-browser-run-1792331214163-52-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-browser-run-1792331214163-52-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-browser-run-1792331214163-52-playwright/artifacts"
+}
+
+[2026-10-18T13:47:01.133Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 3,
+  "phase": "repair"
+}
+
+[2026-10-18T13:47:01.133Z] 20261018123858542-ec1e3550 — Repair selected
+{
+  "iteration": 3,
+  "attempt": 1,
+  "maximum": 3,
+  "reasons": [
+    "Playwright acceptance test failed: Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { level: 1 })\nExpected: \u001b[32m\"Ralph MCQ fixture 10\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('heading', { level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { level: 1 })\u001b[22m\n\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { level: 1 })\nExpected: \u001b[32m\"Ralph MCQ fixture 10\"\u001b[39m\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('heading', { level: 1 }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { level: 1 })\u001b[22m\n\n\n  49 |     const delivered = [...cases].reverse();\n  50 |     for (const [index, question] of delivered.entries()) {\n> 51 |       await expect(page.getByRole(\"heading\", { level: 1 })).toHaveText(question.prompt);\n     |                                                             ^\n  52 |       await expect(page.getByRole(\"radio\")).toHaveCount(4);\n  53 |       const selected = question.options.indexOf(question.response);\n  54 |       const radio = page.getByRole(\"radio\", {\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261018123858542-ec1e3550/iteration-3.spec.ts:51:61. Inspect /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-browser-run-1792331214163-52-playwright/results.json and /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-browser-run-1792331214163-52-playwright/runner.log."
+  ]
+}
+
+[2026-10-18T13:48:07.387Z] 20261018123858542-ec1e3550 — Repair completed; verification required
+{
+  "attempt": 1,
+  "summary": "Repaired the browser fixture. All 34 focused tests, lint, typecheck, diff checks, and Playwright discovery pass. Host browser verification remains pending. Evidence: .ralph/20261018123858542-ec1e3550/evidence/numeric-option-browser-repair.md.",
+  "decisions": [
+    {
+      "decision": "Repair only the feature Playwright spec.",
+      "reason": "The fixture’s unbalanced answer positions triggered the app’s valid regeneration gate."
+    },
+    {
+      "decision": "Balance remaining answer positions while preserving numeric regression options.",
+      "reason": "Prepared questions now pass validation and retain every grading case."
+    },
+    {
+      "decision": "Assert fixture validity before database updates.",
+      "reason": "Future invalid fixtures fail with a direct diagnostic."
+    },
+    {
+      "decision": "Assert the real quiz delivery response before answering.",
+      "reason": "Confirms prepared questions load successfully without weakening grading, persistence, or progress assertions."
+    }
+  ]
+}
+
+[2026-10-18T13:48:07.406Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 3,
+  "phase": "verify"
+}
+
+[2026-10-18T13:48:10.163Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-verify-1792331287406-57-lint.log"
+}
+
+[2026-10-18T13:48:11.868Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-verify-1792331290168-58-typecheck.log"
+}
+
+[2026-10-18T13:48:30.837Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-verify-1792331291873-59-test.log"
+}
+
+[2026-10-18T13:48:35.618Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-verify-1792331310843-60-build.log"
+}
+
+[2026-10-18T13:48:35.624Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-run",
+  "failures": []
+}
+
+[2026-10-18T13:48:35.644Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 3,
+  "phase": "browser-run"
+}
+
+[2026-10-18T13:48:41.278Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 1,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-3.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-browser-run-1792331315679-61-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-browser-run-1792331315679-61-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/3-browser-run-1792331315679-61-playwright/artifacts"
+}
+
+[2026-10-18T13:48:41.297Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 3,
+  "phase": "review"
+}
+
+[2026-10-18T13:49:11.111Z] 20261018123858542-ec1e3550 — Independent review decision
+{
+  "summary": "Selected increment passes review. No unresolved defects found.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "lib/quiz.ts prioritizes normalized option-text matches before digit-only legacy indices.",
+    "Independently reran 34 focused tests; all passed, covering numeric answers, digit-leading expressions, ordinary text, legacy indices, and persisted scores.",
+    "Host verification logs confirm lint, typecheck, all 102 automated tests, and production build passed. Review diff check passed."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-3.spec.ts, the supplied results.json, screenshot, persisted-evidence attachment, and trace artifacts.",
+    "Host Playwright passed one real quiz-flow test without skips or retries; trace contained no action errors.",
+    "Self-cleaning fixture verified numeric and expression selections, an incorrect numeric answer, persisted per-answer scores, a 90% attempt score, and course progress after reload."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-18T13:49:11.130Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 3,
+  "phase": "commit"
+}
+
+[2026-10-18T13:49:11.134Z] 20261018123858542-ec1e3550 — Verified iteration approved for commit
+{
+  "iteration": 3,
+  "candidate": "Grade numeric MCQ option text without reinterpreting it as an index",
+  "summary": "Fixed numeric MCQ grading. All 30 focused tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; no browser or server launched. Evidence: .ralph/20261018123858542-ec1e3550/evidence/numeric-mcq-grading.md.\nRepair 1: Repaired the browser fixture. All 34 focused tests, lint, typecheck, diff checks, and Playwright discovery pass. Host browser verification remains pending. Evidence: .ralph/20261018123858542-ec1e3550/evidence/numeric-option-browser-repair.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Grade numeric MCQ option text without reinterpreting it as an index\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 3"
+}

@@ -51,6 +51,21 @@ function submit(responses: { questionId: string; response: string }[]) {
 }
 
 describe("attempt grading agent requirements", () => {
+  it.each([
+    { response: "2", score: 1 },
+    { response: "0", score: 0 },
+  ])("persists numeric option text '$response' with score $score", async ({ response: selected, score }) => {
+    db.update(questions).set({ options: ["2", "3", "0", "1"], modelAnswer: "2" }).where(eq(questions.id, questionId)).run();
+    const response = await submit([{ questionId, response: selected }]);
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({ score, passed: score === 1 });
+    expect(db.select().from(attempts).all()).toMatchObject([{ id: body.attemptId, score, passed: score === 1 }]);
+    expect(db.select().from(answers).all()).toMatchObject([{ attemptId: body.attemptId, questionId, response: selected, score }]);
+    expect(agentForRequest).not.toHaveBeenCalled();
+    expect(runAgentObject).not.toHaveBeenCalled();
+  });
+
   it("persists correct and incorrect MCQ scores without discovery or execution when no agent is available", async () => {
     const secondId = randomUUID();
     const first = db.select().from(questions).where(eq(questions.id, questionId)).get()!;

@@ -15,8 +15,10 @@ export function normalizeAnswer(value: string) {
 
 export function gradeMcq(response: string, modelAnswer: string, options: string[] | null) {
   const normalized = normalizeAnswer(response);
-  const optionIndex = Number.parseInt(normalized, 10);
-  const selected = Number.isInteger(optionIndex) && options?.[optionIndex] ? options[optionIndex] : response;
+  const matchingOption = options?.find((option) => normalizeAnswer(option) === normalized);
+  // Current clients submit option text; only unmatched whole numbers are legacy indices.
+  const optionIndex = /^\d+$/.test(normalized) ? Number(normalized) : -1;
+  const selected = matchingOption ?? options?.[optionIndex] ?? response;
   const passed = normalizeAnswer(selected) === normalizeAnswer(modelAnswer);
   return { score: passed ? 1 : 0, feedback: passed ? "Correct." : `The expected answer is: ${modelAnswer}.`, missedConcept: passed ? null : modelAnswer };
 }
