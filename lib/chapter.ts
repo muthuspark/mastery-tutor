@@ -6,6 +6,7 @@ import { chapters, courses, reviewItems } from "./db/schema";
 import { agentForRequest, noAgentError, runAgentObject, type Agent } from "./agent";
 import { CHAPTER_PROMPT } from "./prompts";
 import { chapterSchema } from "./schemas";
+import { learnerProfilePrompt } from "@/lib/profile";
 
 export async function generateChapterContent(
   id: string,
@@ -34,13 +35,14 @@ export async function generateChapterContent(
     .all();
   const prompt = [
     CHAPTER_PROMPT,
+    learnerProfilePrompt(),
     `Course topic: ${course.topic}`,
     `Chapter: ${chapter.title}`,
     `Objectives: ${chapter.objectives.join("; ")}`,
     `Prerequisite chapter indexes: ${chapter.prerequisites.join(", ") || "none"}`,
     `Prior summaries: ${previous.map((item) => `${item.idx}: ${item.summary ?? "not generated"}`).join(" | ") || "none"}`,
     `Missed concepts to reinforce: ${missed.map((item) => `${item.conceptTag} (${item.misses})`).join(", ") || "none"}`,
-    `Depth hint: ${chapter.depthHint ?? "foundational"}`,
+    `Depth hint: ${chapter.depthHint ?? "adapt to the learner background; otherwise explain accessibly"}`,
   ].join("\n");
   const selectedAgent = agent ?? await agentForRequest(new Request("http://localhost"));
   if (!selectedAgent) throw noAgentError();

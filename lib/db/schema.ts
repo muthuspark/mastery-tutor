@@ -5,6 +5,12 @@ const timestamps = {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 };
 
+export const learnerProfile = sqliteTable("learner_profile", {
+  id: integer("id").primaryKey(),
+  aboutMe: text("about_me").notNull().default(""),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});
+
 export const courses = sqliteTable("courses", {
   id: text("id").primaryKey(),
   topic: text("topic").notNull(),

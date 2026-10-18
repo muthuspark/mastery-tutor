@@ -1,4 +1,4 @@
-import { asc } from "drizzle-orm";
+import { asc, count, eq, getTableColumns, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
@@ -9,6 +9,7 @@ import { agentForRequest, agentSchema, AGENT_COOKIE, noAgentError, runAgentObjec
 import { enqueueGenerationJob } from "@/lib/generation";
 import { SYLLABUS_PROMPT, topicPrompt } from "@/lib/prompts";
 import { syllabusSchema } from "@/lib/schemas";
+import { learnerProfilePrompt } from "@/lib/profile";
 
 const createCourseSchema = z.object({
   topic: z.string().trim().min(3).max(500),
@@ -31,8 +32,16 @@ function errorResponse(error: unknown) {
 }
 
 export async function GET() {
-  const result = await db.select().from(courses).orderBy(asc(courses.createdAt));
-  return NextResponse.json({ courses: result });
+  const result = db.select({
+    ...getTableColumns(courses),
+    passed: count(sql`case when ${chapters.status} = 'passed' then 1 end`),
+    total: count(chapters.id),
+  }).from(courses)
+    .leftJoin(chapters, eq(chapters.courseId, courses.id))
+    .groupBy(courses.id)
+    .orderBy(asc(courses.createdAt))
+    .all();
+  return NextResponse.json({ courses: result.map(({ passed, total, ...course }) => ({ ...course, progress: { passed, total } })) });
 }
 
 export async function POST(request: Request) {
@@ -50,7 +59,7 @@ export async function POST(request: Request) {
     const syllabus = await runAgentObject(
       agent,
       "syllabus",
-      `${SYLLABUS_PROMPT}\n${topicPrompt(parsed.data.topic)}`,
+      `${SYLLABUS_PROMPT}\n${learnerProfilePrompt()}\n${topicPrompt(parsed.data.topic)}`,
       syllabusSchema,
     );
     const courseId = randomUUID();
@@ -68,7 +77,7 @@ export async function POST(request: Request) {
 
     db.transaction((tx) => {
       tx.insert(courses)
-        .values({ id: courseId, topic: parsed.data.topic, level: "foundational", createdAt: now })
+        .values({ id: courseId, topic: syllabus.topic, level: "foundational", createdAt: now })
         .run();
       tx.insert(chapters).values(chapterRows).run();
     });

@@ -17,8 +17,16 @@ describe("LLM contracts", () => {
   });
 
   it("enforces syllabus size and grade bounds", () => {
-    expect(syllabusSchema.safeParse({ chapters: [] }).success).toBe(false);
+    expect(syllabusSchema.safeParse({ topic: "Differential Equations", chapters: [] }).success).toBe(false);
     expect(gradeSchema.safeParse({ score: 1.1, feedback: "No", missedConcept: null }).success).toBe(false);
+  });
+
+  it("requires a nonempty concise topic title from syllabus generation", () => {
+    const chapters = Array.from({ length: 6 }, (_, idx) => ({ title: `Chapter ${idx}`, objectives: ["Learn"], prerequisites: [] }));
+    expect(syllabusSchema.parse({ topic: " Differential Equations ", chapters }).topic).toBe("Differential Equations");
+    for (const topic of [undefined, "", "  ", "a".repeat(101)]) {
+      expect(syllabusSchema.safeParse({ topic, chapters }).success).toBe(false);
+    }
   });
 
   it("requires ten objective multiple-choice questions", () => {

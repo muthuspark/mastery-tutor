@@ -8,7 +8,7 @@ It is deliberately small: one learner, one local SQLite database, and a locally 
 
 ![Start with an intention](docs/screenshots/home.png)
 
-Start with one sentence. There are no level selectors, setup wizards, or preference panels.
+Start with one sentence. Optionally open Profile settings to describe your background, experience, goals, and preferred explanation style. Your profile is saved in SQLite and used for future syllabus, lesson, quiz, and grading feedback generation. Updates leave saved content and progress intact; clear and save the field to remove personalization.
 
 ![Course path](docs/screenshots/course.png)
 

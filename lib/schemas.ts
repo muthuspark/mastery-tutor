@@ -3,6 +3,7 @@ import { z } from "zod";
 const normalizeOption = (value: string) => value.trim().toLowerCase().replace(/\s+/g, " ");
 
 export const syllabusSchema = z.object({
+  topic: z.string().trim().min(1).max(100).describe("A concise, specific course topic title derived from the learner's request"),
   chapters: z
     .array(
       z.object({

@@ -7,6 +7,7 @@ import { QUIZ_PROMPT, GRADING_PROMPT } from "@/lib/prompts";
 import { gradeSchema, quizSchema } from "@/lib/schemas";
 import { balanceQuizOptions } from "@/lib/assessment-quality";
 import type { Quiz } from "@/lib/schemas";
+import { learnerProfilePrompt } from "@/lib/profile";
 
 export function normalizeAnswer(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
@@ -44,7 +45,7 @@ export async function generateQuiz(chapterId: string, agent: Agent = "codex", ge
   if (!chapter) throw new Error("Chapter not found");
   const version = generationVersion ?? chapter.contentGenerationVersion;
   if (version !== chapter.contentGenerationVersion) throw new Error("Quiz generation is stale");
-  const prompt = `${QUIZ_PROMPT}\nChapter: ${chapter.title}\nObjectives: ${chapter.objectives.join("; ")}`;
+  const prompt = `${QUIZ_PROMPT}\n${learnerProfilePrompt()}\nChapter: ${chapter.title}\nObjectives: ${chapter.objectives.join("; ")}`;
   const generated = await generateValidQuiz(agent, prompt);
   const balancedQuestions = generated.questions;
   const now = new Date();
@@ -104,7 +105,7 @@ export async function gradeAnswer(question: typeof questions.$inferSelect, respo
   return runAgentObject(
     agent,
     "grading",
-    `${GRADING_PROMPT}\nQuestion: ${question.prompt}\nRubric: ${question.rubric}\nModel answer: ${question.modelAnswer}\nLearner response: ${response}`,
+    `${GRADING_PROMPT}\n${learnerProfilePrompt()}\nQuestion: ${question.prompt}\nRubric: ${question.rubric}\nModel answer: ${question.modelAnswer}\nLearner response: ${response}`,
     gradeSchema,
   );
 }

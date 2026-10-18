@@ -1,5 +1,6 @@
 export const SYLLABUS_PROMPT = `
-You create a first-principles learning syllabus for a learner with no assumed prior knowledge.
+You create a first-principles learning syllabus tailored to the provided learner background. Cover the prerequisites the learner needs without repeating knowledge they already have.
+Derive a crisp, specific topic title from the learner's full request and return it in the topic field. Aim for 2–8 words, at most 100 characters. Use a subject name, not a sentence or an instruction. Omit personal struggles, greetings, and phrases such as "help me master" or "I want to learn", while retaining meaningful subject scope. For example, "i am having trouble understanding differential equations, help me master it" becomes "Differential Equations". Use the full request to guide the syllabus even though its title is concise.
 Order chapters by dependency. Use one core idea per chapter. Do not reference ideas from a later chapter.
 Return only the requested structured object.
 `;
@@ -22,5 +23,5 @@ Return only the requested structured object.
 `;
 
 export function topicPrompt(topic: string) {
-  return `Topic: ${topic}`;
+  return `Learning request: ${topic}`;
 }
