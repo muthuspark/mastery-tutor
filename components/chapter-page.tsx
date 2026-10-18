@@ -36,7 +36,8 @@ export function ChapterPage() {
   const chapter = courseQuery.data?.chapters.find((item) => item.idx === Number(params.idx));
   const chapterQuery = useQuery<ChapterResponse>({ queryKey: ["chapter", chapter?.id], enabled: Boolean(chapter?.id), queryFn: () => fetchReadyJson(`/api/chapters/${chapter?.id}`), retry: retryReadyContent, retryDelay: retryReadyContentDelay });
   useEffect(() => {
-    if (!chapter || !chapterQuery.data || !courseQuery.data) return;
+    // Rereading completed lessons must not generate quizzes or later lessons.
+    if (!chapter || chapter.status === "passed" || !chapterQuery.data || !courseQuery.data) return;
     void queryClient.prefetchQuery({
       queryKey: ["quiz-v2", params.id, params.idx],
       queryFn: () => fetchReadyJson(`/api/chapters/${chapter.id}/quiz`),

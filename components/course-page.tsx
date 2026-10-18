@@ -82,6 +82,12 @@ export function CoursePage() {
                 {chapter.status === "locked" ? <div className="chapter-row text-[var(--muted)]">{content}</div> : (
                   <Link className={`chapter-row chapter-link no-underline hover:bg-[var(--paper-deep)] ${isOpen ? "text-[var(--accent)]" : ""}`} href={`/course/${params.id}/ch/${chapter.idx}`} aria-current={isOpen ? "step" : undefined} aria-haspopup={isPassed ? "dialog" : undefined} onClick={isPassed ? (event) => openRevisitDialog(chapter, event) : undefined}>{content}</Link>
                 )}
+                {isPassed ? (
+                  <div className="ui flex flex-wrap items-center justify-between gap-3 pb-5 text-sm">
+                    <p className="text-[var(--muted)]">Reread without resetting your progress.</p>
+                    <Link className="button-secondary shrink-0" href={`/course/${params.id}/ch/${chapter.idx}`} aria-label={`Read lesson → ${chapter.title}`}>Read lesson →</Link>
+                  </div>
+                ) : null}
               </li>
             );
           })}

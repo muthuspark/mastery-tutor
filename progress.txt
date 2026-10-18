@@ -3042,3 +3042,327 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Record concept gaps even when a quiz passes\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 6"
 }
+
+[2026-10-18T14:03:16.453Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 7,
+  "phase": "discover"
+}
+
+[2026-10-18T14:04:12.015Z] 20261018123858542-ec1e3550 — Five candidates generated and ranked
+{
+  "formula": "impact * confidence / (effort * risk)",
+  "ranked": [
+    {
+      "title": "Let learners reread completed chapters without resetting evidence",
+      "category": "user value",
+      "rationale": "Provide a direct reading action for completed chapters. This supports revision while preserving the learning history needed for future adaptation.",
+      "evidence": [
+        "components/course-page.tsx:30–41 intercepts completed-chapter navigation and requires the reset flow.",
+        "app/api/chapters/[id]/revisit/route.ts:17–27 deletes questions, answers, and related review items, then clears completion.",
+        "app/api/chapters/[id]/route.ts:40–47 already permits loading ready content for passed chapters. Findings are from source inspection; learner impact was not measured."
+      ],
+      "acceptanceCriteria": [
+        "A completed chapter has a keyboard-accessible action that opens its existing lesson directly.",
+        "Reading and returning preserves chapter status, course completion, attempts, answers, questions, and review items.",
+        "A host browser test using a test-owned completed course verifies navigation and unchanged persisted evidence."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "index": 0,
+      "score": 6.25
+    },
+    {
+      "title": "Restore unfinished quiz answers after a reload",
+      "category": "usability",
+      "rationale": "Persist a small browser draft keyed to the course, chapter, and question set. This extends existing backward-navigation recovery to accidental reloads and interrupted sessions.",
+      "evidence": [
+        "components/quiz-page.tsx:23 stores responses and the current position only in React state.",
+        "components/quiz-page.tsx:54 submits the current question IDs and responses, providing a concrete draft identity.",
+        "The completed skipped-question increment preserves answers during navigation; it does not provide reload recovery. Reduced lost work is a hypothesis, not measured impact."
+      ],
+      "acceptanceCriteria": [
+        "Reloading an unfinished fixture quiz restores selected answers and position for the same question set.",
+        "Draft answers never carry into another course, chapter, or regenerated question set.",
+        "Successful submission clears the draft; unavailable or malformed browser storage does not prevent taking the quiz.",
+        "A host browser test completes and submits a real fixture quiz after restoring its draft."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "index": 2,
+      "score": 5
+    },
+    {
+      "title": "Bound cached quiz queries as assessment history grows",
+      "category": "performance",
+      "rationale": "Filter current eligible questions and limit results in SQLite instead of loading every historical question into application memory. Expected savings grow with retry history; latency improvement remains unmeasured.",
+      "evidence": [
+        "app/api/chapters/[id]/quiz/route.ts:29–31 loads all chapter questions before filtering and slicing to ten.",
+        "app/api/chapters/[id]/quiz/route.ts:52–54 repeats that unbounded read after generation.",
+        "lib/quiz.ts:70 appends generated question rows, while lib/db/schema.ts:109 indexes chapter ownership."
+      ],
+      "acceptanceCriteria": [
+        "Both quiz-loading paths apply generation, MCQ eligibility, ordering, and a ten-question limit before materializing rows.",
+        "An isolated fixture with many historical generations returns the same eligible current quiz and preserves historical evidence.",
+        "Query inspection verifies bounded result materialization; a reproducible comparison records timing without asserting an unsupported speedup.",
+        "Existing quiz quality and answer-key allowlist checks continue to pass."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "index": 3,
+      "score": 3
+    },
+    {
+      "title": "Reject incomplete, duplicate, and stale quiz submissions",
+      "category": "reliability",
+      "rationale": "Ensure a passing result represents the required current assessment. The current server can grade a single submitted correct answer as a passing attempt.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:15 requires only one answer.",
+        "app/api/chapters/[id]/attempts/route.ts:35–46 checks chapter ownership but not assessment completeness or generation version, then averages submitted answers.",
+        "lib/db/schema.ts:150 defines an attempt/question uniqueness constraint, so duplicate IDs reach database failure instead of explicit input validation. These paths were inspected, not executed."
+      ],
+      "acceptanceCriteria": [
+        "Submitting only one answer from a ten-question current quiz returns a structured 400 response and writes no learning records.",
+        "Duplicate question IDs and stale-generation questions return structured 400 responses before grading or persistence.",
+        "A complete valid current quiz, including eligible review questions, still grades successfully without agent discovery for MCQs."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 3,
+      "risk": 3,
+      "index": 1,
+      "score": 2.7777777777777777
+    },
+    {
+      "title": "Offer a prerequisite rescue route after repeated difficulty",
+      "category": "creative wildcard",
+      "rationale": "After two consecutive failed attempts, offer an existing prerequisite lesson with an explanation tied to those attempts. This creates a small, deterministic alternative to another immediate retry without claiming that a prerequisite gap has been diagnosed.",
+      "evidence": [
+        "lib/gating.ts:19–21 produces the same concept-list remediation regardless of repeated failures.",
+        "components/quiz-page.tsx:63 offers generic feedback, retry, and current-chapter review.",
+        "lib/gating.ts:10–12 already uses prerequisite chapter indexes, and attempts persist scores and attempt numbers. Teaching benefit is a hypothesis requiring evaluation."
+      ],
+      "acceptanceCriteria": [
+        "Two consecutive persisted failures trigger a deterministic recommendation using an existing declared prerequisite.",
+        "The explanation cites the failed attempts and describes prerequisite review as an option, without asserting an unverified concept gap.",
+        "Opening the suggested lesson preserves all progress and evidence.",
+        "One failure, an intervening pass, or absent prerequisites does not produce an unsupported prerequisite recommendation.",
+        "A host fixture test verifies the repeated-failure recommendation and its lesson destination."
+      ],
+      "impact": 4,
+      "confidence": 4,
+      "effort": 3,
+      "risk": 2,
+      "index": 4,
+      "score": 2.6666666666666665
+    }
+  ]
+}
+
+[2026-10-18T14:04:12.016Z] 20261018123858542-ec1e3550 — Candidate selected
+{
+  "iteration": 7,
+  "candidate": {
+    "title": "Let learners reread completed chapters without resetting evidence",
+    "category": "user value",
+    "rationale": "Provide a direct reading action for completed chapters. This supports revision while preserving the learning history needed for future adaptation.",
+    "evidence": [
+      "components/course-page.tsx:30–41 intercepts completed-chapter navigation and requires the reset flow.",
+      "app/api/chapters/[id]/revisit/route.ts:17–27 deletes questions, answers, and related review items, then clears completion.",
+      "app/api/chapters/[id]/route.ts:40–47 already permits loading ready content for passed chapters. Findings are from source inspection; learner impact was not measured."
+    ],
+    "acceptanceCriteria": [
+      "A completed chapter has a keyboard-accessible action that opens its existing lesson directly.",
+      "Reading and returning preserves chapter status, course completion, attempts, answers, questions, and review items.",
+      "A host browser test using a test-owned completed course verifies navigation and unchanged persisted evidence."
+    ],
+    "impact": 5,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 2
+  },
+  "score": 6.25,
+  "reason": "Highest score among candidates whose titles have not been completed; ties use higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-18T14:04:12.036Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 7,
+  "phase": "implement"
+}
+
+[2026-10-18T14:06:31.193Z] 20261018123858542-ec1e3550 — Implementation completed; verification required
+{
+  "summary": "Added direct “Read lesson →” actions for completed chapters and disabled their assessment prefetches. All 88 application tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/completed-chapter-reading.md.",
+  "decisions": [
+    {
+      "decision": "Keep reading separate from the existing reset flow.",
+      "reason": "Learners can revise saved lessons while retaining reset functionality."
+    },
+    {
+      "decision": "Reuse the existing lesson route and accessible Link controls.",
+      "reason": "Provides keyboard navigation without new APIs or schema changes."
+    },
+    {
+      "decision": "Skip prefetches for completed chapters.",
+      "reason": "Passive reading should not trigger assessment generation."
+    },
+    {
+      "decision": "Test persisted evidence in an isolated database.",
+      "reason": "Verifies completion, attempts, answers, questions, and reviews remain unchanged without touching learner data."
+    }
+  ]
+}
+
+[2026-10-18T14:06:31.216Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 7,
+  "phase": "verify"
+}
+
+[2026-10-18T14:06:34.043Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 7,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/7-verify-1792332391216-156-lint.log"
+}
+
+[2026-10-18T14:06:35.776Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 7,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/7-verify-1792332394048-157-typecheck.log"
+}
+
+[2026-10-18T14:06:54.428Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 7,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/7-verify-1792332395780-158-test.log"
+}
+
+[2026-10-18T14:07:00.700Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 7,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/7-verify-1792332414433-159-build.log"
+}
+
+[2026-10-18T14:07:00.706Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-18T14:07:00.725Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 7,
+  "phase": "browser-prepare"
+}
+
+[2026-10-18T14:07:50.526Z] 20261018123858542-ec1e3550 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-7.spec.ts",
+  "summary": "Created iteration-7.spec.ts. ESLint and Playwright discovery pass. Browser execution remains for the host.",
+  "decisions": [
+    {
+      "decision": "Complete a real prepared MCQ quiz with an 8/10 pass.",
+      "reason": "Creates completion evidence and two review items without paid generation or mocked persistence."
+    },
+    {
+      "decision": "Activate Read lesson by keyboard, reload, and return to the course.",
+      "reason": "Verifies accessible navigation, visible lesson content, and retained completion."
+    },
+    {
+      "decision": "Compare persisted records before and after rereading.",
+      "reason": "Checks that chapter status, course completion, attempts, answers, questions, review items, and generation jobs remain unchanged. The fixture cleans up its test-owned data."
+    }
+  ]
+}
+
+[2026-10-18T14:07:53.344Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 7,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/7-browser-prepare-1792332470527-164-lint.log"
+}
+
+[2026-10-18T14:07:55.526Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 7,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/7-browser-prepare-1792332473349-165-typecheck.log"
+}
+
+[2026-10-18T14:07:55.551Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 7,
+  "phase": "browser-run"
+}
+
+[2026-10-18T14:08:01.716Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 1,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-7.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/7-browser-run-1792332475606-166-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/7-browser-run-1792332475606-166-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/7-browser-run-1792332475606-166-playwright/artifacts"
+}
+
+[2026-10-18T14:08:01.735Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 7,
+  "phase": "review"
+}
+
+[2026-10-18T14:08:45.572Z] 20261018123858542-ec1e3550 — Independent review decision
+{
+  "summary": "Reviewed the diff, tests, and host browser artifacts. No unresolved defects found in the selected increment.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Host test verified keyboard activation of “Read lesson →” opens the saved lesson directly.",
+    "Persisted chapter status, course completion, attempts, answers, questions, and review items remained unchanged after reading, reloading, and returning.",
+    "The self-cleaning browser fixture completed a real quiz before verifying rereading.",
+    "Five focused tests passed during review; host logs confirm lint, typecheck, all 121 tests, and production build passed. Diff check passed."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Host results.json reports one passed test, zero skipped, unexpected, or flaky tests.",
+    "Inspected iteration-7.spec.ts, trace.zip, and the completion screenshot.",
+    "Trace confirms lesson reads without quiz or mutation requests during rereading."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-18T14:08:45.592Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 7,
+  "phase": "commit"
+}
+
+[2026-10-18T14:08:45.597Z] 20261018123858542-ec1e3550 — Verified iteration approved for commit
+{
+  "iteration": 7,
+  "candidate": "Let learners reread completed chapters without resetting evidence",
+  "summary": "Added direct “Read lesson →” actions for completed chapters and disabled their assessment prefetches. All 88 application tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/completed-chapter-reading.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Let learners reread completed chapters without resetting evidence\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 7"
+}
