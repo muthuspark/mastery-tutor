@@ -104,3 +104,49 @@ it("keeps failed attempts on the retry flow", async () => {
   const retry = await screen.findByRole("link", { name: "Try again" });
   expect(retry).toHaveAttribute("href", "/course/course/ch/0/quiz");
 });
+
+it.each([true, false])("shows only unique missed concepts from the submitted attempt (passed: %s)", async (passed) => {
+  const answers = ["Separation of variables", "Separation of variables", "Initial conditions", null, "  "].map((missedConcept, index) => ({
+    prompt: `Graded question ${index + 1}`, response: "Response", score: missedConcept ? 0 : 1,
+    feedback: "Recorded feedback", modelAnswer: "Expected response", missedConcept,
+  }));
+  await mount(vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+    ...result, passed, score: passed ? 0.8 : 0.4, answers,
+    remediation: passed ? null : "Use a worked example to revisit separation, then check the initial condition.",
+  }) }));
+  answer(1); next(); answer(2); next(); answer(3); submitAnswers();
+  const concepts = await screen.findByRole("region", { name: "Concepts to revisit" });
+  expect(concepts.querySelectorAll("li")).toHaveLength(2);
+  expect(concepts).toHaveTextContent("Separation of variables");
+  expect(concepts).toHaveTextContent("Initial conditions");
+  expect(screen.getByRole("link", { name: "Review chapter" })).toHaveAttribute("href", "/course/course/ch/0");
+  if (passed) {
+    expect(screen.getByText(/You passed this assessment\. Durable mastery needs evidence/)).toBeVisible();
+    expect(screen.getByText(/Your score passes, but this attempt still shows gaps/)).toBeVisible();
+    expect(screen.queryByRole("region", { name: "Before trying again" })).not.toBeInTheDocument();
+  } else {
+    expect(screen.getByRole("region", { name: "Before trying again" })).toHaveTextContent("Use a worked example to revisit separation, then check the initial condition.");
+    fireEvent.click(screen.getByRole("link", { name: "Try again" }));
+    expect(await screen.findByRole("heading", { name: "Question 1" })).toBeVisible();
+    expect(screen.queryByRole("region", { name: "Concepts to revisit" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Before trying again" })).not.toBeInTheDocument();
+  }
+});
+
+it.each([true, false])("does not invent concept gaps or remediation when absent (passed: %s)", async (passed) => {
+  await mount(vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ...result, passed }) }));
+  answer(1); next(); answer(2); next(); answer(3); submitAnswers();
+  await screen.findByRole("heading", { name: passed ? "Chapter complete" : "Keep going" });
+  expect(screen.queryByRole("region", { name: "Concepts to revisit" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: "Before trying again" })).not.toBeInTheDocument();
+  expect(screen.queryByText(/this attempt still shows gaps/)).not.toBeInTheDocument();
+});
+
+it("shows returned remediation even when the failed attempt has no concept tags", async () => {
+  await mount(vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+    ...result, passed: false, remediation: "Review the explanations, then try a fresh QnA.",
+  }) }));
+  answer(1); next(); answer(2); next(); answer(3); submitAnswers();
+  expect(await screen.findByRole("region", { name: "Before trying again" })).toHaveTextContent("Review the explanations, then try a fresh QnA.");
+  expect(screen.queryByRole("region", { name: "Concepts to revisit" })).not.toBeInTheDocument();
+});

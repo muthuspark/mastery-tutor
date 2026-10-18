@@ -3790,3 +3790,443 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Provide recovery actions when a quiz cannot load\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 8"
 }
+
+[2026-10-18T14:15:34.566Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 9,
+  "phase": "discover"
+}
+
+[2026-10-18T14:16:23.999Z] 20261018123858542-ec1e3550 — Five candidates generated and ranked
+{
+  "formula": "impact * confidence / (effort * risk)",
+  "ranked": [
+    {
+      "title": "Show concept-specific guidance on quiz results",
+      "category": "usability",
+      "rationale": "Give learners an evidence-based next study action, including when their aggregate score passes. This extends existing gap recording with actionable presentation; improved recovery is a hypothesis.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:85 returns remediation and per-answer missedConcept values.",
+        "components/quiz-page.tsx:12 omits remediation from the result type.",
+        "components/quiz-page.tsx:89 displays generic guidance and does not render missed concepts."
+      ],
+      "acceptanceCriteria": [
+        "Results list deduplicated missed concepts from the submitted attempt for both passing and failing scores.",
+        "Failed results display returned remediation alongside the existing Review chapter action.",
+        "Passing results with gaps distinguish passing the assessment from demonstrating durable mastery.",
+        "Host browser checks cover a passing quiz with one missed concept and a failing quiz with repeated concept tags."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "index": 2,
+      "score": 10
+    },
+    {
+      "title": "Fill review slots from eligible questions",
+      "category": "user value",
+      "rationale": "Ensure recorded concept gaps receive available review opportunities. Filtering after the limit can suppress eligible reviews farther down the queue; learning benefits remain unmeasured.",
+      "evidence": [
+        "lib/quiz.ts:84-94 limits review candidates to two before filtering question type, options, and excluded IDs.",
+        "app/api/chapters/[id]/quiz/route.ts:56 excludes current and previously attempted questions before requesting reviews.",
+        "app/api/chapters/[id]/attempts/route.ts:33 recomputes eligible review IDs without the delivery exclusions."
+      ],
+      "acceptanceCriteria": [
+        "When the first two ranked entries are excluded or unsupported, return the next eligible reviews, up to two.",
+        "Preserve ranking by misses and due chapter, course isolation, and question deduplication.",
+        "Submission accepts every review selected by delivery under unchanged database state.",
+        "Automated fixtures cover excluded leaders, unsupported questions, and fewer than two eligible reviews."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "index": 1,
+      "score": 5
+    },
+    {
+      "title": "Bound current quiz retrieval as attempt history grows",
+      "category": "performance",
+      "rationale": "Avoid loading historical question generations on every quiz request. The unbounded retrieval is observed in source; its latency and memory impact have not been measured.",
+      "evidence": [
+        "app/api/chapters/[id]/quiz/route.ts:29-31 loads every chapter question before filtering and slicing ten.",
+        "app/api/chapters/[id]/quiz/route.ts:52-54 repeats the same retrieval after generation.",
+        "lib/quiz.ts:70 inserts new questions, allowing historical generations to accumulate."
+      ],
+      "acceptanceCriteria": [
+        "Apply generation and MCQ eligibility filtering before a database limit of ten, preserving current ordering semantics.",
+        "Use the same bounded retrieval before and after generation.",
+        "Fixtures containing many historical questions produce the same delivered current quiz and answer-key allowlist.",
+        "Verify the query materializes at most ten current candidates without deleting historical questions or answers."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "index": 3,
+      "score": 3
+    },
+    {
+      "title": "Reject incomplete and duplicate quiz submissions",
+      "category": "reliability",
+      "rationale": "Protect recorded evidence and chapter progression from malformed submissions. Code inspection indicates that one correct answer can currently produce a passing score; this was not executed.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:15 requires only one submitted answer.",
+        "app/api/chapters/[id]/attempts/route.ts:35 checks question ownership but not duplicate IDs or assessment completeness.",
+        "app/api/chapters/[id]/attempts/route.ts:46 averages only submitted answers before updating progression."
+      ],
+      "acceptanceCriteria": [
+        "Reject missing current assessment questions, duplicate question IDs, blank responses, and obsolete generation questions before grading or writing evidence.",
+        "Rejected submissions leave attempts, answers, chapter status, and review items unchanged.",
+        "A complete prepared MCQ fixture still grades and advances through the host browser flow."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 3,
+      "risk": 3,
+      "index": 0,
+      "score": 2.7777777777777777
+    },
+    {
+      "title": "Show a previous-versus-current review answer comparison",
+      "category": "creative wildcard",
+      "rationale": "Make review feedback a concrete reflection on recorded learning: show how the learner answered this question previously and now. This demonstrates observed change without claiming retention or transfer effectiveness.",
+      "evidence": [
+        "lib/quiz.ts:88 retrieves reviews through their original source question IDs.",
+        "app/api/chapters/[id]/attempts/route.ts:56 persists question IDs, responses, scores, and timestamps.",
+        "components/quiz-page.tsx:89 displays feedback and model answers but omits the learner's submitted response and prior evidence."
+      ],
+      "acceptanceCriteria": [
+        "After a review submission, show the most recent earlier response and date beside the current response and outcome when prior evidence exists.",
+        "Retrieve earlier evidence strictly before the current attempt and scope it to the relevant course and question.",
+        "Keep previous responses and outcomes out of pre-submission quiz delivery.",
+        "Handle absent history gracefully and describe repeated-question success without calling it proven retention or transfer.",
+        "Verify a test-owned wrong-then-correct review flow while preserving both recorded answers."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 3,
+      "risk": 2,
+      "index": 4,
+      "score": 2
+    }
+  ]
+}
+
+[2026-10-18T14:16:24.000Z] 20261018123858542-ec1e3550 — Candidate selected
+{
+  "iteration": 9,
+  "candidate": {
+    "title": "Show concept-specific guidance on quiz results",
+    "category": "usability",
+    "rationale": "Give learners an evidence-based next study action, including when their aggregate score passes. This extends existing gap recording with actionable presentation; improved recovery is a hypothesis.",
+    "evidence": [
+      "app/api/chapters/[id]/attempts/route.ts:85 returns remediation and per-answer missedConcept values.",
+      "components/quiz-page.tsx:12 omits remediation from the result type.",
+      "components/quiz-page.tsx:89 displays generic guidance and does not render missed concepts."
+    ],
+    "acceptanceCriteria": [
+      "Results list deduplicated missed concepts from the submitted attempt for both passing and failing scores.",
+      "Failed results display returned remediation alongside the existing Review chapter action.",
+      "Passing results with gaps distinguish passing the assessment from demonstrating durable mastery.",
+      "Host browser checks cover a passing quiz with one missed concept and a failing quiz with repeated concept tags."
+    ],
+    "impact": 4,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 1
+  },
+  "score": 10,
+  "reason": "Highest score among candidates whose titles have not been completed; ties use higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-18T14:16:24.020Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 9,
+  "phase": "implement"
+}
+
+[2026-10-18T14:16:57.765Z] 20261018123858542-ec1e3550 — Harness guidance updated
+{
+  "decisions": [
+    {
+      "decision": "Scope browser alert/status assertions to app content or expected text",
+      "reason": "Iterations 4 and 8 encountered Next.js route-announcer collisions with global alert locators"
+    },
+    {
+      "decision": "Validate balanced base quiz fixtures before browser navigation",
+      "reason": "Iteration 3 changed answer positions and triggered quiz regeneration instead of loading the prepared fixture"
+    }
+  ],
+  "appliesTo": "Future Ralph launches; normal verification and independent review remain required"
+}
+
+[2026-10-18T14:17:37.209Z] 20261018123858542-ec1e3550 — Implementation completed; verification required
+{
+  "summary": "Implemented concept-specific quiz guidance. All 105 application tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/quiz-concept-guidance.md.",
+  "decisions": [
+    {
+      "decision": "Display deduplicated missed concepts for passing and failing attempts.",
+      "reason": "Aggregate scores can hide specific recorded gaps."
+    },
+    {
+      "decision": "Show returned remediation for failed attempts alongside existing review actions.",
+      "reason": "Give learners the server-provided next study guidance."
+    },
+    {
+      "decision": "Distinguish assessment success from durable mastery.",
+      "reason": "One passing assessment does not establish retention or transfer."
+    },
+    {
+      "decision": "Preserve navigation and use accessible sections with wrapping lists.",
+      "reason": "Keep established flows and support mobile reading."
+    }
+  ]
+}
+
+[2026-10-18T14:17:37.231Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 9,
+  "phase": "verify"
+}
+
+[2026-10-18T14:17:40.235Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-verify-1792333057231-213-lint.log"
+}
+
+[2026-10-18T14:17:41.955Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-verify-1792333060240-214-typecheck.log"
+}
+
+[2026-10-18T14:18:00.665Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-verify-1792333061960-215-test.log"
+}
+
+[2026-10-18T14:18:07.246Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-verify-1792333080669-216-build.log"
+}
+
+[2026-10-18T14:18:07.252Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-18T14:18:07.273Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 9,
+  "phase": "browser-prepare"
+}
+
+[2026-10-18T14:18:53.320Z] 20261018123858542-ec1e3550 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-9.spec.ts",
+  "summary": "Created iteration-9.spec.ts with two executable browser tests. Playwright discovery passes; browser execution remains with the host.",
+  "decisions": [
+    {
+      "decision": "Test passing with one missed concept and failing with repeated concept tags.",
+      "reason": "Covers visible gap guidance, deduplication, remediation, and the durable mastery explanation using real grading."
+    },
+    {
+      "decision": "Follow Review chapter and reload the lesson, then verify saved evidence.",
+      "reason": "Checks navigation and persistence without triggering fresh quiz generation."
+    },
+    {
+      "decision": "Use UUID-scoped prepared fixtures with finally cleanup.",
+      "reason": "Preserves learner data and avoids paid generation."
+    }
+  ]
+}
+
+[2026-10-18T14:18:56.292Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 9,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-browser-prepare-1792333133321-221-lint.log"
+}
+
+[2026-10-18T14:18:58.568Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 9,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-browser-prepare-1792333136297-222-typecheck.log"
+}
+
+[2026-10-18T14:18:58.593Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 9,
+  "phase": "browser-run"
+}
+
+[2026-10-18T14:19:08.835Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "failed",
+  "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  3\u001b[39m\n\u001b[31m+ Received  + 18\u001b[39m\n\n\u001b[33m@@ -117,18 +117,33 @@\u001b[39m\n\u001b[2m        \"Verify MCQ submission\",\u001b[22m\n\u001b[2m      ],\u001b[22m\n\u001b[2m      \"prerequisites\": Array [],\u001b[22m\n\u001b[2m      \"pretest\": null,\u001b[22m\n\u001b[2m      \"quizGenerationError\": null,\u001b[22m\n\u001b[32m-     \"quizGenerationStatus\": \"ready\",\u001b[39m\n\u001b[32m-     \"quizGenerationUpdatedAt\": null,\u001b[39m\n\u001b[31m+     \"quizGenerationStatus\": \"generating\",\u001b[39m\n\u001b[31m+     \"quizGenerationUpdatedAt\": 2026-10-18T14:19:07.717Z,\u001b[39m\n\u001b[2m      \"quizGenerationVersion\": 1,\u001b[22m\n\u001b[2m      \"status\": \"open\",\u001b[22m\n\u001b[2m      \"summary\": \"Fixture\",\u001b[22m\n\u001b[2m      \"title\": \"Prepared deterministic quiz\",\u001b[22m\n\u001b[2m    },\u001b[22m\n\u001b[32m-   \"jobs\": Array [],\u001b[39m\n\u001b[31m+   \"jobs\": Array [\u001b[39m\n\u001b[31m+     Object {\u001b[39m\n\u001b[31m+       \"artifactType\": \"quiz\",\u001b[39m\n\u001b[31m+       \"attempts\": 1,\u001b[39m\n\u001b[31m+       \"createdAt\": 2026-10-18T14:19:07.676Z,\u001b[39m\n\u001b[31m+       \"generationVersion\": 1,\u001b[39m\n\u001b[31m+       \"id\": \"b09006dd-99b4-4af4-8b6d-9960546e18b0\",\u001b[39m\n\u001b[31m+       \"lastError\": null,\u001b[39m\n\u001b[31m+       \"leaseExpiresAt\": 2026-10-18T14:21:07.695Z,\u001b[39m\n\u001b[31m+       \"leaseOwner\": \"request-55c86ee7-eb1a-44ee-81f1-d27afcdde478\",\u001b[39m\n\u001b[31m+       \"nextRunAt\": 2026-10-18T14:19:07.676Z,\u001b[39m\n\u001b[31m+       \"status\": \"running\",\u001b[39m\n\u001b[31m+       \"targetId\": \"0d6405d2-b914-436f-ae99-e02b87d1f669\",\u001b[39m\n\u001b[31m+       \"updatedAt\": 2026-10-18T14:19:07.695Z,\u001b[39m\n\u001b[31m+     },\u001b[39m\n\u001b[31m+   ],\u001b[39m\n\u001b[2m    \"reviews\": Array [\u001b[22m\n\u001b[2m      Object {\u001b[22m\n\u001b[2m        \"conceptTag\": \"Separation of variables\",\u001b[22m\n\u001b[2m        \"courseId\": \"4247afd3-9f7e-41af-9eb8-d067a0415539\",\u001b[22m\n\u001b[2m        \"createdAt\": 2026-10-18T14:19:07.314Z,\u001b[22m\nError: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  3\u001b[39m\n\u001b[31m+ Received  + 18\u001b[39m\n\n\u001b[33m@@ -117,18 +117,33 @@\u001b[39m\n\u001b[2m        \"Verify MCQ submission\",\u001b[22m\n\u001b[2m      ],\u001b[22m\n\u001b[2m      \"prerequisites\": Array [],\u001b[22m\n\u001b[2m      \"pretest\": null,\u001b[22m\n\u001b[2m      \"quizGenerationError\": null,\u001b[22m\n\u001b[32m-     \"quizGenerationStatus\": \"ready\",\u001b[39m\n\u001b[32m-     \"quizGenerationUpdatedAt\": null,\u001b[39m\n\u001b[31m+     \"quizGenerationStatus\": \"generating\",\u001b[39m\n\u001b[31m+     \"quizGenerationUpdatedAt\": 2026-10-18T14:19:07.717Z,\u001b[39m\n\u001b[2m      \"quizGenerationVersion\": 1,\u001b[22m\n\u001b[2m      \"status\": \"open\",\u001b[22m\n\u001b[2m      \"summary\": \"Fixture\",\u001b[22m\n\u001b[2m      \"title\": \"Prepared deterministic quiz\",\u001b[22m\n\u001b[2m    },\u001b[22m\n\u001b[32m-   \"jobs\": Array [],\u001b[39m\n\u001b[31m+   \"jobs\": Array [\u001b[39m\n\u001b[31m+     Object {\u001b[39m\n\u001b[31m+       \"artifactType\": \"quiz\",\u001b[39m\n\u001b[31m+       \"attempts\": 1,\u001b[39m\n\u001b[31m+       \"createdAt\": 2026-10-18T14:19:07.676Z,\u001b[39m\n\u001b[31m+       \"generationVersion\": 1,\u001b[39m\n\u001b[31m+       \"id\": \"b09006dd-99b4-4af4-8b6d-9960546e18b0\",\u001b[39m\n\u001b[31m+       \"lastError\": null,\u001b[39m\n\u001b[31m+       \"leaseExpiresAt\": 2026-10-18T14:21:07.695Z,\u001b[39m\n\u001b[31m+       \"leaseOwner\": \"request-55c86ee7-eb1a-44ee-81f1-d27afcdde478\",\u001b[39m\n\u001b[31m+       \"nextRunAt\": 2026-10-18T14:19:07.676Z,\u001b[39m\n\u001b[31m+       \"status\": \"running\",\u001b[39m\n\u001b[31m+       \"targetId\": \"0d6405d2-b914-436f-ae99-e02b87d1f669\",\u001b[39m\n\u001b[31m+       \"updatedAt\": 2026-10-18T14:19:07.695Z,\u001b[39m\n\u001b[31m+     },\u001b[39m\n\u001b[31m+   ],\u001b[39m\n\u001b[2m    \"reviews\": Array [\u001b[22m\n\u001b[2m      Object {\u001b[22m\n\u001b[2m        \"conceptTag\": \"Separation of variables\",\u001b[22m\n\u001b[2m        \"courseId\": \"4247afd3-9f7e-41af-9eb8-d067a0415539\",\u001b[22m\n\u001b[2m        \"createdAt\": 2026-10-18T14:19:07.314Z,\u001b[22m\n\n  102 |       await page.reload();\n  103 |       await expect(page.getByRole(\"main\")).toContainText(\"Test-owned prepared lesson\");\n> 104 |       expect(snapshot()).toEqual(saved);\n      |                          ^\n  105 |     } finally {\n  106 |       sqlite?.close();\n  107 |       fixture.cleanup();\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261018123858542-ec1e3550/iteration-9.spec.ts:104:26",
+  "passed": 1,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-9.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-browser-run-1792333138627-223-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-browser-run-1792333138627-223-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-browser-run-1792333138627-223-playwright/artifacts"
+}
+
+[2026-10-18T14:19:08.858Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 9,
+  "phase": "repair"
+}
+
+[2026-10-18T14:19:08.858Z] 20261018123858542-ec1e3550 — Repair selected
+{
+  "iteration": 9,
+  "attempt": 1,
+  "maximum": 3,
+  "reasons": [
+    "Playwright acceptance test failed: Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  3\u001b[39m\n\u001b[31m+ Received  + 18\u001b[39m\n\n\u001b[33m@@ -117,18 +117,33 @@\u001b[39m\n\u001b[2m        \"Verify MCQ submission\",\u001b[22m\n\u001b[2m      ],\u001b[22m\n\u001b[2m      \"prerequisites\": Array [],\u001b[22m\n\u001b[2m      \"pretest\": null,\u001b[22m\n\u001b[2m      \"quizGenerationError\": null,\u001b[22m\n\u001b[32m-     \"quizGenerationStatus\": \"ready\",\u001b[39m\n\u001b[32m-     \"quizGenerationUpdatedAt\": null,\u001b[39m\n\u001b[31m+     \"quizGenerationStatus\": \"generating\",\u001b[39m\n\u001b[31m+     \"quizGenerationUpdatedAt\": 2026-10-18T14:19:07.717Z,\u001b[39m\n\u001b[2m      \"quizGenerationVersion\": 1,\u001b[22m\n\u001b[2m      \"status\": \"open\",\u001b[22m\n\u001b[2m      \"summary\": \"Fixture\",\u001b[22m\n\u001b[2m      \"title\": \"Prepared deterministic quiz\",\u001b[22m\n\u001b[2m    },\u001b[22m\n\u001b[32m-   \"jobs\": Array [],\u001b[39m\n\u001b[31m+   \"jobs\": Array [\u001b[39m\n\u001b[31m+     Object {\u001b[39m\n\u001b[31m+       \"artifactType\": \"quiz\",\u001b[39m\n\u001b[31m+       \"attempts\": 1,\u001b[39m\n\u001b[31m+       \"createdAt\": 2026-10-18T14:19:07.676Z,\u001b[39m\n\u001b[31m+       \"generationVersion\": 1,\u001b[39m\n\u001b[31m+       \"id\": \"b09006dd-99b4-4af4-8b6d-9960546e18b0\",\u001b[39m\n\u001b[31m+       \"lastError\": null,\u001b[39m\n\u001b[31m+       \"leaseExpiresAt\": 2026-10-18T14:21:07.695Z,\u001b[39m\n\u001b[31m+       \"leaseOwner\": \"request-55c86ee7-eb1a-44ee-81f1-d27afcdde478\",\u001b[39m\n\u001b[31m+       \"nextRunAt\": 2026-10-18T14:19:07.676Z,\u001b[39m\n\u001b[31m+       \"status\": \"running\",\u001b[39m\n\u001b[31m+       \"targetId\": \"0d6405d2-b914-436f-ae99-e02b87d1f669\",\u001b[39m\n\u001b[31m+       \"updatedAt\": 2026-10-18T14:19:07.695Z,\u001b[39m\n\u001b[31m+     },\u001b[39m\n\u001b[31m+   ],\u001b[39m\n\u001b[2m    \"reviews\": Array [\u001b[22m\n\u001b[2m      Object {\u001b[22m\n\u001b[2m        \"conceptTag\": \"Separation of variables\",\u001b[22m\n\u001b[2m        \"courseId\": \"4247afd3-9f7e-41af-9eb8-d067a0415539\",\u001b[22m\n\u001b[2m        \"createdAt\": 2026-10-18T14:19:07.314Z,\u001b[22m\nError: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  3\u001b[39m\n\u001b[31m+ Received  + 18\u001b[39m\n\n\u001b[33m@@ -117,18 +117,33 @@\u001b[39m\n\u001b[2m        \"Verify MCQ submission\",\u001b[22m\n\u001b[2m      ],\u001b[22m\n\u001b[2m      \"prerequisites\": Array [],\u001b[22m\n\u001b[2m      \"pretest\": null,\u001b[22m\n\u001b[2m      \"quizGenerationError\": null,\u001b[22m\n\u001b[32m-     \"quizGenerationStatus\": \"ready\",\u001b[39m\n\u001b[32m-     \"quizGenerationUpdatedAt\": null,\u001b[39m\n\u001b[31m+     \"quizGenerationStatus\": \"generating\",\u001b[39m\n\u001b[31m+     \"quizGenerationUpdatedAt\": 2026-10-18T14:19:07.717Z,\u001b[39m\n\u001b[2m      \"quizGenerationVersion\": 1,\u001b[22m\n\u001b[2m      \"status\": \"open\",\u001b[22m\n\u001b[2m      \"summary\": \"Fixture\",\u001b[22m\n\u001b[2m      \"title\": \"Prepared deterministic quiz\",\u001b[22m\n\u001b[2m    },\u001b[22m\n\u001b[32m-   \"jobs\": Array [],\u001b[39m\n\u001b[31m+   \"jobs\": Array [\u001b[39m\n\u001b[31m+     Object {\u001b[39m\n\u001b[31m+       \"artifactType\": \"quiz\",\u001b[39m\n\u001b[31m+       \"attempts\": 1,\u001b[39m\n\u001b[31m+       \"createdAt\": 2026-10-18T14:19:07.676Z,\u001b[39m\n\u001b[31m+       \"generationVersion\": 1,\u001b[39m\n\u001b[31m+       \"id\": \"b09006dd-99b4-4af4-8b6d-9960546e18b0\",\u001b[39m\n\u001b[31m+       \"lastError\": null,\u001b[39m\n\u001b[31m+       \"leaseExpiresAt\": 2026-10-18T14:21:07.695Z,\u001b[39m\n\u001b[31m+       \"leaseOwner\": \"request-55c86ee7-eb1a-44ee-81f1-d27afcdde478\",\u001b[39m\n\u001b[31m+       \"nextRunAt\": 2026-10-18T14:19:07.676Z,\u001b[39m\n\u001b[31m+       \"status\": \"running\",\u001b[39m\n\u001b[31m+       \"targetId\": \"0d6405d2-b914-436f-ae99-e02b87d1f669\",\u001b[39m\n\u001b[31m+       \"updatedAt\": 2026-10-18T14:19:07.695Z,\u001b[39m\n\u001b[31m+     },\u001b[39m\n\u001b[31m+   ],\u001b[39m\n\u001b[2m    \"reviews\": Array [\u001b[22m\n\u001b[2m      Object {\u001b[22m\n\u001b[2m        \"conceptTag\": \"Separation of variables\",\u001b[22m\n\u001b[2m        \"courseId\": \"4247afd3-9f7e-41af-9eb8-d067a0415539\",\u001b[22m\n\u001b[2m        \"createdAt\": 2026-10-18T14:19:07.314Z,\u001b[22m\n\n  102 |       await page.reload();\n  103 |       await expect(page.getByRole(\"main\")).toContainText(\"Test-owned prepared lesson\");\n> 104 |       expect(snapshot()).toEqual(saved);\n      |                          ^\n  105 |     } finally {\n  106 |       sqlite?.close();\n  107 |       fixture.cleanup();\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261018123858542-ec1e3550/iteration-9.spec.ts:104:26. Inspect /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-browser-run-1792333138627-223-playwright/results.json and /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-browser-run-1792333138627-223-playwright/runner.log."
+  ]
+}
+
+[2026-10-18T14:19:57.011Z] 20261018123858542-ec1e3550 — Repair completed; verification required
+{
+  "attempt": 1,
+  "summary": "Repaired the browser spec. All 15 component tests, lint, typecheck, test discovery, and diff checks pass. Host browser rerun remains pending. Evidence: .ralph/20261018123858542-ec1e3550/evidence/concept-guidance-prefetch-repair.md.",
+  "decisions": [
+    {
+      "decision": "Stub only the failed lesson’s background quiz prefetch after real grading.",
+      "reason": "Lesson reload legitimately starts fresh quiz generation, which caused the recorded snapshot mismatch."
+    },
+    {
+      "decision": "Preserve both real quiz flows and full persistence assertions.",
+      "reason": "Verify concept guidance and saved evidence without weakening checks."
+    },
+    {
+      "decision": "Leave application behavior unchanged.",
+      "reason": "The failure came from the spec’s incorrect assumption about existing lesson prefetch behavior."
+    }
+  ]
+}
+
+[2026-10-18T14:19:57.032Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 9,
+  "phase": "verify"
+}
+
+[2026-10-18T14:19:59.981Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-verify-1792333197032-228-lint.log"
+}
+
+[2026-10-18T14:20:01.724Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-verify-1792333199986-229-typecheck.log"
+}
+
+[2026-10-18T14:20:20.693Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-verify-1792333201729-230-test.log"
+}
+
+[2026-10-18T14:20:26.684Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-verify-1792333220698-231-build.log"
+}
+
+[2026-10-18T14:20:26.690Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-run",
+  "failures": []
+}
+
+[2026-10-18T14:20:26.713Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 9,
+  "phase": "browser-run"
+}
+
+[2026-10-18T14:20:36.417Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 2,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-9.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-browser-run-1792333226748-232-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-browser-run-1792333226748-232-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/9-browser-run-1792333226748-232-playwright/artifacts"
+}
+
+[2026-10-18T14:20:36.438Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 9,
+  "phase": "review"
+}
+
+[2026-10-18T14:21:23.398Z] 20261018123858542-ec1e3550 — Independent review decision
+{
+  "summary": "Selected increment passes review. No concrete unresolved defects found.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Component tests verify deduplicated missed concepts for passing and failing attempts, excluding blank tags.",
+    "Failed-result tests verify returned remediation and the preserved Review chapter action.",
+    "Passing-result tests verify explicit gaps and language distinguishing assessment success from durable mastery.",
+    "Independent checks passed: 15 component tests, lint, typecheck, and diff checks. Host logs record 138 tests and the production build passing."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-9.spec.ts, the supplied results.json, and recorded screenshot artifacts.",
+    "Host results: two passed, zero skipped, unexpected, or flaky tests.",
+    "Real MCQ submissions cover a 90% passing attempt with one missed concept and a 60% failing attempt with repeated concept tags, including remediation and review navigation.",
+    "Browser assertions verify persisted evidence remains unchanged after reviewing and reloading the lesson."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-18T14:21:23.419Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 9,
+  "phase": "commit"
+}
+
+[2026-10-18T14:21:23.423Z] 20261018123858542-ec1e3550 — Verified iteration approved for commit
+{
+  "iteration": 9,
+  "candidate": "Show concept-specific guidance on quiz results",
+  "summary": "Implemented concept-specific quiz guidance. All 105 application tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/quiz-concept-guidance.md.\nRepair 1: Repaired the browser spec. All 15 component tests, lint, typecheck, test discovery, and diff checks pass. Host browser rerun remains pending. Evidence: .ralph/20261018123858542-ec1e3550/evidence/concept-guidance-prefetch-repair.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Show concept-specific guidance on quiz results\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 9"
+}
