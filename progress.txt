@@ -3366,3 +3366,427 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Let learners reread completed chapters without resetting evidence\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 7"
 }
+
+[2026-10-18T14:08:45.633Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 8,
+  "phase": "discover"
+}
+
+[2026-10-18T14:09:28.014Z] 20261018123858542-ec1e3550 — Five candidates generated and ranked
+{
+  "formula": "impact * confidence / (effort * risk)",
+  "ranked": [
+    {
+      "title": "Provide recovery actions when a quiz cannot load",
+      "category": "usability",
+      "rationale": "Let learners retry loading or return to the lesson without manually refreshing or navigating back. Reduced abandonment is a hypothesis, not a measured result.",
+      "evidence": [
+        "components/quiz-page.tsx:30 stops automatic generation-pending retries after four retries.",
+        "components/quiz-page.tsx:61–62 renders a preparation message or a terminal error message without recovery controls.",
+        "fetchReadyJson at components/quiz-page.tsx:13–17 distinguishes pending generation internally but discards other server error details."
+      ],
+      "acceptanceCriteria": [
+        "Distinguish pending preparation, load failure, and unavailable chapter states with accurate messages.",
+        "Offer keyboard-accessible retry and return-to-chapter actions after loading fails.",
+        "Retry refetches the appropriate failed query and successfully renders questions when the service recovers.",
+        "Component tests cover pending responses followed by success and a failed request recovered through retry; host browser verification uses the prepared MCQ fixture."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "index": 2,
+      "score": 7.5
+    },
+    {
+      "title": "Fill review slots from eligible due questions",
+      "category": "user value",
+      "rationale": "Prevent excluded or unsupported questions from hiding other due concept practice. The selection defect is visible in source; its frequency and learning impact are unmeasured.",
+      "evidence": [
+        "lib/quiz.ts:84–94 applies limit(2) before filtering unsupported question types and excluded IDs.",
+        "app/api/chapters/[id]/quiz/route.ts excludes current and latest-attempt questions when requesting reviews."
+      ],
+      "acceptanceCriteria": [
+        "With two ineligible highest-priority rows followed by eligible due MCQs, return up to two eligible reviews.",
+        "Preserve priority ordering, course isolation, exclusion rules, and the two-question cap.",
+        "Regression tests cover excluded IDs, unsupported types, and fewer than two eligible questions."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "index": 0,
+      "score": 5
+    },
+    {
+      "title": "Bound cached quiz reads in SQL",
+      "category": "performance",
+      "rationale": "Avoid loading every historical question on each quiz request as retries accumulate. Unbounded materialization is confirmed in source; latency savings require measurement.",
+      "evidence": [
+        "app/api/chapters/[id]/quiz/route.ts:29–31 loads all chapter questions, then filters generation version and MCQ eligibility and slices to ten.",
+        "The same unbounded query is repeated after generation in that route.",
+        "lib/quiz.ts:54–80 inserts new question rows, while answers reference historical questions."
+      ],
+      "acceptanceCriteria": [
+        "Apply generation-version and MCQ eligibility filtering before a SQL limit of ten in both retrieval paths.",
+        "A fixture containing many historical generations returns the same eligible current questions while materializing at most ten question rows per retrieval.",
+        "Preserve assessment validation, answer-key withholding, review selection, and historical answers.",
+        "Record query-plan or row-materialization evidence; report timing improvements only if measured."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "index": 3,
+      "score": 3
+    },
+    {
+      "title": "Validate complete quiz submissions before recording evidence",
+      "category": "reliability",
+      "rationale": "Prevent a partial submission from passing a chapter and unlocking subsequent content. Source permits this behavior; no runtime reproduction was performed.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:15 requires only one answer; POST averages only submitted answers and accepts any question belonging to the chapter.",
+        "app/attempts-route.test.ts explicitly expects a single-answer retry to complete a chapter after a two-question attempt.",
+        "Duplicate question IDs currently reach the database constraint and produce a database_error."
+      ],
+      "acceptanceCriteria": [
+        "Validate submissions against a server-established delivered question set, including its review questions.",
+        "Reject missing, duplicate, blank, extra, or stale question submissions with an actionable client error before grading or persistence.",
+        "Rejected submissions leave attempts, answers, chapter status, course completion, and review evidence unchanged.",
+        "A complete valid MCQ submission still grades without agent discovery."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 3,
+      "risk": 3,
+      "index": 1,
+      "score": 2.7777777777777777
+    },
+    {
+      "title": "Add an optional confidence prediction before submission",
+      "category": "creative wildcard",
+      "rationale": "Give learners a small calibration exercise: compare how certain they felt with the observed answer outcome. This supports the goal's confidence-calibration requirement; benefits to learning remain untested.",
+      "evidence": [
+        "components/quiz-page.tsx:23 stores answer selections without confidence ratings.",
+        "app/api/chapters/[id]/attempts/route.ts:15 accepts only questionId and response.",
+        "lib/db/schema.ts answers records responses, scores, and feedback without optional confidence evidence."
+      ],
+      "acceptanceCriteria": [
+        "Offer an optional per-question confidence choice with no default, preserving it during backward navigation.",
+        "Persist supplied confidence alongside its answer; omitted ratings remain unknown and older clients remain compatible.",
+        "After grading, show the learner's prediction beside the observed outcome, distinguishing confident errors from uncertain correct answers.",
+        "Confidence never changes correctness, pass thresholds, or chapter unlocking; tests cover omitted ratings, persistence, and result comparisons."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 3,
+      "risk": 2,
+      "index": 4,
+      "score": 2
+    }
+  ]
+}
+
+[2026-10-18T14:09:28.014Z] 20261018123858542-ec1e3550 — Candidate selected
+{
+  "iteration": 8,
+  "candidate": {
+    "title": "Provide recovery actions when a quiz cannot load",
+    "category": "usability",
+    "rationale": "Let learners retry loading or return to the lesson without manually refreshing or navigating back. Reduced abandonment is a hypothesis, not a measured result.",
+    "evidence": [
+      "components/quiz-page.tsx:30 stops automatic generation-pending retries after four retries.",
+      "components/quiz-page.tsx:61–62 renders a preparation message or a terminal error message without recovery controls.",
+      "fetchReadyJson at components/quiz-page.tsx:13–17 distinguishes pending generation internally but discards other server error details."
+    ],
+    "acceptanceCriteria": [
+      "Distinguish pending preparation, load failure, and unavailable chapter states with accurate messages.",
+      "Offer keyboard-accessible retry and return-to-chapter actions after loading fails.",
+      "Retry refetches the appropriate failed query and successfully renders questions when the service recovers.",
+      "Component tests cover pending responses followed by success and a failed request recovered through retry; host browser verification uses the prepared MCQ fixture."
+    ],
+    "impact": 3,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 1
+  },
+  "score": 7.5,
+  "reason": "Highest score among candidates whose titles have not been completed; ties use higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-18T14:09:28.033Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 8,
+  "phase": "implement"
+}
+
+[2026-10-18T14:11:10.704Z] 20261018123858542-ec1e3550 — Implementation completed; verification required
+{
+  "summary": "Implemented quiz loading recovery. All 100 application tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/quiz-load-recovery.md.",
+  "decisions": [
+    {
+      "decision": "Distinguish preparation, load failure, and unavailable chapters.",
+      "reason": "Messages should accurately describe the loading outcome."
+    },
+    {
+      "decision": "Provide native retry and chapter-return controls.",
+      "reason": "Learners need accessible recovery without refreshing manually."
+    },
+    {
+      "decision": "Refetch only the failed query.",
+      "reason": "Recovery should resume loading without repeating successful requests."
+    },
+    {
+      "decision": "Return unavailable chapters to the course.",
+      "reason": "Retrying cannot resolve missing chapters or unmet prerequisites."
+    }
+  ]
+}
+
+[2026-10-18T14:11:10.726Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 8,
+  "phase": "verify"
+}
+
+[2026-10-18T14:11:13.590Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 8,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-verify-1792332670727-180-lint.log"
+}
+
+[2026-10-18T14:11:15.496Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 8,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-verify-1792332673595-181-typecheck.log"
+}
+
+[2026-10-18T14:11:34.517Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 8,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-verify-1792332675501-182-test.log"
+}
+
+[2026-10-18T14:11:41.064Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 8,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-verify-1792332694522-183-build.log"
+}
+
+[2026-10-18T14:11:41.070Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-18T14:11:41.090Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 8,
+  "phase": "browser-prepare"
+}
+
+[2026-10-18T14:12:42.758Z] 20261018123858542-ec1e3550 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-8.spec.ts",
+  "summary": "Created iteration-8.spec.ts with five tests. Playwright discovery and diff checks pass; browser execution remains for the host.",
+  "decisions": [
+    {
+      "decision": "Cover quiz and course-query retries plus keyboard recovery actions.",
+      "reason": "Verify each failed query recovers and learners can return to the lesson."
+    },
+    {
+      "decision": "Cover automatic preparation retries, exhausted retries, and unavailable chapters.",
+      "reason": "Verify distinct messages and appropriate recovery controls."
+    },
+    {
+      "decision": "Complete a real fixture quiz after recovery and verify persisted progress after reload.",
+      "reason": "Validate real delivery, grading, and persistence; only transient loading failures are simulated."
+    }
+  ]
+}
+
+[2026-10-18T14:12:45.705Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 8,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-browser-prepare-1792332762758-188-lint.log"
+}
+
+[2026-10-18T14:12:47.941Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 8,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-browser-prepare-1792332765710-189-typecheck.log"
+}
+
+[2026-10-18T14:12:47.967Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 8,
+  "phase": "browser-run"
+}
+
+[2026-10-18T14:13:07.295Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "failed",
+  "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected: \u001b[32m\"Could not load this QnA. Try again, or return to the chapter.\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" class=\"ui mt-5 text-sm text-[var(--muted)]\">Could not load this QnA. Try again, or return to …</p> aka getByText('Could not load this QnA. Try')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected: \u001b[32m\"Could not load this QnA. Try again, or return to the chapter.\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" class=\"ui mt-5 text-sm text-[var(--muted)]\">Could not load this QnA. Try again, or return to …</p> aka getByText('Could not load this QnA. Try')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\n\n  23 |     await page.goto(`${lessonPath}/quiz`);\n  24 |     await expect(page.getByRole(\"heading\", { name: \"Could not load QnA\", exact: true })).toBeVisible();\n> 25 |     await expect(page.getByRole(\"alert\")).toHaveText(\"Could not load this QnA. Try again, or return to the chapter.\");\n     |                                           ^\n  26 |     const back = page.getByRole(\"link\", { name: \"Back to chapter\", exact: true });\n  27 |     await expect(back).toHaveAttribute(\"href\", lessonPath);\n  28 |     const retry = page.getByRole(\"button\", { name: \"Try again\", exact: true });\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261018123858542-ec1e3550/iteration-8.spec.ts:25:43\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected substring: \u001b[32m\"Could not load this QnA.\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" class=\"ui mt-5 text-sm text-[var(--muted)]\">Could not load this QnA. Try again, or return to …</p> aka getByText('Could not load this QnA. Try')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\u001b[2m    - locator resolved to <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div>\u001b[22m\n\u001b[2m    - unexpected value \"\"\u001b[22m\n\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected substring: \u001b[32m\"Could not load this QnA.\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" class=\"ui mt-5 text-sm text-[var(--muted)]\">Could not load this QnA. Try again, or return to …</p> aka getByText('Could not load this QnA. Try')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\u001b[2m    - locator resolved to <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div>\u001b[22m\n\u001b[2m    - unexpected value \"\"\u001b[22m\n\n\n  89 |     const lessonPath = `/course/${fixture.courseId}/ch/0`;\n  90 |     await page.goto(`${lessonPath}/quiz`);\n> 91 |     await expect(page.getByRole(\"alert\")).toContainText(\"Could not load this QnA.\");\n     |                                           ^\n  92 |     expect(quizRequests).toBe(0);\n  93 |     await page.getByRole(\"button\", { name: \"Try again\", exact: true }).press(\"Enter\");\n  94 |     await expect(page.getByRole(\"heading\", { level: 1 })).toHaveText(fixture.questions[9].prompt);\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261018123858542-ec1e3550/iteration-8.spec.ts:91:43\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('alert')\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\u001b[2m    14 × locator resolved to 1 element\u001b[22m\n\u001b[2m       - unexpected value \"1\"\u001b[22m\n",
+  "passed": 0,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-8.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-browser-run-1792332768000-190-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-browser-run-1792332768000-190-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-browser-run-1792332768000-190-playwright/artifacts"
+}
+
+[2026-10-18T14:13:07.315Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 8,
+  "phase": "repair"
+}
+
+[2026-10-18T14:13:07.315Z] 20261018123858542-ec1e3550 — Repair selected
+{
+  "iteration": 8,
+  "attempt": 1,
+  "maximum": 3,
+  "reasons": [
+    "Playwright acceptance test failed: Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected: \u001b[32m\"Could not load this QnA. Try again, or return to the chapter.\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" class=\"ui mt-5 text-sm text-[var(--muted)]\">Could not load this QnA. Try again, or return to …</p> aka getByText('Could not load this QnA. Try')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected: \u001b[32m\"Could not load this QnA. Try again, or return to the chapter.\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" class=\"ui mt-5 text-sm text-[var(--muted)]\">Could not load this QnA. Try again, or return to …</p> aka getByText('Could not load this QnA. Try')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\n\n  23 |     await page.goto(`${lessonPath}/quiz`);\n  24 |     await expect(page.getByRole(\"heading\", { name: \"Could not load QnA\", exact: true })).toBeVisible();\n> 25 |     await expect(page.getByRole(\"alert\")).toHaveText(\"Could not load this QnA. Try again, or return to the chapter.\");\n     |                                           ^\n  26 |     const back = page.getByRole(\"link\", { name: \"Back to chapter\", exact: true });\n  27 |     await expect(back).toHaveAttribute(\"href\", lessonPath);\n  28 |     const retry = page.getByRole(\"button\", { name: \"Try again\", exact: true });\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261018123858542-ec1e3550/iteration-8.spec.ts:25:43\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected substring: \u001b[32m\"Could not load this QnA.\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" class=\"ui mt-5 text-sm text-[var(--muted)]\">Could not load this QnA. Try again, or return to …</p> aka getByText('Could not load this QnA. Try')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\u001b[2m    - locator resolved to <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div>\u001b[22m\n\u001b[2m    - unexpected value \"\"\u001b[22m\n\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected substring: \u001b[32m\"Could not load this QnA.\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" class=\"ui mt-5 text-sm text-[var(--muted)]\">Could not load this QnA. Try again, or return to …</p> aka getByText('Could not load this QnA. Try')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\u001b[2m    - locator resolved to <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div>\u001b[22m\n\u001b[2m    - unexpected value \"\"\u001b[22m\n\n\n  89 |     const lessonPath = `/course/${fixture.courseId}/ch/0`;\n  90 |     await page.goto(`${lessonPath}/quiz`);\n> 91 |     await expect(page.getByRole(\"alert\")).toContainText(\"Could not load this QnA.\");\n     |                                           ^\n  92 |     expect(quizRequests).toBe(0);\n  93 |     await page.getByRole(\"button\", { name: \"Try again\", exact: true }).press(\"Enter\");\n  94 |     await expect(page.getByRole(\"heading\", { level: 1 })).toHaveText(fixture.questions[9].prompt);\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261018123858542-ec1e3550/iteration-8.spec.ts:91:43\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('alert')\nExpected: \u001b[32m0\u001b[39m\nReceived: \u001b[31m1\u001b[39m\nTimeout:  5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\u001b[2m    14 × locator resolved to 1 element\u001b[22m\n\u001b[2m       - unexpected value \"1\"\u001b[22m\n. Inspect /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-browser-run-1792332768000-190-playwright/results.json and /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-browser-run-1792332768000-190-playwright/runner.log."
+  ]
+}
+
+[2026-10-18T14:13:52.837Z] 20261018123858542-ec1e3550 — Repair completed; verification required
+{
+  "attempt": 1,
+  "summary": "Repaired all six quiz alert locators. Component tests pass (12/12), lint, typecheck, diff checks, and five-test Playwright discovery pass. Host browser rerun remains pending. Evidence: .ralph/20261018123858542-ec1e3550/evidence/quiz-load-alert-repair.md.",
+  "decisions": [
+    {
+      "decision": "Scope alert assertions to the main landmark.",
+      "reason": "Excludes Next.js route announcements while preserving quiz error and absence checks."
+    },
+    {
+      "decision": "Leave application code and timeouts unchanged.",
+      "reason": "All recorded failures arose from locator ambiguity."
+    },
+    {
+      "decision": "Leave browser execution to the host.",
+      "reason": "Required by task constraints; no server or browser launched."
+    }
+  ]
+}
+
+[2026-10-18T14:13:52.856Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 8,
+  "phase": "verify"
+}
+
+[2026-10-18T14:13:55.790Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 8,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-verify-1792332832856-195-lint.log"
+}
+
+[2026-10-18T14:13:57.496Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 8,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-verify-1792332835795-196-typecheck.log"
+}
+
+[2026-10-18T14:14:16.389Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 8,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-verify-1792332837502-197-test.log"
+}
+
+[2026-10-18T14:14:22.225Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 8,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-verify-1792332856394-198-build.log"
+}
+
+[2026-10-18T14:14:22.231Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-run",
+  "failures": []
+}
+
+[2026-10-18T14:14:22.253Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 8,
+  "phase": "browser-run"
+}
+
+[2026-10-18T14:14:33.487Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 5,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-8.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-browser-run-1792332862287-199-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-browser-run-1792332862287-199-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/8-browser-run-1792332862287-199-playwright/artifacts"
+}
+
+[2026-10-18T14:14:33.507Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 8,
+  "phase": "review"
+}
+
+[2026-10-18T14:15:34.507Z] 20261018123858542-ec1e3550 — Independent review decision
+{
+  "summary": "Selected increment passes review. No concrete unresolved defects found. Production build was not verified.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Distinct preparation, failure, missing, and locked states are covered by 12 passing component tests.",
+    "Host browser tests verify keyboard navigation and activation of retry and return-to-chapter controls.",
+    "Component and browser tests confirm retry targets the failed query and renders recovered questions.",
+    "Prepared MCQ fixture coverage includes real assessment submission, grading, persisted answers, and progress after reload.",
+    "Independently reran all 100 application tests, lint, typecheck, and diff checks; all passed."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-8.spec.ts, supplied results.json, screenshots, and trace archives.",
+    "Host results: 5 passed, 0 failed, 0 skipped, 0 flaky.",
+    "Coverage includes quiz failure recovery, course lookup recovery, lesson return, automatic and manual preparation retries, and unavailable chapters.",
+    "Recovery screenshot confirms readable messages, established control styling, and visible keyboard focus."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-18T14:15:34.526Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 8,
+  "phase": "commit"
+}
+
+[2026-10-18T14:15:34.530Z] 20261018123858542-ec1e3550 — Verified iteration approved for commit
+{
+  "iteration": 8,
+  "candidate": "Provide recovery actions when a quiz cannot load",
+  "summary": "Implemented quiz loading recovery. All 100 application tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/quiz-load-recovery.md.\nRepair 1: Repaired all six quiz alert locators. Component tests pass (12/12), lint, typecheck, diff checks, and five-test Playwright discovery pass. Host browser rerun remains pending. Evidence: .ralph/20261018123858542-ec1e3550/evidence/quiz-load-alert-repair.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Provide recovery actions when a quiz cannot load\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 8"
+}
