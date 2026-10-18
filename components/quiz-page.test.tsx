@@ -83,3 +83,24 @@ it("locks navigation and answers during submission, then preserves answers after
   previous();
   expect(screen.getByRole("radio", { name: "A. Answer 2" })).toBeChecked();
 });
+
+
+it.each([
+  { name: "completed course", fields: { complete: true, nextChapterIdx: null }, label: "View completed course", href: "/course/course" },
+  { name: "completion takes priority over a next chapter", fields: { complete: true, nextChapterIdx: 1 }, label: "View completed course", href: "/course/course" },
+  { name: "server-selected next chapter", fields: { complete: false, nextChapterIdx: 4 }, label: "Continue", href: "/course/course/ch/4" },
+  { name: "zero next chapter index", fields: { complete: false, nextChapterIdx: 0 }, label: "Continue", href: "/course/course/ch/0" },
+  { name: "no available next chapter", fields: { complete: false, nextChapterIdx: null }, label: "Back to course", href: "/course/course" },
+  { name: "missing next chapter information", fields: {}, label: "Back to course", href: "/course/course" },
+])("uses the correct passing action for $name", async ({ fields, label, href }) => {
+  await mount(vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ...result, ...fields }) }));
+  answer(1); next(); answer(2); next(); answer(3); submitAnswers();
+  expect(await screen.findByRole("link", { name: label })).toHaveAttribute("href", href);
+});
+
+it("keeps failed attempts on the retry flow", async () => {
+  await mount(vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ...result, passed: false, complete: false, nextChapterIdx: null }) }));
+  answer(1); next(); answer(2); next(); answer(3); submitAnswers();
+  const retry = await screen.findByRole("link", { name: "Try again" });
+  expect(retry).toHaveAttribute("href", "/course/course/ch/0/quiz");
+});

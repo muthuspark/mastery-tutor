@@ -2389,3 +2389,328 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Let learners recover from skipped quiz questions\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 4"
 }
+
+[2026-10-18T13:54:39.357Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 5,
+  "phase": "discover"
+}
+
+[2026-10-18T13:55:23.110Z] 20261018123858542-ec1e3550 — Five candidates generated and ranked
+{
+  "formula": "impact * confidence / (effort * risk)",
+  "ranked": [
+    {
+      "title": "Send learners to the correct destination after their final quiz",
+      "category": "usability",
+      "rationale": "Use the server's completion and next-chapter information to provide a valid next activity after assessment.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:86 returns complete and nextChapterIdx.",
+        "components/quiz-page.tsx:12 omits both fields from Result.",
+        "components/quiz-page.tsx:63 constructs the next route by adding one to the current index, including after the final chapter."
+      ],
+      "acceptanceCriteria": [
+        "Passing the final chapter presents a course-completion action linking to the existing course page.",
+        "Passing an intermediate chapter links to the returned nextChapterIdx.",
+        "A passing result without an available next chapter falls back to the course page.",
+        "Host browser verification completes a test-owned MCQ fixture and follows the resulting action successfully."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 1,
+      "risk": 1,
+      "index": 2,
+      "score": 20
+    },
+    {
+      "title": "Give learners an evidence receipt after each quiz",
+      "category": "creative wildcard",
+      "rationale": "Show current-chapter and review performance separately, with a brief explanation of what this attempt demonstrates. This makes existing evidence understandable without claiming durable mastery.",
+      "evidence": [
+        "components/quiz-page.tsx:8 receives isReview, but the question display at line 64 does not identify review questions.",
+        "components/quiz-page.tsx:63 displays a combined percentage and says 'You understand the core ideas.'",
+        "app/api/chapters/[id]/attempts/route.ts:86 returns question IDs and per-answer scores, enabling results to be matched to delivered review provenance."
+      ],
+      "acceptanceCriteria": [
+        "Review questions are visibly identified during the quiz.",
+        "Results show separate correct/total counts for current questions and review questions, calculated from actual graded answers.",
+        "When no review questions were answered, results explicitly state that review was not assessed.",
+        "Results describe performance on this attempt without claiming delayed retention, transfer, or durable mastery.",
+        "Fixture verification checks mixed current/review outcomes and confirms that scoring and unlock behavior remain unchanged."
+      ],
+      "impact": 4,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 1,
+      "index": 4,
+      "score": 8
+    },
+    {
+      "title": "Preserve concept gaps even when the quiz passes",
+      "category": "user value",
+      "rationale": "A passing aggregate score can conceal missed concepts. Record every incorrect answer for review using its question concept tag. This should improve recommendation fidelity; learning benefits remain unmeasured.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:68-77 schedules missed answers only inside the failed-attempt branch.",
+        "lib/quiz.ts:23 uses the model answer as missedConcept, and the attempts route uses that value as the review conceptTag despite questions already having conceptTag."
+      ],
+      "acceptanceCriteria": [
+        "An 8/10 passing attempt schedules the two missed concepts while preserving chapter advancement.",
+        "Review records use question.conceptTag, with repeated misses updating the existing course/concept record.",
+        "A fully correct attempt creates no new review items; route tests verify persisted outcomes."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "index": 0,
+      "score": 6.25
+    },
+    {
+      "title": "Bound quiz loading independently of historical question count",
+      "category": "performance",
+      "rationale": "Filter eligible questions in SQL and bound retrieval before materializing rows. The source shows avoidable work; no latency improvement has been measured.",
+      "evidence": [
+        "app/api/chapters/[id]/quiz/route.ts:29-31 reads every chapter question before filtering and slicing to ten.",
+        "app/api/chapters/[id]/quiz/route.ts:52-54 repeats the same pattern after generation.",
+        "lib/quiz.ts:70 inserts new question rows, allowing historical rows to accumulate."
+      ],
+      "acceptanceCriteria": [
+        "Both loading paths apply generation-version and question-type predicates in SQL.",
+        "Retrieval uses a bounded selection strategy while retaining eligibility checks and the ten-question balance requirement.",
+        "A fixture with extensive historical generations returns the correct current quiz and leaves history untouched.",
+        "Verification records fetched-row counts or query behavior; latency claims require measurements."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "index": 3,
+      "score": 3
+    },
+    {
+      "title": "Reject incomplete or stale quiz submissions on the server",
+      "category": "reliability",
+      "rationale": "Client-side completeness checks do not protect persisted learning evidence. Validate the complete eligible question set before grading or changing progress.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:15 accepts any nonempty answer array.",
+        "app/api/chapters/[id]/attempts/route.ts:35-47 accepts any question belonging to the chapter and averages only submitted answers.",
+        "Source inspection implies that one correct chapter answer can produce a passing score; this was not executed."
+      ],
+      "acceptanceCriteria": [
+        "Missing, duplicate, blank, and stale-generation answers receive actionable validation errors before grading.",
+        "Rejected submissions create no attempts, answers, review items, or progress changes.",
+        "Complete submissions containing eligible review questions still grade successfully.",
+        "Server validation and quiz delivery share consistent question-selection rules."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 3,
+      "risk": 3,
+      "index": 1,
+      "score": 2.7777777777777777
+    }
+  ]
+}
+
+[2026-10-18T13:55:23.111Z] 20261018123858542-ec1e3550 — Candidate selected
+{
+  "iteration": 5,
+  "candidate": {
+    "title": "Send learners to the correct destination after their final quiz",
+    "category": "usability",
+    "rationale": "Use the server's completion and next-chapter information to provide a valid next activity after assessment.",
+    "evidence": [
+      "app/api/chapters/[id]/attempts/route.ts:86 returns complete and nextChapterIdx.",
+      "components/quiz-page.tsx:12 omits both fields from Result.",
+      "components/quiz-page.tsx:63 constructs the next route by adding one to the current index, including after the final chapter."
+    ],
+    "acceptanceCriteria": [
+      "Passing the final chapter presents a course-completion action linking to the existing course page.",
+      "Passing an intermediate chapter links to the returned nextChapterIdx.",
+      "A passing result without an available next chapter falls back to the course page.",
+      "Host browser verification completes a test-owned MCQ fixture and follows the resulting action successfully."
+    ],
+    "impact": 4,
+    "confidence": 5,
+    "effort": 1,
+    "risk": 1
+  },
+  "score": 20,
+  "reason": "Highest score among candidates whose titles have not been completed; ties use higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-18T13:55:23.130Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 5,
+  "phase": "implement"
+}
+
+[2026-10-18T13:56:34.531Z] 20261018123858542-ec1e3550 — Implementation completed; verification required
+{
+  "summary": "Implemented server-directed post-quiz navigation. All 79 app tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/quiz-result-destination.md.",
+  "decisions": [
+    {
+      "decision": "Use returned nextChapterIdx for intermediate chapters.",
+      "reason": "The server determines the available next chapter."
+    },
+    {
+      "decision": "Link completed courses and missing-next-chapter results to the course page.",
+      "reason": "Provides a valid destination without inventing chapter routes."
+    },
+    {
+      "decision": "Label actions “View completed course” or “Back to course”; preserve retry behavior.",
+      "reason": "Clarifies the destination while keeping failed-attempt behavior intact."
+    }
+  ]
+}
+
+[2026-10-18T13:56:34.553Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 5,
+  "phase": "verify"
+}
+
+[2026-10-18T13:56:37.340Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 5,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/5-verify-1792331794553-108-lint.log"
+}
+
+[2026-10-18T13:56:39.062Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 5,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/5-verify-1792331797346-109-typecheck.log"
+}
+
+[2026-10-18T13:56:57.952Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 5,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/5-verify-1792331799067-110-test.log"
+}
+
+[2026-10-18T13:57:03.915Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 5,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/5-verify-1792331817956-111-build.log"
+}
+
+[2026-10-18T13:57:03.922Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-18T13:57:03.957Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 5,
+  "phase": "browser-prepare"
+}
+
+[2026-10-18T13:58:00.639Z] 20261018123858542-ec1e3550 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-5.spec.ts",
+  "summary": "Wrote iteration-5.spec.ts with three real MCQ flows. ESLint, typecheck, and diff checks pass. Browser execution remains for the host.",
+  "decisions": [
+    {
+      "decision": "Verify final-chapter completion action and destination.",
+      "reason": "Confirms the learner reaches the completed course and progress persists after reload."
+    },
+    {
+      "decision": "Verify intermediate-chapter Continue action.",
+      "reason": "Checks the link matches the real server’s nextChapterIdx and opens the prepared lesson."
+    },
+    {
+      "decision": "Verify fallback when no next chapter is available.",
+      "reason": "Confirms a passing result returns to the course without falsely claiming completion."
+    },
+    {
+      "decision": "Use self-cleaning test-owned fixtures without API mocks.",
+      "reason": "Exercises real grading and persistence while avoiding paid generation and existing learner data."
+    }
+  ]
+}
+
+[2026-10-18T13:58:03.430Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 5,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/5-browser-prepare-1792331880639-116-lint.log"
+}
+
+[2026-10-18T13:58:05.758Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 5,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/5-browser-prepare-1792331883436-117-typecheck.log"
+}
+
+[2026-10-18T13:58:05.782Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 5,
+  "phase": "browser-run"
+}
+
+[2026-10-18T13:58:19.852Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 3,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-5.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/5-browser-run-1792331885842-118-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/5-browser-run-1792331885842-118-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/5-browser-run-1792331885842-118-playwright/artifacts"
+}
+
+[2026-10-18T13:58:19.873Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 5,
+  "phase": "review"
+}
+
+[2026-10-18T13:58:52.801Z] 20261018123858542-ec1e3550 — Independent review decision
+{
+  "summary": "Selected increment passes review; no concrete unresolved defects found. Production build was not independently verified.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Final-chapter host test completes a real MCQ fixture, follows “View completed course,” and verifies persisted completion.",
+    "Intermediate-chapter host test follows the returned nextChapterIdx; component tests additionally verify nonsequential index 4 and index 0.",
+    "Fallback host test verifies passing without an available next chapter returns to the course; component tests cover null and omitted fields.",
+    "Independently reran all 10 quiz component tests and git diff --check; both passed."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-5.spec.ts and the supplied results.json: 3 passed, 0 failed, 0 skipped, 0 flaky.",
+    "Inspected saved trace archives: no action errors. Completion screenshot confirms the existing course destination.",
+    "Browser scenarios verify actual quiz submission, navigation, persisted attempt data, and state after reload."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-18T13:58:52.818Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 5,
+  "phase": "commit"
+}
+
+[2026-10-18T13:58:52.822Z] 20261018123858542-ec1e3550 — Verified iteration approved for commit
+{
+  "iteration": 5,
+  "candidate": "Send learners to the correct destination after their final quiz",
+  "summary": "Implemented server-directed post-quiz navigation. All 79 app tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/quiz-result-destination.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Send learners to the correct destination after their final quiz\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 5"
+}
