@@ -1963,3 +1963,429 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Grade numeric MCQ option text without reinterpreting it as an index\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 3"
 }
+
+[2026-10-18T13:49:11.168Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 4,
+  "phase": "discover"
+}
+
+[2026-10-18T13:49:51.788Z] 20261018123858542-ec1e3550 — Five candidates generated and ranked
+{
+  "formula": "impact * confidence / (effort * risk)",
+  "ranked": [
+    {
+      "title": "Let learners recover from skipped quiz questions",
+      "category": "usability",
+      "rationale": "Add backward navigation and direct recovery to the first unanswered question. The current flow can strand learners at submission after an earlier skip.",
+      "evidence": [
+        "components/quiz-page.tsx:56 advances without requiring an answer and offers no previous-question control.",
+        "components/quiz-page.tsx:42 rejects submission when any answer is missing but leaves currentIndex unchanged.",
+        "Responses are already stored by question ID in components/quiz-page.tsx:23."
+      ],
+      "acceptanceCriteria": [
+        "Learners can move backward and forward while preserving selected answers.",
+        "Submitting with missing answers displays the first unanswered question and an accessible error.",
+        "Navigation controls are disabled during submission.",
+        "Host browser coverage uses the self-cleaning MCQ fixture to skip, recover, complete, and submit a quiz."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "index": 2,
+      "score": 10
+    },
+    {
+      "title": "Preserve concept gaps even when a quiz passes",
+      "category": "user value",
+      "rationale": "A passing aggregate score can hide individual gaps. Record incorrect answers under their existing concept tags regardless of the overall result. This improves evidence fidelity; teaching effectiveness remains unmeasured.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:68 updates reviewItems only in the failed-attempt branch.",
+        "lib/quiz.ts:23 uses the model answer as missedConcept for incorrect MCQs, although gradeAnswer receives question.conceptTag.",
+        "lib/chapter.ts:32 reads reviewItems as concepts to reinforce."
+      ],
+      "acceptanceCriteria": [
+        "A 9/10 passing fixture attempt persists the missed question's conceptTag in reviewItems.",
+        "Incorrect answers in failed attempts also use conceptTag rather than answer text.",
+        "Correct answers create no new misses; existing pass and unlock behavior remains covered.",
+        "Route tests verify persisted records across a fresh read."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "index": 0,
+      "score": 6.25
+    },
+    {
+      "title": "Bound quiz loading as question history grows",
+      "category": "performance",
+      "rationale": "Move current-version and MCQ filtering into SQL and bound the returned rows. This avoids loading every historical question on each quiz request. Query growth is visible in source; latency savings have not been measured.",
+      "evidence": [
+        "app/api/chapters/[id]/quiz/route.ts:29 loads all chapter questions before filtering and slicing to ten.",
+        "The same full-history query runs again after generation in app/api/chapters/[id]/quiz/route.ts.",
+        "lib/quiz.ts:77 inserts new question rows, while answered historical questions are retained."
+      ],
+      "acceptanceCriteria": [
+        "Quiz selection filters generation version, type, and option eligibility before applying the ten-question limit.",
+        "A fixture with extensive stale history returns the same eligible current questions as the existing selection rules.",
+        "Database selection materializes at most ten current candidates per selection.",
+        "Existing balance validation, review inclusion, and response allowlist tests pass."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "index": 3,
+      "score": 3
+    },
+    {
+      "title": "Reject incomplete and duplicate quiz submissions",
+      "category": "reliability",
+      "rationale": "Validate the submitted question set before grading so a partial or repeated answer cannot establish chapter completion.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:15 requires only one answer and does not enforce unique IDs.",
+        "app/api/chapters/[id]/attempts/route.ts:34 checks question ownership but not completeness or generation version.",
+        "app/api/chapters/[id]/attempts/route.ts:46 averages only submitted answers."
+      ],
+      "acceptanceCriteria": [
+        "Submitting one correct answer from a ten-question quiz returns 400 without writing evidence or unlocking chapters.",
+        "Duplicate IDs, blank responses, and stale current-chapter question sets are rejected before grading.",
+        "Complete current quizzes with eligible review questions remain accepted.",
+        "Tests assert rejected requests leave attempts, answers, review items, and chapter status unchanged."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 3,
+      "risk": 3,
+      "index": 1,
+      "score": 2.7777777777777777
+    },
+    {
+      "title": "Offer a prerequisite detour after repeated difficulty",
+      "category": "creative wildcard",
+      "rationale": "After two consecutive failed attempts, offer an optional prerequisite reading detour with an explanation citing those attempts. This is a small, transparent adaptation experiment using existing history, without claiming a diagnosed prerequisite gap.",
+      "evidence": [
+        "lib/gating.ts:19 returns generic remediation text without considering previous attempts.",
+        "app/api/chapters/[id]/attempts/route.ts:48 already reads chapter attempt history.",
+        "lib/chapter.ts:42 uses persisted prerequisite chapter indexes.",
+        "components/quiz-page.tsx:55 offers retry and chapter review without a different approach after repeated failure."
+      ],
+      "acceptanceCriteria": [
+        "Two consecutive failures trigger an optional link to an existing accessible prerequisite chapter.",
+        "The explanation cites the failed attempts and describes prerequisite review as a suggestion.",
+        "One failure, an intervening pass, or no accessible prerequisite produces no detour.",
+        "The rule derives from persisted attempts after reload and does not reset prerequisite progress or regenerate content.",
+        "Host fixture coverage verifies the repeated-failure recommendation and destination."
+      ],
+      "impact": 4,
+      "confidence": 3,
+      "effort": 3,
+      "risk": 2,
+      "index": 4,
+      "score": 2
+    }
+  ]
+}
+
+[2026-10-18T13:49:51.789Z] 20261018123858542-ec1e3550 — Candidate selected
+{
+  "iteration": 4,
+  "candidate": {
+    "title": "Let learners recover from skipped quiz questions",
+    "category": "usability",
+    "rationale": "Add backward navigation and direct recovery to the first unanswered question. The current flow can strand learners at submission after an earlier skip.",
+    "evidence": [
+      "components/quiz-page.tsx:56 advances without requiring an answer and offers no previous-question control.",
+      "components/quiz-page.tsx:42 rejects submission when any answer is missing but leaves currentIndex unchanged.",
+      "Responses are already stored by question ID in components/quiz-page.tsx:23."
+    ],
+    "acceptanceCriteria": [
+      "Learners can move backward and forward while preserving selected answers.",
+      "Submitting with missing answers displays the first unanswered question and an accessible error.",
+      "Navigation controls are disabled during submission.",
+      "Host browser coverage uses the self-cleaning MCQ fixture to skip, recover, complete, and submit a quiz."
+    ],
+    "impact": 4,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 1
+  },
+  "score": 10,
+  "reason": "Highest score among candidates whose titles have not been completed; ties use higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-18T13:49:51.807Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 4,
+  "phase": "implement"
+}
+
+[2026-10-18T13:51:13.465Z] 20261018123858542-ec1e3550 — Implementation completed; verification required
+{
+  "summary": "Implemented backward navigation, preserved answers, focused recovery to the first unanswered question, and submission-time control locking. All 72 app tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/skipped-quiz-recovery.md.",
+  "decisions": [
+    {
+      "decision": "Allow skips and add Previous question.",
+      "reason": "Learners can revisit questions while retaining selections."
+    },
+    {
+      "decision": "Return incomplete submissions to the earliest unanswered question with a focused alert.",
+      "reason": "Provides a clear, accessible recovery action."
+    },
+    {
+      "decision": "Keep existing question-ID response state and submission format.",
+      "reason": "Preserves compatibility with grading."
+    },
+    {
+      "decision": "Lock navigation and answer edits during submission.",
+      "reason": "Keeps displayed answers consistent with submitted evidence."
+    },
+    {
+      "decision": "Reuse existing button styles with responsive layout.",
+      "reason": "Maintains visual consistency and mobile usability."
+    }
+  ]
+}
+
+[2026-10-18T13:51:13.490Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 4,
+  "phase": "verify"
+}
+
+[2026-10-18T13:51:16.271Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 4,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-verify-1792331473490-75-lint.log"
+}
+
+[2026-10-18T13:51:17.948Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 4,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-verify-1792331476276-76-typecheck.log"
+}
+
+[2026-10-18T13:51:36.780Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 4,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-verify-1792331477953-77-test.log"
+}
+
+[2026-10-18T13:51:42.356Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 4,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-verify-1792331496788-78-build.log"
+}
+
+[2026-10-18T13:51:42.362Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-18T13:51:42.382Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 4,
+  "phase": "browser-prepare"
+}
+
+[2026-10-18T13:52:39.279Z] 20261018123858542-ec1e3550 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-4.spec.ts",
+  "summary": "Created iteration-4.spec.ts. Typecheck, file lint, and Playwright discovery pass. Browser execution remains for the host.",
+  "decisions": [
+    {
+      "decision": "Cover backward/forward navigation, answer revision, and recovery of two skipped questions with focused alerts.",
+      "reason": "Verifies saved selections and recovery to the earliest unanswered question."
+    },
+    {
+      "decision": "Pause submission briefly, then continue to the real API.",
+      "reason": "Reliably checks disabled navigation and answers without mocking grading."
+    },
+    {
+      "decision": "Verify graded answers, persisted records, and course progress after reload using the self-cleaning fixture.",
+      "reason": "Confirms recovered answers are submitted and saved while isolating test-owned data."
+    }
+  ]
+}
+
+[2026-10-18T13:52:42.058Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 4,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-browser-prepare-1792331559280-83-lint.log"
+}
+
+[2026-10-18T13:52:43.755Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 4,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-browser-prepare-1792331562063-84-typecheck.log"
+}
+
+[2026-10-18T13:52:43.779Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 4,
+  "phase": "browser-run"
+}
+
+[2026-10-18T13:52:48.998Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "failed",
+  "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected: \u001b[32m\"Answer question 1 before submitting. Your other answers are saved.\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" tabindex=\"-1\" class=\"ui mt-4 text-sm text-[var(--accent-dark)]\">Answer question 1 before submitting. Your other a…</p> aka getByText('Answer question 1 before')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected: \u001b[32m\"Answer question 1 before submitting. Your other answers are saved.\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" tabindex=\"-1\" class=\"ui mt-4 text-sm text-[var(--accent-dark)]\">Answer question 1 before submitting. Your other a…</p> aka getByText('Answer question 1 before')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\n\n  45 |     await submit.click();\n  46 |     await expect(heading).toHaveText(delivered[0].prompt);\n> 47 |     await expect(alert).toHaveText(\"Answer question 1 before submitting. Your other answers are saved.\");\n     |                         ^\n  48 |     await expect(alert).toBeFocused();\n  49 |     await expect(previous).toBeDisabled();\n  50 |     expect(fixture.persisted().attempts).toEqual([]);\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261018123858542-ec1e3550/iteration-4.spec.ts:47:25",
+  "passed": 0,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-4.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-browser-run-1792331563814-85-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-browser-run-1792331563814-85-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-browser-run-1792331563814-85-playwright/artifacts"
+}
+
+[2026-10-18T13:52:49.017Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 4,
+  "phase": "repair"
+}
+
+[2026-10-18T13:52:49.017Z] 20261018123858542-ec1e3550 — Repair selected
+{
+  "iteration": 4,
+  "attempt": 1,
+  "maximum": 3,
+  "reasons": [
+    "Playwright acceptance test failed: Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected: \u001b[32m\"Answer question 1 before submitting. Your other answers are saved.\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" tabindex=\"-1\" class=\"ui mt-4 text-sm text-[var(--accent-dark)]\">Answer question 1 before submitting. Your other a…</p> aka getByText('Answer question 1 before')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected: \u001b[32m\"Answer question 1 before submitting. Your other answers are saved.\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" tabindex=\"-1\" class=\"ui mt-4 text-sm text-[var(--accent-dark)]\">Answer question 1 before submitting. Your other a…</p> aka getByText('Answer question 1 before')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toHaveText\" getByRole('alert') with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\n\n  45 |     await submit.click();\n  46 |     await expect(heading).toHaveText(delivered[0].prompt);\n> 47 |     await expect(alert).toHaveText(\"Answer question 1 before submitting. Your other answers are saved.\");\n     |                         ^\n  48 |     await expect(alert).toBeFocused();\n  49 |     await expect(previous).toBeDisabled();\n  50 |     expect(fixture.persisted().attempts).toEqual([]);\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261018123858542-ec1e3550/iteration-4.spec.ts:47:25. Inspect /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-browser-run-1792331563814-85-playwright/results.json and /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-browser-run-1792331563814-85-playwright/runner.log."
+  ]
+}
+
+[2026-10-18T13:53:24.456Z] 20261018123858542-ec1e3550 — Repair completed; verification required
+{
+  "attempt": 1,
+  "summary": "Fixed the Playwright alert locator. All 3 focused tests, lint, typecheck, test discovery, and diff checks pass. Host browser rerun remains pending. Evidence: .ralph/20261018123858542-ec1e3550/evidence/quiz-recovery-alert-repair.md.",
+  "decisions": [
+    {
+      "decision": "Scope the alert locator to the quiz’s main landmark.",
+      "reason": "Excludes Next.js’s route announcer while preserving text, focus, and dismissal assertions."
+    },
+    {
+      "decision": "Keep application code and remaining browser coverage unchanged.",
+      "reason": "The recorded failure was locator ambiguity; no behavior change or weaker assertion was needed."
+    }
+  ]
+}
+
+[2026-10-18T13:53:24.475Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 4,
+  "phase": "verify"
+}
+
+[2026-10-18T13:53:27.252Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 4,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-verify-1792331604475-90-lint.log"
+}
+
+[2026-10-18T13:53:28.998Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 4,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-verify-1792331607257-91-typecheck.log"
+}
+
+[2026-10-18T13:53:48.107Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 4,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-verify-1792331609003-92-test.log"
+}
+
+[2026-10-18T13:53:53.426Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 4,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-verify-1792331628112-93-build.log"
+}
+
+[2026-10-18T13:53:53.433Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-run",
+  "failures": []
+}
+
+[2026-10-18T13:53:53.453Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 4,
+  "phase": "browser-run"
+}
+
+[2026-10-18T13:54:00.905Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 1,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-4.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-browser-run-1792331633489-94-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-browser-run-1792331633489-94-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/4-browser-run-1792331633489-94-playwright/artifacts"
+}
+
+[2026-10-18T13:54:00.923Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 4,
+  "phase": "review"
+}
+
+[2026-10-18T13:54:39.303Z] 20261018123858542-ec1e3550 — Independent review decision
+{
+  "summary": "Reviewed the full diff and host evidence. No unresolved defects found in the selected increment.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Backward/forward navigation preserves revised answers; component and host browser tests verify this.",
+    "Incomplete submission returns to the earliest unanswered question with a focused role=alert; host coverage verifies two successive recoveries.",
+    "Submission disables Previous, Submit, answer inputs, and chapter navigation; component tests also verify recovery after submission failure.",
+    "The host test uses the self-cleaning MCQ fixture, completes real grading, and verifies all 10 persisted answers and progress after reload.",
+    "Independent focused rerun: 3/3 tests passed; diff check passed. Host logs record passing lint, typecheck, 105 tests, and production build."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-4.spec.ts, results.json, artifact inventory, and recovery/completion screenshots.",
+    "Host result: 1 passed, 0 skipped, 0 unexpected, 0 flaky, no retries or errors."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-18T13:54:39.321Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 4,
+  "phase": "commit"
+}
+
+[2026-10-18T13:54:39.325Z] 20261018123858542-ec1e3550 — Verified iteration approved for commit
+{
+  "iteration": 4,
+  "candidate": "Let learners recover from skipped quiz questions",
+  "summary": "Implemented backward navigation, preserved answers, focused recovery to the first unanswered question, and submission-time control locking. All 72 app tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/skipped-quiz-recovery.md.\nRepair 1: Fixed the Playwright alert locator. All 3 focused tests, lint, typecheck, test discovery, and diff checks pass. Host browser rerun remains pending. Evidence: .ralph/20261018123858542-ec1e3550/evidence/quiz-recovery-alert-repair.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Let learners recover from skipped quiz questions\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 4"
+}
