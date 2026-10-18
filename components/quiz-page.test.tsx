@@ -12,10 +12,10 @@ const questions = [1, 2, 3].map(number => ({
   options: [`Answer ${number}`, `Other ${number}`], isReview: false,
 }));
 const result = { score: 1, passed: true, answers: [] };
-async function mount(submit = vi.fn().mockResolvedValue({ ok: true, json: async () => result })) {
+async function mount(submit = vi.fn().mockResolvedValue({ ok: true, json: async () => result }), quizQuestions = questions) {
   const fetch = vi.fn(async (url: string, options?: RequestInit) => {
     if (options?.method === "POST") return submit(url, options);
-    return { ok: true, json: async () => url.includes("/quiz") ? { questions } : { chapters: [{ id: "chapter", idx: 0, status: "open" }] } };
+    return { ok: true, json: async () => url.includes("/quiz") ? { questions: quizQuestions } : { chapters: [{ id: "chapter", idx: 0, status: "open" }] } };
   });
   vi.stubGlobal("fetch", fetch);
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><QuizPage /></QueryClientProvider>);
@@ -149,4 +149,27 @@ it("shows returned remediation even when the failed attempt has no concept tags"
   answer(1); next(); answer(2); next(); answer(3); submitAnswers();
   expect(await screen.findByRole("region", { name: "Before trying again" })).toHaveTextContent("Review the explanations, then try a fresh QnA.");
   expect(screen.queryByRole("region", { name: "Concepts to revisit" })).not.toBeInTheDocument();
+});
+
+
+it.each([
+  { name: "correct answer", response: "Independent retrieval", modelAnswer: "Independent retrieval", score: 1 },
+  { name: "incorrect answer", response: "Assisted practice", modelAnswer: "Independent retrieval", score: 0 },
+  { name: "numeric option text", response: "0", modelAnswer: "0", score: 1 },
+  { name: "long option text", response: "A long explanation of separation of variables. ".repeat(20) + "x".repeat(200), modelAnswer: "Separate the variables.", score: 0 },
+  { name: "literal markup", response: '<img src=x onerror="alert(1)"> **answer** <script>alert(1)</script>', modelAnswer: "<strong>Expected</strong>", score: 0 },
+])("shows the submitted $name beside its feedback and model answer", async ({ response, modelAnswer, score }) => {
+  const graded = { prompt: "Question 1", response, modelAnswer, score, feedback: score ? "Correct." : "Review this answer.", missedConcept: null };
+  const submit = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ...result, answers: [graded] }) });
+  await mount(submit, [{ ...questions[0], options: [response, "Other"] }]);
+  fireEvent.click(screen.getByRole("radio", { name: `A. ${response}` }));
+  submitAnswers();
+  await screen.findByRole("heading", { name: "Chapter complete" });
+  expect(JSON.parse(submit.mock.calls[0][1].body).answers).toEqual([{ questionId: "q1", response }]);
+  const submitted = screen.getByText("Your answer:").closest("p")!;
+  expect(submitted.textContent).toBe(`Your answer: ${response}`);
+  const review = submitted.parentElement!;
+  expect(review).toContainElement(screen.getByText(graded.feedback));
+  expect(review).toContainElement(screen.getByText(`Model answer: ${modelAnswer}`));
+  expect(review.querySelector("img, script, strong")).toBeNull();
 });

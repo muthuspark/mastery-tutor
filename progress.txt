@@ -4230,3 +4230,333 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Show concept-specific guidance on quiz results\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 9"
 }
+
+[2026-10-18T14:21:23.462Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 10,
+  "phase": "discover"
+}
+
+[2026-10-18T14:22:06.016Z] 20261018123858542-ec1e3550 — Five candidates generated and ranked
+{
+  "formula": "impact * confidence / (effort * risk)",
+  "ranked": [
+    {
+      "title": "Show the learner’s submitted answer beside quiz feedback",
+      "category": "usability",
+      "rationale": "Let learners compare their choice with the expected answer while reviewing mistakes. The missing comparison is confirmed in source; improved comprehension remains a hypothesis.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:85 already returns each submitted response.",
+        "components/quiz-page.tsx:12 includes response in the result type.",
+        "components/quiz-page.tsx:99 renders the question, feedback, and model answer but omits the learner’s response."
+      ],
+      "acceptanceCriteria": [
+        "Each result displays a clearly labeled submitted answer alongside feedback and the model answer.",
+        "Correct, incorrect, numeric, and long option text render accurately and wrap on narrow screens.",
+        "Answer content renders as text without interpreting markup.",
+        "A fixture-backed browser quiz verifies that selected responses appear in the resulting feedback."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 1,
+      "risk": 1,
+      "index": 2,
+      "score": 15
+    },
+    {
+      "title": "Deliver eligible review questions without silently dropping them",
+      "category": "user value",
+      "rationale": "Keep recorded concept gaps represented in later practice. Static inspection identifies a selection-order defect; its frequency in learner sessions has not been measured.",
+      "evidence": [
+        "lib/quiz.ts:84–94 limits review rows to two before filtering excluded IDs, unsupported types, and invalid options. Eligible later rows cannot fill those slots.",
+        "app/api/chapters/[id]/quiz/route.ts:56–57 supplies exclusions, while app/api/chapters/[id]/attempts/route.ts:33 recomputes eligibility without them, potentially rejecting a replacement review question."
+      ],
+      "acceptanceCriteria": [
+        "Apply eligibility and exclusion rules before taking the two highest-priority review questions.",
+        "Fixtures with excluded or unsupported leading rows still return two eligible questions when available.",
+        "Every delivered review question is accepted on submission; unrelated course questions remain rejected.",
+        "A fixture-backed browser quiz can submit successfully with replacement review questions."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "index": 0,
+      "score": 5
+    },
+    {
+      "title": "Bound quiz loading queries as assessment history grows",
+      "category": "performance",
+      "rationale": "Avoid materializing every historical question when delivering at most ten current questions. Query growth is visible in source; no latency benchmark has been run.",
+      "evidence": [
+        "app/api/chapters/[id]/quiz/route.ts:29–31 retrieves all chapter questions before filtering generation, type, and option eligibility and taking ten.",
+        "app/api/chapters/[id]/quiz/route.ts:52–54 repeats that pattern after generation.",
+        "lib/quiz.ts:70 inserts generated question rows, allowing retained history to increase subsequent reads."
+      ],
+      "acceptanceCriteria": [
+        "Move current-generation and MCQ filtering into the database and bound returned candidates while preserving option eligibility.",
+        "Preserve selection order, assessment-quality checks, answer-key protection, and historical evidence.",
+        "A fixture containing many obsolete questions returns the same ten eligible current questions as a small fixture.",
+        "Query inspection or instrumentation demonstrates that obsolete generations are not materialized; report timing only if actually measured."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "index": 3,
+      "score": 3
+    },
+    {
+      "title": "Offer an optional recall pause before revealing MCQ choices",
+      "category": "creative wildcard",
+      "rationale": "Give learners a small opportunity to retrieve an answer before recognition cues appear. This is a testable interaction experiment, with no claim of improved retention or independent recall evidence.",
+      "evidence": [
+        "components/quiz-page.tsx:100 immediately displays all options beneath every question.",
+        "components/quiz-page.tsx:8 and lib/quiz.ts:105–108 identify and grade the activity as MCQ.",
+        "The supplied goal calls for retrieval practice and gradually reduced assistance."
+      ],
+      "acceptanceCriteria": [
+        "An optional recall-first setting initially conceals choices and provides a keyboard-accessible reveal action.",
+        "Revealing choices preserves question navigation and previously selected answers.",
+        "The activity remains labeled and recorded as MCQ performance; the pause creates no fabricated recall, transfer, or mastery evidence.",
+        "Component and fixture-backed browser checks cover revealing choices, navigating backward, and completing the real quiz flow."
+      ],
+      "impact": 2,
+      "confidence": 3,
+      "effort": 2,
+      "risk": 1,
+      "index": 4,
+      "score": 3
+    },
+    {
+      "title": "Require a complete, valid quiz submission before awarding a pass",
+      "category": "reliability",
+      "rationale": "Prevent partial submissions from creating misleading assessment evidence and unlocking chapters. This follows directly from the validation path; no exploit or browser reproduction was performed.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:15 permits a single answer and whitespace-only responses.",
+        "app/api/chapters/[id]/attempts/route.ts:35–40 checks chapter membership but not completeness, uniqueness, or current generation.",
+        "app/api/chapters/[id]/attempts/route.ts:46–60 averages only submitted answers and marks the chapter passed.",
+        "lib/db/schema.ts:150–153 catches repeated question IDs through a database uniqueness constraint rather than an actionable validation response."
+      ],
+      "acceptanceCriteria": [
+        "Reject missing required questions, duplicate IDs, blank responses, and obsolete current-chapter questions with an explicit client error before grading.",
+        "Rejected submissions create no attempts, answers, review updates, chapter unlocks, or generation jobs.",
+        "A complete current quiz, including supported review questions, retains its existing grading behavior.",
+        "Route tests cover a single correct answer submitted against a ten-question quiz and confirm it cannot award a pass."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 3,
+      "risk": 3,
+      "index": 1,
+      "score": 2.7777777777777777
+    }
+  ]
+}
+
+[2026-10-18T14:22:06.017Z] 20261018123858542-ec1e3550 — Candidate selected
+{
+  "iteration": 10,
+  "candidate": {
+    "title": "Show the learner’s submitted answer beside quiz feedback",
+    "category": "usability",
+    "rationale": "Let learners compare their choice with the expected answer while reviewing mistakes. The missing comparison is confirmed in source; improved comprehension remains a hypothesis.",
+    "evidence": [
+      "app/api/chapters/[id]/attempts/route.ts:85 already returns each submitted response.",
+      "components/quiz-page.tsx:12 includes response in the result type.",
+      "components/quiz-page.tsx:99 renders the question, feedback, and model answer but omits the learner’s response."
+    ],
+    "acceptanceCriteria": [
+      "Each result displays a clearly labeled submitted answer alongside feedback and the model answer.",
+      "Correct, incorrect, numeric, and long option text render accurately and wrap on narrow screens.",
+      "Answer content renders as text without interpreting markup.",
+      "A fixture-backed browser quiz verifies that selected responses appear in the resulting feedback."
+    ],
+    "impact": 3,
+    "confidence": 5,
+    "effort": 1,
+    "risk": 1
+  },
+  "score": 15,
+  "reason": "Highest score among candidates whose titles have not been completed; ties use higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-18T14:22:06.037Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 10,
+  "phase": "implement"
+}
+
+[2026-10-18T14:22:34.762Z] 20261018123858542-ec1e3550 — Browser isolation guidance updated
+{
+  "decision": "Separate real grading/evidence checks from out-of-scope background quiz regeneration",
+  "reason": "Iteration 9 exposed intentional failed-attempt review prefetch changing generation metadata; the corrected browser test keeps real submission and lesson reads while explicitly isolating background regeneration",
+  "appliesTo": "Future Ralph launches; verification and review remain mandatory"
+}
+
+[2026-10-18T14:23:11.427Z] 20261018123858542-ec1e3550 — Implementation completed; verification required
+{
+  "summary": "Implemented labeled submitted answers beside quiz feedback, with wrapping and literal text rendering. All 110 application tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/submitted-answer-feedback.md.",
+  "decisions": [
+    {
+      "decision": "Show “Your answer” before feedback and model answer.",
+      "reason": "Makes comparison clear within each result."
+    },
+    {
+      "decision": "Render the server-returned response as React text.",
+      "reason": "Preserves numeric answers and displays markup literally."
+    },
+    {
+      "decision": "Preserve whitespace and wrap long text within result rows.",
+      "reason": "Supports readable answers on narrow screens."
+    }
+  ]
+}
+
+[2026-10-18T14:23:11.450Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 10,
+  "phase": "verify"
+}
+
+[2026-10-18T14:23:14.450Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 10,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/10-verify-1792333391450-246-lint.log"
+}
+
+[2026-10-18T14:23:16.183Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 10,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/10-verify-1792333394455-247-typecheck.log"
+}
+
+[2026-10-18T14:23:35.607Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 10,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/10-verify-1792333396188-248-test.log"
+}
+
+[2026-10-18T14:23:41.116Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 10,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/10-verify-1792333415612-249-build.log"
+}
+
+[2026-10-18T14:23:41.121Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-18T14:23:41.141Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 10,
+  "phase": "browser-prepare"
+}
+
+[2026-10-18T14:24:44.513Z] 20261018123858542-ec1e3550 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-10.spec.ts",
+  "summary": "Created iteration-10.spec.ts. Typecheck and Playwright discovery pass; browser execution remains pending with the host.",
+  "decisions": [
+    {
+      "decision": "Use a self-cleaning fixture and real grading API.",
+      "reason": "Verifies selected responses appear beside feedback and model answers without mocking grading."
+    },
+    {
+      "decision": "Cover correct, incorrect, numeric, long, and literal-markup answers at desktop and mobile widths.",
+      "reason": "Checks exact text, wrapping, and safe text rendering."
+    },
+    {
+      "decision": "Verify saved responses after reloading the completed course.",
+      "reason": "Feedback uses component state; persisted answers must survive navigation and reload."
+    }
+  ]
+}
+
+[2026-10-18T14:24:47.541Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 10,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/10-browser-prepare-1792333484514-254-lint.log"
+}
+
+[2026-10-18T14:24:49.242Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 10,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/10-browser-prepare-1792333487546-255-typecheck.log"
+}
+
+[2026-10-18T14:24:49.268Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 10,
+  "phase": "browser-run"
+}
+
+[2026-10-18T14:24:55.779Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 1,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-10.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/10-browser-run-1792333489323-256-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/10-browser-run-1792333489323-256-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/10-browser-run-1792333489323-256-playwright/artifacts"
+}
+
+[2026-10-18T14:24:55.801Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 10,
+  "phase": "review"
+}
+
+[2026-10-18T14:25:41.167Z] 20261018123858542-ec1e3550 — Independent review decision
+{
+  "summary": "Selected increment passes review. No unresolved defects found.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Each result labels the submitted response beside feedback and the model answer.",
+    "Component tests cover correct, incorrect, numeric, long, and markup-containing responses; independently rerun: 20/20 passed.",
+    "Host browser assertions verify exact text, literal markup, and wrapping without overflow at 1280px and 375px.",
+    "Fixture-backed browser test uses real delivery and grading, verifies persisted responses, and cleans up its fixtures.",
+    "Host logs record 143 passing tests and a successful production build; diff check passed."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-10.spec.ts and results.json: 1 passed, no skips, retries, or errors.",
+    "Inspected host screenshot attachments at desktop and mobile widths; long answers wrap visibly.",
+    "Inspected artifact inventory and trace archive."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-18T14:25:41.189Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 10,
+  "phase": "commit"
+}
+
+[2026-10-18T14:25:41.193Z] 20261018123858542-ec1e3550 — Verified iteration approved for commit
+{
+  "iteration": 10,
+  "candidate": "Show the learner’s submitted answer beside quiz feedback",
+  "summary": "Implemented labeled submitted answers beside quiz feedback, with wrapping and literal text rendering. All 110 application tests, lint, typecheck, and diff checks pass. Host browser verification remains pending; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/submitted-answer-feedback.md.",
+  "decision": "Stop after this commit: iteration limit reached",
+  "commitMessage": "ralph: Show the learner’s submitted answer beside quiz feedback\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 10"
+}
