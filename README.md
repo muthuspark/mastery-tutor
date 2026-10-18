@@ -110,3 +110,26 @@ The interface follows the repository's Paper & Ink guide: warm paper, charcoal i
 ## Status
 
 The core local learning loop is implemented and verified: onboarding, syllabus creation, lazy chapter generation, QnA, mastery gating, remediation, review scheduling, regeneration, and export.
+
+## Autonomous improvement loop
+
+The Ralph script uses your installed, authenticated Codex CLI to improve this repository toward a supplied goal. Each iteration proposes five diverse candidates, ranks their estimated impact and confidence against effort and risk, implements the winner, runs checks, reviews it in a fresh session, and repairs defects before committing. Scores are estimates supported by repository evidence, not measured product outcomes.
+
+```bash
+npm run ralph -- --goal "Improve learner retention" --iterations 10
+npm run ralph -- --goal-file loop-prd.md
+npm run ralph -- --resume <run-id>
+npm run ralph -- --help
+```
+
+Start from a clean Git working tree, including untracked files. Commit the script and any existing goal/progress files you want to keep before starting; the script never stashes existing changes. A goal file outside the repository is also supported. Ralph creates and stays on a local `ralph/<run-id>` branch, with one commit per verified iteration. It never pushes, merges, or deploys. Review the resulting branch yourself before merging.
+
+The default run completes **10 verified iterations**. Use `--iterations 0` to continue until stopped, `--model <model>` to override your Codex configuration, `--max-fix-attempts <N>` to change the default three repair rounds, or `--phase-timeout-minutes <N>` to change the default 30-minute timeout per agent/check command. Codex runs with approvals disabled, read-only access for discovery/review, and workspace-write access for implementation/repair. Missing permissions or unavailable external services are blockers rather than reasons to bypass the sandbox.
+
+Lint, typecheck, tests, and production build run before the first iteration and after every implementation/repair. Changes to user-facing flows also require browser evidence checked by the review session. Configure working browser tooling and any required local services before running. Failed checks or unresolved defects block new features; exhausted repairs stop the run with unfinished changes preserved. The initial goal checklist is a direction for improvement, not an automatic termination signal.
+
+Every decision is appended with a timestamp and run ID to root `progress.txt`: all five candidates and scores, selection reasoning, implementation summaries, check outcomes, review evidence and findings, repairs, resume actions, and stop decisions. Existing contents are preserved. The log is included in each verified iteration’s commit; an interrupted run preserves its pending log entries alongside unfinished code. Commit hashes are recorded in the run state.
+
+Prompts, raw CLI events, check logs, candidate rankings, and atomic state checkpoints are saved in ignored `.ralph/<run-id>/`. Ctrl+C stops the active child process and preserves work. Resume with the printed command on the same branch, without editing the recorded changes or HEAD; saved options and the goal snapshot are reused. Interrupted implementations resume as repairs, while checks and reviews can be repeated. After an abrupt machine/process crash, uncheckpointed edits may require manual reconciliation; the script refuses mismatched state rather than resetting files. A lock prevents simultaneous runs in the same working tree.
+
+Creating or testing this script does not start a paid agent run. Its automated tests use fake Codex/npm executables and temporary Git repositories.
