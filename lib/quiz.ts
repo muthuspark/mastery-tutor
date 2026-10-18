@@ -20,7 +20,7 @@ export function gradeMcq(response: string, modelAnswer: string, options: string[
   const optionIndex = /^\d+$/.test(normalized) ? Number(normalized) : -1;
   const selected = matchingOption ?? options?.[optionIndex] ?? response;
   const passed = normalizeAnswer(selected) === normalizeAnswer(modelAnswer);
-  return { score: passed ? 1 : 0, feedback: passed ? "Correct." : `The expected answer is: ${modelAnswer}.`, missedConcept: passed ? null : modelAnswer };
+  return { score: passed ? 1 : 0, feedback: passed ? "Correct." : `The expected answer is: ${modelAnswer}.` };
 }
 
 export async function generateValidQuiz(
@@ -103,7 +103,10 @@ export function latestAttemptQuestionIds(attemptId: string) {
 }
 
 export async function gradeAnswer(question: typeof questions.$inferSelect, response: string, agent: Agent = "codex") {
-  if (question.type === "mcq") return gradeMcq(response, question.modelAnswer, question.options);
+  if (question.type === "mcq") {
+    const result = gradeMcq(response, question.modelAnswer, question.options);
+    return { ...result, missedConcept: result.score === 0 ? question.conceptTag : null };
+  }
   return runAgentObject(
     agent,
     "grading",

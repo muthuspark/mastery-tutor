@@ -74,7 +74,7 @@ describe("attempt grading agent requirements", () => {
     const body = await response.json();
     expect(response.status).toBe(200);
     expect(body).toMatchObject({ score: 0.5, passed: false, complete: false });
-    expect(body.answers).toMatchObject([{ score: 1, feedback: "Correct.", missedConcept: null }, { score: 0, missedConcept: "y = Ce^x" }]);
+    expect(body.answers).toMatchObject([{ score: 1, feedback: "Correct.", missedConcept: null }, { score: 0, missedConcept: "separation" }]);
     expect(agentForRequest).not.toHaveBeenCalled();
     expect(runAgentObject).not.toHaveBeenCalled();
     expect(db.select().from(attempts).all()).toMatchObject([{ id: body.attemptId, attemptNo: 1, score: 0.5, passed: false }]);
@@ -128,5 +128,70 @@ describe("attempt grading agent requirements", () => {
     expect(db.select().from(courses).where(eq(courses.id, courseId)).get()?.completedAt).toBeNull();
     expect(agentForRequest).not.toHaveBeenCalled();
     expect(runAgentObject).not.toHaveBeenCalled();
+  });
+});
+
+describe("concept gaps across attempt outcomes", () => {
+  function tenQuestionQuiz() {
+    const first = db.select().from(questions).where(eq(questions.id, questionId)).get()!;
+    const quiz = Array.from({ length: 10 }, (_, index) => ({
+      ...first,
+      id: index === 0 ? questionId : randomUUID(),
+      prompt: `Differential equations question ${index + 1}`,
+      conceptTag: `concept-${index + 1}`,
+    }));
+    db.update(questions).set({ conceptTag: quiz[0].conceptTag }).where(eq(questions.id, questionId)).run();
+    db.insert(questions).values(quiz.slice(1)).run();
+    return quiz;
+  }
+
+  it.each([
+    { incorrect: 2, score: 0.8, passed: true },
+    { incorrect: 3, score: 0.7, passed: false },
+  ])("records each concept gap with $incorrect misses and passed=$passed", async ({ incorrect, score, passed }) => {
+    const quiz = tenQuestionQuiz();
+    const response = await submit(quiz.map((question, index) => ({ questionId: question.id, response: index < incorrect ? "y = x" : question.modelAnswer })));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({ score, passed, complete: passed });
+    expect(db.select().from(attempts).all()).toMatchObject([{ id: body.attemptId, score, passed }]);
+    expect(db.select().from(chapters).where(eq(chapters.id, chapterId)).get()?.status).toBe(passed ? "passed" : "open");
+    const gaps = db.select().from(reviewItems).all();
+    expect(gaps).toHaveLength(incorrect);
+    expect(gaps).toEqual(expect.arrayContaining(quiz.slice(0, incorrect).map((question) => expect.objectContaining({
+      courseId, conceptTag: question.conceptTag, sourceQuestionId: question.id, misses: 1, dueAfterChapterIdx: 1,
+    }))));
+    expect(body.answers.slice(0, incorrect).map((answer: { missedConcept: string }) => answer.missedConcept)).toEqual(quiz.slice(0, incorrect).map((question) => question.conceptTag));
+  });
+
+  it("updates the matching course/concept when a different question repeats a miss", async () => {
+    const quiz = tenQuestionQuiz();
+    db.update(questions).set({ conceptTag: quiz[0].conceptTag }).where(eq(questions.id, quiz[1].id)).run();
+    const otherCourseId = randomUUID();
+    db.insert(courses).values({ id: otherCourseId, topic: "Other test course", createdAt: new Date() }).run();
+    const unrelatedId = randomUUID();
+    db.insert(reviewItems).values({ id: unrelatedId, courseId: otherCourseId, conceptTag: quiz[0].conceptTag, sourceQuestionId: questionId, misses: 4, dueAfterChapterIdx: 9, createdAt: new Date() }).run();
+    const unrelated = db.select().from(reviewItems).where(eq(reviewItems.id, unrelatedId)).get();
+
+    const responses = (missIndex: number) => quiz.map((question, index) => ({ questionId: question.id, response: index === missIndex ? "y = x" : question.modelAnswer }));
+    expect(await (await submit(responses(0))).json()).toMatchObject({ score: 0.9, passed: true });
+    const initial = db.select().from(reviewItems).where(eq(reviewItems.courseId, courseId)).get()!;
+    expect(await (await submit(responses(1))).json()).toMatchObject({ score: 0.9, passed: true });
+    expect(db.select().from(reviewItems).where(eq(reviewItems.courseId, courseId)).all()).toEqual([
+      { ...initial, sourceQuestionId: quiz[1].id, misses: 2, dueAfterChapterIdx: 2 },
+    ]);
+    expect(db.select().from(reviewItems).where(eq(reviewItems.id, unrelatedId)).get()).toEqual(unrelated);
+  });
+
+  it("creates no review items for an all-correct quiz and preserves previously recorded gaps", async () => {
+    const quiz = tenQuestionQuiz();
+    const correct = quiz.map((question) => ({ questionId: question.id, response: question.modelAnswer }));
+    expect(await (await submit(correct)).json()).toMatchObject({ score: 1, passed: true });
+    expect(db.select().from(reviewItems).all()).toEqual([]);
+    await submit(correct.map((answer, index) => index === 0 ? { ...answer, response: "y = x" } : answer));
+    const gaps = db.select().from(reviewItems).all();
+    expect(gaps).toHaveLength(1);
+    expect(await (await submit(correct)).json()).toMatchObject({ score: 1, passed: true });
+    expect(db.select().from(reviewItems).all()).toEqual(gaps);
   });
 });

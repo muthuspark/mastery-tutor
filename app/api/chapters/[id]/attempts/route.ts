@@ -65,15 +65,14 @@ export async function POST(request: Request, context: RouteContext) {
         }
         complete = courseIsComplete(currentAsPassed);
         if (complete) tx.update(courses).set({ completedAt: now }).where(eq(courses.id, chapter.courseId)).run();
-      } else {
-        for (const answer of graded.filter((item) => item.missedConcept)) {
-          const conceptTag = answer.missedConcept as string;
-          const existing = tx.select().from(reviewItems).where(and(eq(reviewItems.courseId, chapter.courseId), eq(reviewItems.conceptTag, conceptTag))).get();
-          if (existing) {
-            tx.update(reviewItems).set({ misses: existing.misses + 1, sourceQuestionId: answer.question.id, dueAfterChapterIdx: dueChapterIndex(chapter.idx, existing.misses) }).where(eq(reviewItems.id, existing.id)).run();
-          } else {
-            tx.insert(reviewItems).values({ id: randomUUID(), courseId: chapter.courseId, conceptTag, sourceQuestionId: answer.question.id, misses: 1, dueAfterChapterIdx: dueChapterIndex(chapter.idx, 0), createdAt: now }).run();
-          }
+      }
+      for (const answer of graded.filter((item) => item.missedConcept)) {
+        const conceptTag = answer.missedConcept as string;
+        const existing = tx.select().from(reviewItems).where(and(eq(reviewItems.courseId, chapter.courseId), eq(reviewItems.conceptTag, conceptTag))).get();
+        if (existing) {
+          tx.update(reviewItems).set({ misses: existing.misses + 1, sourceQuestionId: answer.question.id, dueAfterChapterIdx: dueChapterIndex(chapter.idx, existing.misses) }).where(eq(reviewItems.id, existing.id)).run();
+        } else {
+          tx.insert(reviewItems).values({ id: randomUUID(), courseId: chapter.courseId, conceptTag, sourceQuestionId: answer.question.id, misses: 1, dueAfterChapterIdx: dueChapterIndex(chapter.idx, 0), createdAt: now }).run();
         }
       }
     });

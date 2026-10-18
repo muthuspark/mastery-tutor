@@ -2714,3 +2714,331 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Send learners to the correct destination after their final quiz\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 5"
 }
+
+[2026-10-18T13:58:52.854Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 6,
+  "phase": "discover"
+}
+
+[2026-10-18T13:59:37.826Z] 20261018123858542-ec1e3550 — Five candidates generated and ranked
+{
+  "formula": "impact * confidence / (effort * risk)",
+  "ranked": [
+    {
+      "title": "Record concept gaps even when a quiz passes",
+      "category": "user value",
+      "rationale": "Preserve specific weaknesses behind an otherwise passing score so subsequent teaching can address them. Better adaptation is an expected benefit, not a measured outcome.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:59–78 updates review items only in the failed-attempt branch.",
+        "lib/quiz.ts:23 identifies an incorrect MCQ's missed concept using modelAnswer, although questions already have conceptTag.",
+        "lib/chapter.ts:31–44 uses recorded review-item concept tags to guide subsequent teaching."
+      ],
+      "acceptanceCriteria": [
+        "A passing ten-question attempt with two incorrect answers records both questions' concept tags for review while retaining the passing result.",
+        "Incorrect MCQs use question.conceptTag rather than answer text as the review key; repeated misses update the matching course/concept item.",
+        "An all-correct attempt creates no new review items; focused tests cover passing and failing attempts."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "index": 0,
+      "score": 6.25
+    },
+    {
+      "title": "Offer a prerequisite detour after repeated difficulty",
+      "category": "creative wildcard",
+      "rationale": "Turn repeated failure into an actionable change of approach using existing prerequisite links. Present it as a review suggestion grounded in attempt history, without claiming a diagnosed prerequisite gap.",
+      "evidence": [
+        "lib/gating.ts:19–22 gives the same review-and-retry advice regardless of failure history.",
+        "app/api/chapters/[id]/attempts/route.ts:48–49 already reads previous attempts.",
+        "lib/db/schema.ts:33 stores prerequisite chapter indexes, while components/quiz-page.tsx:63 offers retry and current-chapter review only."
+      ],
+      "acceptanceCriteria": [
+        "After two consecutive failed attempts, results offer a read-only link to an available prerequisite chapter and explain that repeated difficulty triggered the suggestion.",
+        "A first failure, a passing result, or a chapter without available prerequisites does not show the detour.",
+        "Opening the suggestion preserves prerequisite pass status, attempts, answers, and review items; tests cover the rule and a host fixture quiz flow."
+      ],
+      "impact": 4,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "index": 4,
+      "score": 4
+    },
+    {
+      "title": "Let learners reopen saved quiz feedback",
+      "category": "usability",
+      "rationale": "Make recorded explanations available after refresh or a later visit, supporting deliberate review across sessions.",
+      "evidence": [
+        "components/quiz-page.tsx:23 stores results only in component state; line 57 sets that state after submission.",
+        "components/quiz-page.tsx:63 renders feedback exclusively from that transient result.",
+        "lib/db/schema.ts:113–155 already persists attempts, responses, scores, and feedback."
+      ],
+      "acceptanceCriteria": [
+        "A learner can open a saved attempt from the course or chapter and see its score, submitted responses, and persisted feedback after refresh.",
+        "Reading saved feedback does not submit another attempt, regenerate questions, or alter progress.",
+        "Unknown or mismatched attempt IDs produce a clear unavailable state; host browser verification covers completing a fixture quiz and reopening its feedback."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 3,
+      "risk": 2,
+      "index": 2,
+      "score": 3.3333333333333335
+    },
+    {
+      "title": "Bound quiz-history reads in SQL",
+      "category": "performance",
+      "rationale": "Avoid materializing every historical question when delivering ten current questions. Reduced allocation is expected from the query change; latency has not been measured.",
+      "evidence": [
+        "app/api/chapters/[id]/quiz/route.ts:29–31 reads all chapter questions, then filters generation/type and slices in JavaScript.",
+        "app/api/chapters/[id]/quiz/route.ts:52–54 repeats that unbounded read after generation.",
+        "lib/quiz.ts:54–70 inserts new question rows for generated quizzes, allowing history to accumulate."
+      ],
+      "acceptanceCriteria": [
+        "Both delivery queries filter chapter, current generation, MCQ type, and supported option eligibility before applying a database limit of ten.",
+        "A test-owned fixture containing substantial historical question data returns the correct current quiz without including old generations.",
+        "Tests verify bounded query results and unchanged answer-key exclusion, review-question inclusion, and regeneration behavior."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "index": 3,
+      "score": 3
+    },
+    {
+      "title": "Reject incomplete, duplicate, and stale quiz submissions",
+      "category": "reliability",
+      "rationale": "Ensure chapter advancement reflects a complete eligible assessment. Source inspection reveals validation gaps; no exploit or browser reproduction was performed.",
+      "evidence": [
+        "app/api/chapters/[id]/attempts/route.ts:15 requires only one submitted answer.",
+        "app/api/chapters/[id]/attempts/route.ts:35–46 checks question ownership but does not require a complete question set or current generation before averaging submitted scores.",
+        "app/api/chapters/[id]/quiz/route.ts:29–31 selects current-generation questions, unlike the attempt handler."
+      ],
+      "acceptanceCriteria": [
+        "Submitting one correct answer from a ten-question quiz returns a validation error without recording an attempt or unlocking a chapter.",
+        "Duplicate question IDs, blank responses, stale-generation questions, and foreign-course questions fail before grading or writes.",
+        "A complete current quiz, including its eligible review questions, submits successfully; integration tests verify rejection leaves persisted progress unchanged."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 3,
+      "risk": 3,
+      "index": 1,
+      "score": 2.7777777777777777
+    }
+  ]
+}
+
+[2026-10-18T13:59:37.826Z] 20261018123858542-ec1e3550 — Candidate selected
+{
+  "iteration": 6,
+  "candidate": {
+    "title": "Record concept gaps even when a quiz passes",
+    "category": "user value",
+    "rationale": "Preserve specific weaknesses behind an otherwise passing score so subsequent teaching can address them. Better adaptation is an expected benefit, not a measured outcome.",
+    "evidence": [
+      "app/api/chapters/[id]/attempts/route.ts:59–78 updates review items only in the failed-attempt branch.",
+      "lib/quiz.ts:23 identifies an incorrect MCQ's missed concept using modelAnswer, although questions already have conceptTag.",
+      "lib/chapter.ts:31–44 uses recorded review-item concept tags to guide subsequent teaching."
+    ],
+    "acceptanceCriteria": [
+      "A passing ten-question attempt with two incorrect answers records both questions' concept tags for review while retaining the passing result.",
+      "Incorrect MCQs use question.conceptTag rather than answer text as the review key; repeated misses update the matching course/concept item.",
+      "An all-correct attempt creates no new review items; focused tests cover passing and failing attempts."
+    ],
+    "impact": 5,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 2
+  },
+  "score": 6.25,
+  "reason": "Highest score among candidates whose titles have not been completed; ties use higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-18T13:59:37.844Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 6,
+  "phase": "implement"
+}
+
+[2026-10-18T14:00:51.226Z] 20261018123858542-ec1e3550 — Implementation completed; verification required
+{
+  "summary": "Implemented concept-gap recording for passing and failing quizzes. All 83 application tests, lint, typecheck, and diff checks pass. Browser verification remains pending with the host; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/concept-gaps-on-pass.md.",
+  "decisions": [
+    {
+      "decision": "Record gaps regardless of overall quiz result.",
+      "reason": "Passing scores can still contain specific concept weaknesses."
+    },
+    {
+      "decision": "Use question.conceptTag for MCQ review keys.",
+      "reason": "Concept tags identify concepts consistently across questions."
+    },
+    {
+      "decision": "Preserve existing progression and review scheduling.",
+      "reason": "The selected increment changes evidence capture only."
+    },
+    {
+      "decision": "Keep course/concept updates in the attempt transaction and retain prior gaps after correct attempts.",
+      "reason": "Evidence stays atomic, course-scoped, and preserved for review."
+    },
+    {
+      "decision": "Verify persistence with isolated database-backed route tests.",
+      "reason": "Covers acceptance criteria without modifying learner data."
+    }
+  ]
+}
+
+[2026-10-18T14:00:51.250Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 6,
+  "phase": "verify"
+}
+
+[2026-10-18T14:00:54.055Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 6,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/6-verify-1792332051250-132-lint.log"
+}
+
+[2026-10-18T14:00:55.803Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 6,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/6-verify-1792332054060-133-typecheck.log"
+}
+
+[2026-10-18T14:01:14.999Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 6,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/6-verify-1792332055808-134-test.log"
+}
+
+[2026-10-18T14:01:22.317Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 6,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/6-verify-1792332075004-135-build.log"
+}
+
+[2026-10-18T14:01:22.322Z] 20261018123858542-ec1e3550 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-18T14:01:22.342Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 6,
+  "phase": "browser-prepare"
+}
+
+[2026-10-18T14:02:22.881Z] 20261018123858542-ec1e3550 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-6.spec.ts",
+  "summary": "Created iteration-6.spec.ts. Typecheck, scoped ESLint, and diff checks pass. Browser tests have not run; host execution is pending.",
+  "decisions": [
+    {
+      "decision": "Cover 8/10 passing, 7/10 failing, and all-correct quizzes through real UI submission.",
+      "reason": "Verifies visible scores and outcomes alongside persisted concept gaps."
+    },
+    {
+      "decision": "Verify later review questions after reload.",
+      "reason": "Confirms saved misses affect learner-visible practice; respects the two-question review limit."
+    },
+    {
+      "decision": "Check repeated misses and subsequent all-correct attempts through the real API.",
+      "reason": "Verifies existing review rows update and recorded gaps remain preserved."
+    },
+    {
+      "decision": "Use self-cleaning, test-owned prepared fixtures.",
+      "reason": "Avoids learner-data changes and paid generation."
+    }
+  ]
+}
+
+[2026-10-18T14:02:25.724Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 6,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/6-browser-prepare-1792332142881-140-lint.log"
+}
+
+[2026-10-18T14:02:27.472Z] 20261018123858542-ec1e3550 — Check passed
+{
+  "iteration": 6,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/6-browser-prepare-1792332145729-141-typecheck.log"
+}
+
+[2026-10-18T14:02:27.496Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 6,
+  "phase": "browser-run"
+}
+
+[2026-10-18T14:02:43.164Z] 20261018123858542-ec1e3550 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 3,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261018123858542-ec1e3550/iteration-6.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/6-browser-run-1792332147550-142-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/6-browser-run-1792332147550-142-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261018123858542-ec1e3550/6-browser-run-1792332147550-142-playwright/artifacts"
+}
+
+[2026-10-18T14:02:43.184Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 6,
+  "phase": "review"
+}
+
+[2026-10-18T14:03:16.392Z] 20261018123858542-ec1e3550 — Independent review decision
+{
+  "summary": "Selected increment passes review; no concrete unresolved defects found.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Passing 8/10 attempts retain their passing result and persist both missed concept tags, verified by route tests and host browser tests.",
+    "Incorrect MCQs use question.conceptTag. Focused tests verify repeated misses update the matching course/concept item and preserve unrelated courses.",
+    "All-correct attempts create no review items. Passing and failing attempts have focused coverage; 34 focused tests passed independently.",
+    "Recorded host checks passed: lint, typecheck, 116 automated tests, and production build. Independent diff check passed."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-6.spec.ts, results.json, and screenshot artifacts.",
+    "Host browser results: 3 passed, zero skips, retries, or failures.",
+    "Real quiz flows cover 8/10, 7/10, and 10/10 outcomes, persisted evidence, reload, and later review-question delivery."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-18T14:03:16.413Z] 20261018123858542-ec1e3550 — Phase started
+{
+  "iteration": 6,
+  "phase": "commit"
+}
+
+[2026-10-18T14:03:16.417Z] 20261018123858542-ec1e3550 — Verified iteration approved for commit
+{
+  "iteration": 6,
+  "candidate": "Record concept gaps even when a quiz passes",
+  "summary": "Implemented concept-gap recording for passing and failing quizzes. All 83 application tests, lint, typecheck, and diff checks pass. Browser verification remains pending with the host; build not run. Evidence: .ralph/20261018123858542-ec1e3550/evidence/concept-gaps-on-pass.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Record concept gaps even when a quiz passes\n\nRalph-Run: 20261018123858542-ec1e3550\nRalph-Iteration: 6"
+}

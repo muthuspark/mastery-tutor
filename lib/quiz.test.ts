@@ -10,13 +10,13 @@ describe("quiz grading", () => {
     expect(gradeMcq("1", "Another answer", ["A useful answer", "Another answer"]).score).toBe(1);
   });
 
-  it("returns a missed concept for an incorrect answer", () => {
-    expect(gradeMcq("Wrong", "Right", null)).toMatchObject({ score: 0, missedConcept: "Right" });
+  it("returns the expected answer as feedback for an incorrect answer", () => {
+    expect(gradeMcq("Wrong", "Right", null)).toMatchObject({ score: 0, feedback: "The expected answer is: Right." });
   });
 
   it.each(["2", "3", "0", "1"])("grades numeric option %s as text before considering indices", (answer) => {
     const options = ["2", "3", "0", "1"];
-    expect(gradeMcq(`  ${answer}  `, answer, options)).toMatchObject({ score: 1, feedback: "Correct.", missedConcept: null });
+    expect(gradeMcq(`  ${answer}  `, answer, options)).toMatchObject({ score: 1, feedback: "Correct." });
     const otherAnswer = options[(options.indexOf(answer) + 1) % options.length];
     expect(gradeMcq(answer, otherAnswer, options).score).toBe(0);
   });
