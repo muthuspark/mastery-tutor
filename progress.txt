@@ -871,3 +871,507 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Keep assessment prompts and answer options readable within the reading container\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 2"
 }
+
+[2026-10-19T01:06:06.861Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 3,
+  "phase": "discover"
+}
+
+[2026-10-19T01:06:55.393Z] 20261019005423535-521173d2 — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Keep lesson text and display mathematics inside the reading container",
+      "category": "Responsive lesson content",
+      "rationale": "First slice: establish reusable lesson wrapping and locally scrollable display-math styles. Preserve mathematical notation and complete content. Source inspection establishes missing safeguards; browser overflow and learner impact have not been measured.",
+      "evidence": [
+        "components/mermaid-content.tsx:30 renders generated HTML with prose-editorial and max-w-none, without an explicit long-text wrapping convention.",
+        "lib/markdown.ts:39 renders mathematics through rehype-katex. Installed node_modules/katex/dist/katex.css:1214 applies white-space: nowrap to display mathematics.",
+        "app/globals.css:88-93 contains explicit overflow handling for Mermaid diagrams, but none for display mathematics or long lesson links.",
+        "app/globals.css:44-48 already protects course titles and assessment text, demonstrating an existing containment convention that lesson prose lacks."
+      ],
+      "acceptanceCriteria": [
+        "Long lesson URLs and uninterrupted prose tokens wrap within the reading container at 375, 768, and 1440 pixels.",
+        "Wide display equations remain complete and locally scrollable without causing document horizontal overflow; keyboard users can reach and scroll overflowing regions.",
+        "Existing code-block scrolling, Mermaid rendering, mathematical accessibility content, and lesson navigation remain functional.",
+        "Host tests use self-cleaning prepared course fixtures with real lesson delivery and isolate unrelated generation; lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 4,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "Reading lessons is a core learner task. Uncontained legitimate content can compromise mobile study and surrounding navigation. The implementation risk is concrete; prevalence and abandonment effects remain hypotheses."
+        },
+        "subjectMatterExpert": {
+          "score": 4,
+          "rationale": "Learners must be able to inspect complete explanations and equations. Hidden or displaced notation can obstruct understanding and introduce difficulty unrelated to the subject. Local scrolling preserves notation while making it accessible.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 0,
+      "score": 4,
+      "mustDoScore": 8
+    },
+    {
+      "title": "Give course loading, failure, and empty states consistent overview geometry",
+      "category": "Course overview states",
+      "rationale": "Keep every course-overview state in the wide layout and provide consistent headings and local navigation for unavailable content. Scope this increment to the overview.",
+      "evidence": [
+        "components/course-page.tsx:19-24 uses reading-shell for loading and failure, while the loaded overview uses page-shell.",
+        "components/course-page.tsx:22-23 provides an alert and retry but no failure heading or local return link.",
+        "The total === 0 branch in components/course-page.tsx displays only This course has no chapters yet.",
+        "app/globals.css:29-30 defines materially different wide and reading maximum widths."
+      ],
+      "acceptanceCriteria": [
+        "Loaded, loading, failed, and empty overview states share identical page-shell horizontal bounds.",
+        "Failure and empty states provide descriptive headings and a keyboard-accessible return-to-learning action using shared controls.",
+        "Retry remains disabled while pending and recovers through read requests without resetting learner progress.",
+        "Host tests verify state geometry and recovery at 375, 768, and 1440 pixels using test-owned fixtures; lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "The overview is the learner's chapter-selection hub. Stable geometry and explicit exits make degraded states easier to understand, although global navigation and retry already offer partial recovery."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Learners need a clear path toward available study material when a course cannot display chapters. This supports study continuity without changing mastery gates or learning evidence.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 2,
+      "score": 7.5,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Keep quiz recovery controls stable while retrying",
+      "category": "Loading and error consistency",
+      "rationale": "Extend the completed chapter recovery convention to quiz delivery failures. Preserve the recovery screen, disabled retry control, and return navigation during manual retries.",
+      "evidence": [
+        "components/quiz-page.tsx:66 replaces failed-query recovery with a loading-only main whenever the failed query is fetching.",
+        "components/quiz-page.tsx:81-87 separately renders recovery headings, retry, and return navigation.",
+        "components/quiz-page-loading.test.tsx:73-76 explicitly verifies that the retry button disappears during recovery.",
+        "components/reading-page-state.tsx provides the existing pending-status and disabled-retry precedent."
+      ],
+      "acceptanceCriteria": [
+        "Manual recovery retains its heading, return link, and disabled Trying again… control until the request settles.",
+        "Pending recovery announces status; repeated failure restores an enabled retry and the appropriate main-content alert.",
+        "Existing bounded preparation retries, unavailable states, and refetch-only recovery behavior remain intact.",
+        "Host tests verify delayed recovery at 375, 768, and 1440 pixels, followed by real prepared ten-question delivery and grading without unrelated generation; lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Removing local recovery controls during a slow retry creates avoidable uncertainty at assessment entry. Recovery already works, so this is important continuity work rather than an established assessment blocker."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "A persistent route back to the lesson supports corrective study when assessment delivery fails. Educational benefit is inferred; this change does not improve grading validity itself.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 1,
+      "score": 5,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Standardize secondary learning actions and disabled states",
+      "category": "Shared controls and accessibility",
+      "rationale": "Introduce a reusable compact-action convention for lesson difficulty feedback, regeneration, and assessment-result review navigation. Standardize target size, typography, focus, and disabled presentation.",
+      "evidence": [
+        "app/globals.css:42 gives text-button zero padding and no minimum target height; its hover rule has no disabled exclusion.",
+        "components/chapter-page.tsx:79 uses text-button for Too easy, Too hard, and Regenerate chapter.",
+        "The result branch in components/quiz-page.tsx renders Review chapter as an independently styled text-xs link.",
+        "components/course-list.tsx:18 adds min-h-11 locally, while header links receive separate 2.75rem minimum-height rules."
+      ],
+      "acceptanceCriteria": [
+        "Scoped actions share a minimum 44px target height, consistent UI typography, and visible keyboard focus.",
+        "Disabled regeneration has a distinct shared disabled appearance and does not display enabled hover feedback.",
+        "Actions wrap without overlap or horizontal overflow at 375, 768, and 1440 pixels.",
+        "Host verification reaches Review chapter after real failed prepared MCQ grading, preserves learning evidence, accounts for background prefetches, and isolates unrelated regeneration; lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "These recurring mobile actions currently have inconsistent target sizes and state feedback. Missed taps have not been measured, but the source inconsistency directly affects usability."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Lesson review and difficulty feedback support corrective study and tutoring. Consistent operability improves access to those functions without changing instructional decisions.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 3,
+      "score": 3.75,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Define shared container tokens and explicit layout variants",
+      "category": "Layout primitives",
+      "rationale": "Consolidate existing container widths, responsive gutters, and page spacing into shared tokens. Preserve the useful reading variant and document its intentional relationship to the wider global header.",
+      "evidence": [
+        "app/globals.css:29-30 independently declares page-shell and reading-shell geometry.",
+        "app/globals.css:70 and 95 repeat wide-container geometry for the site header and generation overlay.",
+        "Mobile container rules are distributed across separate media blocks, and home-page explicitly overrides vertical padding.",
+        "app/page.tsx and components/course-page.tsx use the wide variant; settings, chapter, and quiz use the reading variant. e2e/header.spec.ts checks header consistency but does not establish the complete container-variant contract."
+      ],
+      "acceptanceCriteria": [
+        "Shared tokens own wide width, reading width, responsive horizontal gutters, and standard page vertical spacing.",
+        "All five page routes, global header, and generation overlay consume explicit layout variants without independently duplicated container values.",
+        "Documentation records reading/form insets, global-header alignment, and intentional home-page and overlay spacing exceptions.",
+        "Host geometry checks at 375, 768, and 1440 pixels confirm identical bounds within each variant and no document overflow; lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "This directly fulfills the requested reusable layout contract and reduces future drift. Existing shells already provide substantial consistency, so it is foundational rather than an urgent learner blockage."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Predictable study regions support navigation and sustained reading. An explicit narrow variant preserves reading comfort while allowing consistent layouts; learning gains remain unmeasured.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 4,
+      "score": 3.75,
+      "mustDoScore": 6
+    }
+  ]
+}
+
+[2026-10-19T01:06:55.394Z] 20261019005423535-521173d2 — Candidate selected
+{
+  "iteration": 3,
+  "candidate": {
+    "title": "Keep lesson text and display mathematics inside the reading container",
+    "category": "Responsive lesson content",
+    "rationale": "First slice: establish reusable lesson wrapping and locally scrollable display-math styles. Preserve mathematical notation and complete content. Source inspection establishes missing safeguards; browser overflow and learner impact have not been measured.",
+    "evidence": [
+      "components/mermaid-content.tsx:30 renders generated HTML with prose-editorial and max-w-none, without an explicit long-text wrapping convention.",
+      "lib/markdown.ts:39 renders mathematics through rehype-katex. Installed node_modules/katex/dist/katex.css:1214 applies white-space: nowrap to display mathematics.",
+      "app/globals.css:88-93 contains explicit overflow handling for Mermaid diagrams, but none for display mathematics or long lesson links.",
+      "app/globals.css:44-48 already protects course titles and assessment text, demonstrating an existing containment convention that lesson prose lacks."
+    ],
+    "acceptanceCriteria": [
+      "Long lesson URLs and uninterrupted prose tokens wrap within the reading container at 375, 768, and 1440 pixels.",
+      "Wide display equations remain complete and locally scrollable without causing document horizontal overflow; keyboard users can reach and scroll overflowing regions.",
+      "Existing code-block scrolling, Mermaid rendering, mathematical accessibility content, and lesson navigation remain functional.",
+      "Host tests use self-cleaning prepared course fixtures with real lesson delivery and isolate unrelated generation; lint, typecheck, and relevant tests pass."
+    ],
+    "impact": 4,
+    "confidence": 4,
+    "effort": 2,
+    "risk": 2,
+    "mustDo": {
+      "productManager": {
+        "score": 4,
+        "rationale": "Reading lessons is a core learner task. Uncontained legitimate content can compromise mobile study and surrounding navigation. The implementation risk is concrete; prevalence and abandonment effects remain hypotheses."
+      },
+      "subjectMatterExpert": {
+        "score": 4,
+        "rationale": "Learners must be able to inspect complete explanations and equations. Hidden or displaced notation can obstruct understanding and introduce difficulty unrelated to the subject. Local scrolling preserves notation while making it accessible.",
+        "domain": "Learning science, mastery learning, assessment, and tutoring"
+      }
+    }
+  },
+  "mustDoScore": 8,
+  "score": 4,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T01:06:55.415Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 3,
+  "phase": "implement"
+}
+
+[2026-10-19T01:08:25.520Z] 20261019005423535-521173d2 — Implementation completed; verification required
+{
+  "summary": "Implemented lesson text wrapping and locally scrollable, keyboard-accessible display equations. Lint, typecheck, and 58 component tests pass. Host browser verification remains pending. Evidence: .ralph/20261019005423535-521173d2/iteration-3-implementation-evidence.md.",
+  "decisions": [
+    {
+      "decision": "Wrap long prose while preserving code and mathematical notation.",
+      "reason": "Keep complete lesson content within the reading container."
+    },
+    {
+      "decision": "Make only overflowing equations focusable, with a named region and visible focus outline.",
+      "reason": "Enable keyboard scrolling without adding unnecessary tab stops."
+    },
+    {
+      "decision": "Observe equation sizes and preserve existing lesson rendering and navigation.",
+      "reason": "Keep accessibility accurate after resizing and font loading while limiting scope."
+    }
+  ]
+}
+
+[2026-10-19T01:08:25.544Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 3,
+  "phase": "verify"
+}
+
+[2026-10-19T01:08:28.742Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-verify-1792372105544-61-lint.log"
+}
+
+[2026-10-19T01:08:30.481Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-verify-1792372108746-62-typecheck.log"
+}
+
+[2026-10-19T01:08:50.696Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-verify-1792372110486-63-test.log"
+}
+
+[2026-10-19T01:08:56.785Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-verify-1792372130701-64-build.log"
+}
+
+[2026-10-19T01:08:56.790Z] 20261019005423535-521173d2 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T01:08:56.808Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 3,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T01:12:37.119Z] 20261019005423535-521173d2 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-3.spec.ts",
+  "summary": "Created iteration-3.spec.ts. ESLint and TypeScript checks pass. Browser execution remains pending with the host.",
+  "decisions": [
+    {
+      "decision": "Test at 375, 768, and 1440 pixels.",
+      "reason": "Verify complete text wrapping, local equation scrolling, keyboard access, and document containment."
+    },
+    {
+      "decision": "Check resizing, reloads, code blocks, and Mermaid diagrams.",
+      "reason": "Cover responsive accessibility updates, content persistence, and rendering regressions."
+    },
+    {
+      "decision": "Use self-cleaning fixtures with real lesson delivery and ten-question grading.",
+      "reason": "Verify navigation and saved completion while avoiding paid generation."
+    }
+  ]
+}
+
+[2026-10-19T01:12:40.305Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 3,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-browser-prepare-1792372357120-69-lint.log"
+}
+
+[2026-10-19T01:12:42.596Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 3,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-browser-prepare-1792372360310-70-typecheck.log"
+}
+
+[2026-10-19T01:12:42.619Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 3,
+  "phase": "browser-run"
+}
+
+[2026-10-19T01:13:22.567Z] 20261019005423535-521173d2 — Host Playwright verification
+{
+  "status": "failed",
+  "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByText('You completed this course.', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('main').getByText('You completed this course.', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByText('You completed this course.', { exact: true })\u001b[22m\n\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByText('You completed this course.', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('main').getByText('You completed this course.', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByText('You completed this course.', { exact: true })\u001b[22m\n\n\n  221 |       await main.getByRole(\"link\", { name: \"View completed course\", exact: true }).click();\n  222 |       await page.reload();\n> 223 |       await expect(main.getByText(\"You completed this course.\", { exact: true })).toBeVisible();\n      |                                                                                   ^\n  224 |       const saved = fixture.persisted();\n  225 |       expect(saved.attempts).toHaveLength(1);\n  226 |       expect(saved.attempts[0]).toMatchObject({ id: result.attemptId, score: 1, passed: true });\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261019005423535-521173d2/iteration-3.spec.ts:223:83\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByText('You completed this course.', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('main').getByText('You completed this course.', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByText('You completed this course.', { exact: true })\u001b[22m\n\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByText('You completed this course.', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('main').getByText('You completed this course.', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByText('You completed this course.', { exact: true })\u001b[22m\n\n\n  221 |       await main.getByRole(\"link\", { name: \"View completed course\", exact: true }).click();\n  222 |       await page.reload();\n> 223 |       await expect(main.getByText(\"You completed this course.\", { exact: true })).toBeVisible();\n      |                                                                                   ^\n  224 |       const saved = fixture.persisted();\n  225 |       expect(saved.attempts).toHaveLength(1);\n  226 |       expect(saved.attempts[0]).toMatchObject({ id: result.attemptId, score: 1, passed: true });\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261019005423535-521173d2/iteration-3.spec.ts:223:83\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByText('You completed this course.', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('main').getByText('You completed this course.', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByText('You completed this course.', { exact: true })\u001b[22m\n",
+  "passed": 0,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-3.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-browser-run-1792372362655-71-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-browser-run-1792372362655-71-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-browser-run-1792372362655-71-playwright/artifacts"
+}
+
+[2026-10-19T01:13:22.585Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 3,
+  "phase": "repair"
+}
+
+[2026-10-19T01:13:22.585Z] 20261019005423535-521173d2 — Repair selected
+{
+  "iteration": 3,
+  "attempt": 1,
+  "maximum": 3,
+  "reasons": [
+    "Playwright acceptance test failed: Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByText('You completed this course.', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('main').getByText('You completed this course.', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByText('You completed this course.', { exact: true })\u001b[22m\n\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByText('You completed this course.', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('main').getByText('You completed this course.', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByText('You completed this course.', { exact: true })\u001b[22m\n\n\n  221 |       await main.getByRole(\"link\", { name: \"View completed course\", exact: true }).click();\n  222 |       await page.reload();\n> 223 |       await expect(main.getByText(\"You completed this course.\", { exact: true })).toBeVisible();\n      |                                                                                   ^\n  224 |       const saved = fixture.persisted();\n  225 |       expect(saved.attempts).toHaveLength(1);\n  226 |       expect(saved.attempts[0]).toMatchObject({ id: result.attemptId, score: 1, passed: true });\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261019005423535-521173d2/iteration-3.spec.ts:223:83\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByText('You completed this course.', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('main').getByText('You completed this course.', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByText('You completed this course.', { exact: true })\u001b[22m\n\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByText('You completed this course.', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('main').getByText('You completed this course.', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByText('You completed this course.', { exact: true })\u001b[22m\n\n\n  221 |       await main.getByRole(\"link\", { name: \"View completed course\", exact: true }).click();\n  222 |       await page.reload();\n> 223 |       await expect(main.getByText(\"You completed this course.\", { exact: true })).toBeVisible();\n      |                                                                                   ^\n  224 |       const saved = fixture.persisted();\n  225 |       expect(saved.attempts).toHaveLength(1);\n  226 |       expect(saved.attempts[0]).toMatchObject({ id: result.attemptId, score: 1, passed: true });\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261019005423535-521173d2/iteration-3.spec.ts:223:83\nError: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('main').getByText('You completed this course.', { exact: true })\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" getByRole('main').getByText('You completed this course.', { exact: true }) with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('main').getByText('You completed this course.', { exact: true })\u001b[22m\n. Inspect /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-browser-run-1792372362655-71-playwright/results.json and /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-browser-run-1792372362655-71-playwright/runner.log."
+  ]
+}
+
+[2026-10-19T01:14:07.845Z] 20261019005423535-521173d2 — Repair completed; verification required
+{
+  "attempt": 1,
+  "summary": "Repaired the Playwright navigation race by waiting for the course URL and completion message before reloading. Lint, typecheck, and diff checks pass; 130 tests pass. The 33 Ralph tests are blocked by sandbox Git permissions (EPERM). Host browser rerun remains pending. Evidence: .ralph/20261019005423535-521173d2/iteration-3-repair-evidence.md.",
+  "decisions": [
+    {
+      "decision": "Repair the feature spec only.",
+      "reason": "The trace shows reload interrupted client navigation and reopened the quiz."
+    },
+    {
+      "decision": "Verify course URL and completion before reload; retain verification after reload.",
+      "reason": "Synchronizes navigation while preserving persisted-completion coverage."
+    },
+    {
+      "decision": "Preserve viewport, real grading, persistence, and cleanup assertions without increasing timeouts.",
+      "reason": "The failure does not justify weakening acceptance coverage."
+    },
+    {
+      "decision": "Leave app code, Ralph tests, and package commands unchanged.",
+      "reason": "No app defect was established; Git subprocess permission failures require host validation."
+    }
+  ]
+}
+
+[2026-10-19T01:14:07.865Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 3,
+  "phase": "verify"
+}
+
+[2026-10-19T01:14:11.015Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-verify-1792372447866-76-lint.log"
+}
+
+[2026-10-19T01:14:12.759Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-verify-1792372451020-77-typecheck.log"
+}
+
+[2026-10-19T01:14:32.644Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-verify-1792372452764-78-test.log"
+}
+
+[2026-10-19T01:14:38.227Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-verify-1792372472649-79-build.log"
+}
+
+[2026-10-19T01:14:38.233Z] 20261019005423535-521173d2 — Verification decision
+{
+  "nextPhase": "browser-run",
+  "failures": []
+}
+
+[2026-10-19T01:14:38.252Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 3,
+  "phase": "browser-run"
+}
+
+[2026-10-19T01:15:00.845Z] 20261019005423535-521173d2 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 3,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-3.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-browser-run-1792372478297-80-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-browser-run-1792372478297-80-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/3-browser-run-1792372478297-80-playwright/artifacts"
+}
+
+[2026-10-19T01:15:00.863Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 3,
+  "phase": "review"
+}
+
+[2026-10-19T01:15:45.872Z] 20261019005423535-521173d2 — Independent review decision
+{
+  "summary": "Selected increment passes review. No unresolved defects found.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Host tests verify complete long-text wrapping at 375, 768, and 1440 pixels without document overflow.",
+    "Wide equations preserve MathML and TeX source, support keyboard scrolling, expose visible focus, and update focusability after resizing.",
+    "Browser coverage verifies code scrolling, real Mermaid rendering, lesson navigation, ten-question grading, and persisted completion.",
+    "Prepared fixtures validate balanced questions, clean up test-owned data, and confirm no generation jobs.",
+    "Local lint, typecheck, and diff checks pass. Host verification records 163 passing tests. Local Vitest collection was blocked by temporary-directory access."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected supplied results.json: 3 passed, zero skipped, unexpected, or flaky tests.",
+    "Inspected all three trace archives; embedded specs match the current spec.",
+    "Reviewed the attached mobile screenshot showing wrapped prose and bounded equation scrolling."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T01:15:45.891Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 3,
+  "phase": "commit"
+}
+
+[2026-10-19T01:15:45.895Z] 20261019005423535-521173d2 — Verified iteration approved for commit
+{
+  "iteration": 3,
+  "candidate": "Keep lesson text and display mathematics inside the reading container",
+  "summary": "Implemented lesson text wrapping and locally scrollable, keyboard-accessible display equations. Lint, typecheck, and 58 component tests pass. Host browser verification remains pending. Evidence: .ralph/20261019005423535-521173d2/iteration-3-implementation-evidence.md.\nRepair 1: Repaired the Playwright navigation race by waiting for the course URL and completion message before reloading. Lint, typecheck, and diff checks pass; 130 tests pass. The 33 Ralph tests are blocked by sandbox Git permissions (EPERM). Host browser rerun remains pending. Evidence: .ralph/20261019005423535-521173d2/iteration-3-repair-evidence.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Keep lesson text and display mathematics inside the reading container\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 3"
+}

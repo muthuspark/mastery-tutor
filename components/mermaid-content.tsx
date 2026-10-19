@@ -8,6 +8,34 @@ export function MermaidContent({ html }: MermaidContentProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const equations = contentRef.current?.querySelectorAll<HTMLElement>(".katex-display");
+    if (!equations?.length) return;
+
+    // Keep short equations out of the tab order; recheck after resizing or font loading.
+    const updateOverflow = () => {
+      equations.forEach((equation) => {
+        if (equation.scrollWidth > equation.clientWidth) {
+          equation.tabIndex = 0;
+          equation.setAttribute("role", "region");
+          equation.setAttribute("aria-label", "Equation (scroll horizontally)");
+        } else {
+          equation.removeAttribute("tabindex");
+          equation.removeAttribute("role");
+          equation.removeAttribute("aria-label");
+        }
+      });
+    };
+    const observer = new ResizeObserver(updateOverflow);
+    equations.forEach((equation) => {
+      observer.observe(equation);
+      // The natural-width child also changes size when KaTeX fonts finish loading.
+      if (equation.firstElementChild) observer.observe(equation.firstElementChild);
+    });
+    updateOverflow();
+    return () => observer.disconnect();
+  }, [html]);
+
+  useEffect(() => {
     let cancelled = false;
     const blocks = contentRef.current?.querySelectorAll<HTMLElement>(".mermaid[data-chart]");
     if (!blocks?.length) return;
