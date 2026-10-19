@@ -89,6 +89,19 @@ describe("generation coordinator", () => {
     expect(GENERATION_MAX_ATTEMPTS).toBe(3);
   });
 
+  it("requeues completed jobs when fresh generation is requested", () => {
+    const { chapterId, now } = fixture();
+    const job = enqueueGenerationJob("quiz", chapterId, 1, now);
+    const claimed = claimGenerationJob(job.id, "test-worker", now);
+    expect(claimed).toBeDefined();
+    expect(completeGenerationJob(job.id, "test-worker", new Date(now.getTime() + 1_000))).toBe(true);
+
+    const requeued = enqueueGenerationJob("quiz", chapterId, 1, new Date(now.getTime() + 2_000));
+    expect(requeued.id).toBe(job.id);
+    expect(requeued.status).toBe("pending");
+    expect(requeued.attempts).toBe(0);
+  });
+
   it("reclaims an expired running job", () => {
     const { chapterId, now } = fixture();
     const job = enqueueGenerationJob("chapter", chapterId, 1, now);

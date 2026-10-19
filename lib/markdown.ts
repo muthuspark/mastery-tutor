@@ -2,6 +2,7 @@ import "server-only";
 
 import { unified } from "unified";
 import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import rehypeKatex from "rehype-katex";
@@ -39,6 +40,7 @@ function rehypeMermaid() {
 export async function renderMarkdown(markdown: string) {
   const file = await unified()
     .use(remarkParse)
+    .use(remarkGfm)
     .use(remarkMath)
     .use(remarkRehype)
     .use(rehypeMermaid)

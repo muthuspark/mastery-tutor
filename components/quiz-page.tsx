@@ -12,16 +12,22 @@ type CourseResponse = { chapters: CourseChapter[] };
 type Result = { remediation?: string | null; score: number; passed: boolean; complete?: boolean; nextChapterIdx?: number | null; answers: { prompt: string; response: string; score: number; feedback: string; modelAnswer: string; missedConcept: string | null }[] };
 
 class QuizLoadError extends Error {
-  constructor(readonly status: number) {
+  constructor(readonly status: number, readonly retryable: boolean) {
     super(status === 202 ? "generation_pending" : "Could not load this QnA");
   }
 }
 
 async function fetchReadyJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
-  if (response.status === 202 || !response.ok) throw new QuizLoadError(response.status);
+  if (response.status === 202 || !response.ok) {
+    const body = await response.json().catch(() => null) as { error?: { retryable?: boolean } } | null;
+    throw new QuizLoadError(response.status, response.status === 202 || body?.error?.retryable === true);
+  }
   return response.json();
 }
+
+const retryReadyContent = (failureCount: number, error: Error) => error instanceof QuizLoadError && error.retryable && failureCount < 45;
+const retryReadyContentDelay = () => 2_000;
 
 export function QuizPage() {
   const params = useParams<{ id: string; idx: string }>(); const queryClient = useQueryClient();
@@ -47,7 +53,7 @@ export function QuizPage() {
   useEffect(() => { if (!isSubmitting) return; const timer = window.setInterval(() => setGradingStage((stage) => (stage + 1) % gradingMessages.length), 3500); return () => window.clearInterval(timer); }, [isSubmitting, gradingMessages.length]);
   const courseQuery = useQuery<CourseResponse>({ queryKey: ["course", params.id], queryFn: () => fetchReadyJson(`/api/courses/${params.id}`), retry: false });
   const chapter = courseQuery.data?.chapters.find((item) => item.idx === Number(params.idx));
-  const quiz = useQuery<QuizResponse>({ queryKey: ["quiz-v2", params.id, params.idx], enabled: Boolean(chapter?.id) && chapter?.status !== "locked", queryFn: () => fetchReadyJson(`/api/chapters/${chapter?.id}/quiz`), retry: (count, error) => error.message === "generation_pending" && count < 4 });
+  const quiz = useQuery<QuizResponse>({ queryKey: ["quiz-v2", params.id, params.idx], enabled: Boolean(chapter?.id) && chapter?.status !== "locked", queryFn: () => fetchReadyJson(`/api/chapters/${chapter?.id}/quiz`), retry: retryReadyContent, retryDelay: retryReadyContentDelay });
   useEffect(() => {
     if (!quiz.data || !chapter || !courseQuery.data) return;
     const next = courseQuery.data.chapters.find((item) => item.idx > chapter.idx && item.status === "open");
@@ -55,7 +61,8 @@ export function QuizPage() {
       void queryClient.prefetchQuery({
         queryKey: ["chapter", next.id],
         queryFn: () => fetchReadyJson(`/api/chapters/${next.id}`),
-        retry: (count, error) => error.message === "generation_pending" && count < 4,
+        retry: retryReadyContent,
+        retryDelay: retryReadyContentDelay,
       });
     }
   }, [chapter, courseQuery.data, params.id, quiz.data, queryClient]);

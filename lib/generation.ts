@@ -48,6 +48,24 @@ export function enqueueGenerationJob(
 ) {
   const existing = getGenerationJobForTarget(artifactType, targetId, generationVersion);
   if (existing) {
+    if (existing.status === "completed" || existing.status === "failed") {
+      const requeued = db
+        .update(generationJobs)
+        .set({
+          status: "pending",
+          attempts: 0,
+          nextRunAt: at,
+          leaseOwner: null,
+          leaseExpiresAt: null,
+          lastError: null,
+          updatedAt: at,
+        })
+        .where(eq(generationJobs.id, existing.id))
+        .returning()
+        .get();
+      recordGenerationEvent("job_enqueued", { artifactType, targetId, generationVersion, status: requeued?.status ?? "pending" });
+      return requeued ?? existing;
+    }
     recordGenerationEvent("job_duplicate", { artifactType, targetId, generationVersion, status: existing.status });
     return existing;
   }

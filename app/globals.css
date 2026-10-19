@@ -106,6 +106,9 @@ h1, h2, h3 { text-wrap: balance; }
 .prose-editorial .katex-display:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .prose-editorial > p:first-of-type::first-letter { float: left; color: var(--accent); font-family: var(--display); font-size: 4.3rem; font-weight: 700; line-height: 0.78; margin: 0.12rem 0.35rem 0 0; }
 .prose-editorial blockquote { border-inline-start: 2px solid var(--accent); color: var(--brown); font-family: var(--display); font-size: 1.55rem; font-style: italic; margin: 2rem 0; padding-inline-start: 1.25rem; }
+.prose-editorial table { display: block; width: 100%; max-width: 100%; margin: 2rem 0; overflow-x: auto; border-collapse: collapse; font-size: 0.95em; }
+.prose-editorial th, .prose-editorial td { border: 1px solid var(--line); padding: 0.65rem 0.8rem; text-align: left; vertical-align: top; }
+.prose-editorial th { background: var(--paper-deep); font-weight: 700; }
 .prose-editorial .mermaid { margin: 2rem 0; overflow-x: auto; border-block: 1px solid var(--line); background: var(--paper-deep); padding: 1.25rem; text-align: center; }
 .prose-editorial .mermaid svg { height: auto; max-width: 100%; }
 .prose-editorial .mermaid-error { color: var(--accent-dark); font-family: var(--sans); font-size: 0.85rem; text-align: left; }
