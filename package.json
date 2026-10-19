@@ -14,7 +14,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:push": "drizzle-kit push",
-    "ralph": "tsx scripts/ralph.ts"
+    "ralph": "tsx scripts/ralph.ts",
+    "test:e2e:ralph": "playwright test --config playwright.ralph.config.ts"
   },
   "dependencies": {
     "@shikijs/rehype": "^4.5.0",

@@ -39,8 +39,9 @@ export async function POST(request: Request, context: RouteContext) {
       }
       pending.push({ question, response: answer.response });
     }
-    const agent = await agentForRequest(request);
-    if (!agent) throw noAgentError();
+    const needsAgent = pending.some(({ question }) => question.type !== "mcq");
+    const agent = needsAgent ? await agentForRequest(request) : undefined;
+    if (needsAgent && !agent) throw noAgentError();
     const graded = await Promise.all(pending.map(async ({ question, response }) => ({ question, response, ...(await gradeAnswer(question, response, agent)) })));
     const score = graded.reduce((sum, answer) => sum + answer.score, 0) / graded.length;
     const didPass = passed(score);
@@ -64,15 +65,14 @@ export async function POST(request: Request, context: RouteContext) {
         }
         complete = courseIsComplete(currentAsPassed);
         if (complete) tx.update(courses).set({ completedAt: now }).where(eq(courses.id, chapter.courseId)).run();
-      } else {
-        for (const answer of graded.filter((item) => item.missedConcept)) {
-          const conceptTag = answer.missedConcept as string;
-          const existing = tx.select().from(reviewItems).where(and(eq(reviewItems.courseId, chapter.courseId), eq(reviewItems.conceptTag, conceptTag))).get();
-          if (existing) {
-            tx.update(reviewItems).set({ misses: existing.misses + 1, sourceQuestionId: answer.question.id, dueAfterChapterIdx: dueChapterIndex(chapter.idx, existing.misses) }).where(eq(reviewItems.id, existing.id)).run();
-          } else {
-            tx.insert(reviewItems).values({ id: randomUUID(), courseId: chapter.courseId, conceptTag, sourceQuestionId: answer.question.id, misses: 1, dueAfterChapterIdx: dueChapterIndex(chapter.idx, 0), createdAt: now }).run();
-          }
+      }
+      for (const answer of graded.filter((item) => item.missedConcept)) {
+        const conceptTag = answer.missedConcept as string;
+        const existing = tx.select().from(reviewItems).where(and(eq(reviewItems.courseId, chapter.courseId), eq(reviewItems.conceptTag, conceptTag))).get();
+        if (existing) {
+          tx.update(reviewItems).set({ misses: existing.misses + 1, sourceQuestionId: answer.question.id, dueAfterChapterIdx: dueChapterIndex(chapter.idx, existing.misses) }).where(eq(reviewItems.id, existing.id)).run();
+        } else {
+          tx.insert(reviewItems).values({ id: randomUUID(), courseId: chapter.courseId, conceptTag, sourceQuestionId: answer.question.id, misses: 1, dueAfterChapterIdx: dueChapterIndex(chapter.idx, 0), createdAt: now }).run();
         }
       }
     });

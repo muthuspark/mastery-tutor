@@ -70,7 +70,13 @@ Scale:
 
 ## Layout
 
-- **Grid:** CSS Grid primary. Max-width containment: 1280px centered with 1.5rem side padding.
+- **Page containers:** `app/globals.css` owns shared horizontal geometry for `.page-shell`, `.reading-shell`, `.site-header`, and `.generation-overlay__inner`. Width is the smaller of the viewport minus two gutters and the selected maximum, centered with automatic inline margins. Gutters are outside the content width, not additional internal padding.
+- **Wide variant:** `.page-shell`, the global `.site-header`, and the generation overlay use `--layout-max-wide: 76rem`. Home and course overview (including loading, empty, and failure states) use this variant. The header stays wide on every route so navigation does not move when entering a reading page.
+- **Reading/form variant:** `.reading-shell` selects `--container-max: var(--layout-max-reading)` (48rem). Settings, chapter content and recovery states, QnA, and QnA results use this centered variant. Its edges intentionally differ from the wide header when the reading maximum is reached.
+- **Responsive tokens:** `--layout-gutter` is 1.5rem from 768px and 1rem below 768px. `--layout-page-space` is 3.5rem from 768px and 2.5rem below it, applied above and below both page-shell variants. Change these shared tokens rather than adding route-specific width formulas.
+- **Home spacing exception:** `.page-shell.home-page` has no shell block padding; its inner grid owns 2.5rem block padding below 768px and 3.5rem from 768px, preserving the two-column composition without doubling the page spacing.
+- **Header and generation spacing exceptions:** The header uses 2rem top / 1rem bottom padding, with 1.25rem top below 768px. The full-screen generation dialog shares wide horizontal bounds but its inner panel retains `min-height: calc(100dvh - 6rem)` and its generation grid uses its own vertically centered, responsive spacing.
+- **Revisit dialog exception:** `.revisit-dialog` is an action confirmation, not a page container. Above 480px it is centered, capped at 31rem, with 1.5rem viewport clearance on each side and a locally scrollable height capped at viewport height minus 3rem. At 480px and below it becomes a full-width bottom sheet with up to full viewport height and 1.5rem internal padding. Its geometry deliberately does not consume page gutter tokens.
 - **Spacing rhythm:** Balanced. Base unit: 0.5rem (8px).
 - **Section vertical gaps:** clamp(4rem, 8vw, 8rem).
 - **Hero layout:** Split-screen (text left, visual right).

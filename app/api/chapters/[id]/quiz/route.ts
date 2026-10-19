@@ -54,7 +54,9 @@ export async function GET(request: Request, context: RouteContext) {
         .slice(0, 10);
     }
     const exclude = new Set([...current.map((question) => question.id), ...latestAttemptIds]);
-    return NextResponse.json({ questions: [...current, ...dueReviewQuestions(chapter.courseId, chapter.idx, exclude)] });
+    const delivered = [...current, ...dueReviewQuestions(chapter.courseId, chapter.idx, exclude)]
+      .map(({ id, type, prompt, options, isReview }) => ({ id, type, prompt, options, isReview }));
+    return NextResponse.json({ questions: delivered });
   } catch (error) {
     return errorResponse(error);
   }

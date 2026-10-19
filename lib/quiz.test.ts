@@ -10,8 +10,36 @@ describe("quiz grading", () => {
     expect(gradeMcq("1", "Another answer", ["A useful answer", "Another answer"]).score).toBe(1);
   });
 
-  it("returns a missed concept for an incorrect answer", () => {
-    expect(gradeMcq("Wrong", "Right", null)).toMatchObject({ score: 0, missedConcept: "Right" });
+  it("returns the expected answer as feedback for an incorrect answer", () => {
+    expect(gradeMcq("Wrong", "Right", null)).toMatchObject({ score: 0, feedback: "The expected answer is: Right." });
+  });
+
+  it.each(["2", "3", "0", "1"])("grades numeric option %s as text before considering indices", (answer) => {
+    const options = ["2", "3", "0", "1"];
+    expect(gradeMcq(`  ${answer}  `, answer, options)).toMatchObject({ score: 1, feedback: "Correct." });
+    const otherAnswer = options[(options.indexOf(answer) + 1) % options.length];
+    expect(gradeMcq(answer, otherAnswer, options).score).toBe(0);
+  });
+
+  it.each(["2x + 1", "1/2", "0.5", "3 squared"])("grades digit-leading expression %s as option text", (answer) => {
+    const options = [answer, "First distractor", "Second distractor", "Third distractor"];
+    expect(gradeMcq(answer.toUpperCase(), answer, options).score).toBe(1);
+    for (const distractor of options.slice(1)) expect(gradeMcq(answer, distractor, options).score).toBe(0);
+  });
+
+  it("normalizes option text before deciding whether to use an index", () => {
+    expect(gradeMcq("  2X   + 1  ", "2x + 1", ["2x + 1", "Wrong", "Other"]).score).toBe(1);
+    expect(gradeMcq("  ordinary   TEXT  ", "Ordinary text", ["Wrong", "Ordinary text"]).score).toBe(1);
+  });
+
+  it.each(["0", "1", "2", "3"])("preserves legacy zero-based index %s when no option text matches", (index) => {
+    const options = ["Alpha", "Beta", "Gamma", "Delta"];
+    expect(gradeMcq(` ${index} `, options[Number(index)], options).score).toBe(1);
+  });
+
+  it.each(["2x", "1/2", "0.5", "3 trailing", "-1", "4"])("does not reinterpret invalid index %s", (response) => {
+    const options = ["Alpha", "Beta", "Gamma", "Delta"];
+    for (const answer of options) expect(gradeMcq(response, answer, options).score).toBe(0);
   });
 });
 
