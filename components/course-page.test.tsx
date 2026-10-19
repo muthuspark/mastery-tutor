@@ -122,6 +122,70 @@ it("keeps open and locked chapter actions unchanged", async () => {
   expect(screen.queryByRole("link", { name: /Integration/ })).not.toBeInTheDocument();
 });
 
+it.each([
+  { label: "mixed statuses", statuses: ["passed", "open", "locked"], current: 1 },
+  { label: "multiple open chapters after a retake", statuses: ["open", "passed", "open", "locked"], current: 0 },
+])("names the first open chapter near progress and preserves outline order: $label", async ({ statuses, current }) => {
+  const chapters = statuses.map((status, idx) => ({ id: `chapter-${idx}`, idx, title: `Lesson ${idx + 1}`, status }));
+  const passed = statuses.filter(status => status === "passed").length;
+  const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+    course: { topic: "Learning navigation" }, chapters, progress: { passed, total: chapters.length },
+  }) });
+  vi.stubGlobal("fetch", fetch);
+  render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
+
+  const continuation = await screen.findByRole("link", { name: `Continue: Lesson ${current + 1} →` });
+  expect(screen.getAllByRole("link", { name: /^Continue:/ })).toHaveLength(1);
+  expect(continuation).toHaveAttribute("href", `/course/course/ch/${current}`);
+  expect(continuation).not.toHaveAttribute("aria-haspopup");
+  expect(within(continuation.parentElement!).getByText(`${passed} of ${chapters.length} chapters mastered`)).toBeInTheDocument();
+  continuation.focus();
+  expect(continuation).toHaveFocus();
+
+  const outline = screen.getByRole("list");
+  expect(continuation.compareDocumentPosition(outline) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  const rows = within(outline).getAllByRole("listitem");
+  expect(rows).toHaveLength(chapters.length);
+  chapters.forEach((chapter, index) => {
+    expect(within(rows[index]).getByText(chapter.title)).toBeInTheDocument();
+    if (chapter.status === "open") {
+      expect(within(rows[index]).getByRole("link", { name: `${chapter.title}Continue →` })).toHaveAttribute("href", `/course/course/ch/${chapter.idx}`);
+    }
+  });
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(fetch.mock.calls).toEqual([["/api/courses/course"]]);
+});
+
+it.each([
+  { label: "empty", statuses: [] },
+  { label: "completed", statuses: ["passed", "passed"] },
+  { label: "locked-only", statuses: ["locked", "locked"] },
+  { label: "mastered and locked", statuses: ["passed", "locked"] },
+])("omits the summary Continue link for a $label course", async ({ statuses }) => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+    course: { topic: "No open chapters" },
+    chapters: statuses.map((status, idx) => ({ id: `chapter-${idx}`, idx, title: `Lesson ${idx + 1}`, status })),
+    progress: { passed: statuses.filter(status => status === "passed").length, total: statuses.length },
+  }) }));
+  render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
+  await screen.findByRole("heading", { name: "No open chapters" });
+  expect(screen.queryByRole("link", { name: /Continue/ })).not.toBeInTheDocument();
+  expect(screen.getByRole("progressbar", { name: "Course mastery" })).toBeInTheDocument();
+});
+
+it("keeps the full chapter title in the summary Continue link", async () => {
+  const title = "Understanding how differential equations describe interconnected systems and their behavior over time";
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+    course: { topic: "Long lesson titles" },
+    chapters: [{ id: "long-title", idx: 3, title, status: "open" }],
+    progress: { passed: 0, total: 1 },
+  }) }));
+  render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
+  const continuation = await screen.findByRole("link", { name: `Continue: ${title} →` });
+  expect(continuation).toHaveAttribute("href", "/course/course/ch/3");
+  expect(continuation).toHaveTextContent(`Continue: ${title} →`);
+});
+
 async function renderMasteredCourse() {
   const fetch = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({
     course: { topic: "Differential equations" },

@@ -31,6 +31,7 @@ export function CoursePage() {
   const passed = data.chapters.filter((chapter) => chapter.status === "passed").length;
   const completed = total > 0 && passed === total;
   const percent = total > 0 ? Math.round((passed / total) * 100) : 0;
+  const currentChapter = data.chapters.find((chapter) => chapter.status === "open");
   function openRevisitDialog(chapter: Chapter, event: React.MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
     setRevisitError("");
@@ -65,7 +66,14 @@ export function CoursePage() {
         </div>
       </header>
       <div className="flex flex-wrap items-center justify-between gap-4 py-5">
-        <p className="text-lg text-[var(--muted)]">{passed} of {total} chapters mastered</p>
+        <div className="min-w-0 flex-1 basis-72">
+          <p className="text-lg text-[var(--muted)]">{passed} of {total} chapters mastered</p>
+          {currentChapter ? (
+            <Link className="button-primary ui mt-3 max-w-full text-left no-underline [overflow-wrap:anywhere]" href={`/course/${params.id}/ch/${currentChapter.idx}`}>
+              Continue: {currentChapter.title} →
+            </Link>
+          ) : null}
+        </div>
         <a className="button-secondary ui shrink-0" href={`/api/courses/${params.id}/export`}>Export notes</a>
       </div>
       {total === 0 ? (
