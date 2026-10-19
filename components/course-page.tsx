@@ -84,7 +84,7 @@ export function CoursePage() {
               <span className="chapter-title text-xl">{chapter.title}</span>
               <span className="chapter-row-actions ui text-xs">
                 {isPassed ? <span className="text-[var(--success)]">Mastered</span> : null}
-                <span className="font-bold">{isOpen ? "Continue →" : isPassed ? "Revisit →" : "Locked"}</span>
+                <span className="font-bold">{isOpen ? "Continue →" : isPassed ? "Retake mastery check →" : "Locked"}</span>
               </span>
             </>;
             return (

@@ -1,11 +1,24 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { CoursePage } from "./course-page";
 
-vi.mock("next/navigation", () => ({ useParams: () => ({ id: "course" }), useRouter: () => ({ push: vi.fn() }) }));
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock("next/navigation", () => ({ useParams: () => ({ id: "course" }), useRouter: () => ({ push }) }));
+const dialogMethods = Object.getOwnPropertyDescriptors(HTMLDialogElement.prototype);
+beforeEach(() => {
+  push.mockClear();
+  // jsdom does not implement native dialog methods; browser focus containment
+  // and Escape key dispatch remain the responsibility of host Playwright checks.
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value(this: HTMLDialogElement) { this.setAttribute("open", ""); } });
+  Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value(this: HTMLDialogElement) { this.removeAttribute("open"); } });
+});
+afterEach(() => { cleanup(); vi.unstubAllGlobals();
+  for (const method of ["showModal", "close"]) {
+    if (dialogMethods[method]) Object.defineProperty(HTMLDialogElement.prototype, method, dialogMethods[method]);
+    else Reflect.deleteProperty(HTMLDialogElement.prototype, method);
+  } });
 
 it("announces loading inside the wide course overview landmark", () => {
   vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
@@ -92,7 +105,7 @@ it("offers completed chapters a normal reading link without invoking reset", asy
   expect(fetch).toHaveBeenCalledWith("/api/courses/course");
   expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
   expect(screen.getByText("You completed this course.")).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /Separation\s*Mastered\s*Revisit →/ })).toHaveAttribute("aria-haspopup", "dialog");
+  expect(screen.getByRole("link", { name: /Separation\s*Mastered\s*Retake mastery check →/ })).toHaveAttribute("aria-haspopup", "dialog");
 });
 
 it("keeps open and locked chapter actions unchanged", async () => {
@@ -107,4 +120,56 @@ it("keeps open and locked chapter actions unchanged", async () => {
   expect(screen.queryByRole("link", { name: /Read lesson/ })).not.toBeInTheDocument();
   expect(screen.getByText("Locked")).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /Integration/ })).not.toBeInTheDocument();
+});
+
+async function renderMasteredCourse() {
+  const fetch = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({
+    course: { topic: "Differential equations" },
+    chapters: [{ id: "passed", idx: 0, title: "Separation", status: "passed" }],
+    progress: { passed: 1, total: 1 },
+  }) });
+  vi.stubGlobal("fetch", fetch);
+  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><CoursePage /></QueryClientProvider>);
+  const trigger = await screen.findByRole("link", { name: /Separation\s*Mastered\s*Retake mastery check →/ });
+  trigger.focus();
+  fireEvent.click(trigger);
+  return { fetch, trigger, dialog: screen.getByRole("dialog", { name: "Reset Separation?" }) };
+}
+
+it("explains the retake reset and safely cancels with focus restored without mutation", async () => {
+  const { fetch, trigger, dialog } = await renderMasteredCourse();
+  expect(dialog).toHaveAccessibleDescription("Your current mastery result and quiz questions will be cleared. We’ll generate a fresh set of questions so you can measure what you know again.");
+  expect(within(dialog).getByRole("button", { name: "Keep mastered" })).toHaveFocus();
+  expect(within(dialog).getByRole("button", { name: "Reset and retake mastery check" })).toBeEnabled();
+  // Native Escape dispatches cancel; test that handler independently of jsdom's keyboard support.
+  fireEvent(dialog, new Event("cancel", { cancelable: true }));
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(trigger).toHaveFocus();
+  fireEvent.click(trigger);
+  fireEvent.click(screen.getByRole("button", { name: "Keep mastered" }));
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  expect(trigger).toHaveFocus();
+  expect(fetch.mock.calls).toEqual([["/api/courses/course"]]);
+  expect(push).not.toHaveBeenCalled();
+  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
+});
+
+it("submits only on explicit retake confirmation and preserves pending and error recovery", async () => {
+  const { fetch, dialog } = await renderMasteredCourse();
+  let finish!: (response: { ok: boolean }) => void;
+  fetch.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  fireEvent.click(within(dialog).getByRole("button", { name: "Reset and retake mastery check" }));
+  expect(fetch).toHaveBeenLastCalledWith("/api/chapters/passed/revisit", { method: "POST" });
+  expect(within(dialog).getByRole("button", { name: "Resetting…" })).toBeDisabled();
+  expect(within(dialog).getByRole("button", { name: "Keep mastered" })).toBeDisabled();
+  fireEvent(dialog, new Event("cancel", { cancelable: true }));
+  expect(dialog).toBeInTheDocument();
+  expect(push).not.toHaveBeenCalled();
+  await act(async () => finish({ ok: false }));
+  expect(within(dialog).getByRole("alert")).toHaveTextContent("Could not reset this chapter. Please try again.");
+  expect(within(dialog).getByRole("button", { name: "Keep mastered" })).toBeEnabled();
+  fetch.mockResolvedValueOnce({ ok: true });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Reset and retake mastery check" }));
+  await waitFor(() => expect(push).toHaveBeenCalledWith("/course/course/ch/0"));
+  expect(fetch).toHaveBeenCalledTimes(3);
 });

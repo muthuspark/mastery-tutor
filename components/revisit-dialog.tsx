@@ -61,7 +61,7 @@ export function RevisitDialog({ open, chapterTitle, isSubmitting, error, onCance
         {error ? <p className="revisit-dialog__error ui" role="alert">{error}</p> : null}
         <div className="revisit-dialog__actions ui">
           <button type="button" className="button-secondary" onClick={onCancel} disabled={isSubmitting} ref={cancelRef}>Keep mastered</button>
-          <button type="button" className="button-primary" onClick={onConfirm} disabled={isSubmitting}>{isSubmitting ? "Resetting…" : "Reset and revisit"}</button>
+          <button type="button" className="button-primary" onClick={onConfirm} disabled={isSubmitting}>{isSubmitting ? "Resetting…" : "Reset and retake mastery check"}</button>
         </div>
     </dialog>
   );
