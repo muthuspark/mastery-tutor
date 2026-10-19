@@ -243,9 +243,15 @@ it.each([
   expect(push).not.toHaveBeenCalled();
 });
 
-it("explains the retake reset and safely cancels with focus restored without mutation", async () => {
+it("discloses the chapter quiz reset consequences visibly and in the dialog description", async () => {
+  const { dialog } = await renderMasteredCourse();
+  const disclosure = "This chapter’s current mastery result and quiz questions will be cleared, along with saved answers and review items associated with those questions. We’ll generate a fresh set of questions so you can measure what you know again.";
+  expect(within(dialog).getByText(disclosure)).toBeVisible();
+  expect(dialog).toHaveAccessibleDescription(disclosure);
+});
+
+it("safely cancels retaking with focus restored without mutation", async () => {
   const { fetch, trigger, dialog } = await renderMasteredCourse();
-  expect(dialog).toHaveAccessibleDescription("Your current mastery result and quiz questions will be cleared. We’ll generate a fresh set of questions so you can measure what you know again.");
   expect(within(dialog).getByRole("button", { name: "Keep mastered" })).toHaveFocus();
   expect(within(dialog).getByRole("button", { name: "Reset and retake mastery check" })).toBeEnabled();
   // Native Escape dispatches cancel; test that handler independently of jsdom's keyboard support.
