@@ -9,17 +9,27 @@ import { z } from "zod";
 import { assessBrowserReport } from "./ralph-browser";
 
 const text = z.string().trim().min(1);
+const mustDoAssessmentSchema = z.object({
+  score: z.number().int().min(1).max(5), rationale: text,
+}).strict();
+const mustDoSchema = z.object({
+  productManager: mustDoAssessmentSchema,
+  subjectMatterExpert: mustDoAssessmentSchema.extend({ domain: text }),
+}).strict();
 const candidateSchema = z.object({
   title: text, category: text, rationale: text, evidence: z.array(text).min(1),
   acceptanceCriteria: z.array(text).min(1),
   impact: z.number().int().min(1).max(5), confidence: z.number().int().min(1).max(5),
   effort: z.number().int().min(1).max(5), risk: z.number().int().min(1).max(5),
+  // Optional only for resuming checkpoints created before role-based discovery.
+  mustDo: mustDoSchema.optional(),
 }).strict();
-const proposalsSchema = z.object({ candidates: z.array(candidateSchema).length(5) }).strict()
+const proposalCandidateSchema = candidateSchema.extend({ mustDo: mustDoSchema });
+const proposalsSchema = z.object({ candidates: z.array(proposalCandidateSchema).length(5) }).strict()
   .refine(({ candidates }) => new Set(candidates.map(c => c.title.toLowerCase())).size === 5,
     "Candidates must have distinct titles");
 // Use the underlying object for JSON Schema; validate uniqueness locally as well.
-const proposalsWireSchema = z.object({ candidates: z.array(candidateSchema).length(5) }).strict();
+const proposalsWireSchema = z.object({ candidates: z.array(proposalCandidateSchema).length(5) }).strict();
 const implementationSchema = z.object({
   summary: text, decisions: z.array(z.object({ decision: text, reason: text }).strict()).min(1),
 }).strict();
@@ -66,6 +76,8 @@ npm run ralph -- --resume <run-id>
 Requires a clean Git tree on first start. Creates a local ralph/<run-id> branch.
 Decisions: progress.txt (appended and included in verified commits).
 Logs and resumable state: .ralph/<run-id>/. Never pushes, merges, or deploys.
+Discovery: a senior product manager and domain subject matter expert assess five
+must-do improvements. Highest combined must-do score wins; value/cost breaks ties.
 `;
 
 export function parseOptions(args: string[]): Options {
@@ -117,8 +129,15 @@ function integer(value: string, flag: string) {
 export function rankCandidates(candidates: Candidate[]) {
   return candidates.map((candidate, index) => ({
     ...candidate, index, score: candidate.impact * candidate.confidence / (candidate.effort * candidate.risk),
-  })).sort((a, b) => b.score - a.score || b.impact - a.impact || a.effort - b.effort || a.index - b.index);
+    mustDoScore: candidate.mustDo ? candidate.mustDo.productManager.score + candidate.mustDo.subjectMatterExpert.score : 0,
+  })).sort((a, b) => b.mustDoScore - a.mustDoScore || b.score - a.score || b.impact - a.impact || a.effort - b.effort || a.index - b.index);
 }
+
+const discoveryPrompt = `Assess the product from two explicit roles: a senior product manager and a subject matter expert in this product's domain. Infer and name the relevant domain from the repository and supplied goal; for Mastery Tutor, apply expertise in learning science, mastery learning, assessment, and tutoring.
+The senior product manager evaluates learner needs, severity of unmet needs, product outcomes, and urgency. The subject matter expert evaluates domain correctness, educational value, and consequences of leaving the problem unresolved. Give each role its own reasoned assessment; do not invent user research or measured results.
+Inspect the current implementation and agree on the top five distinct must-do product improvements grounded in the supplied goal. Avoid completed ideas and cosmetic churn. Keep each improvement small, independently useful, and feasible as one verified Ralph increment; scope a first useful slice when necessary.
+For each candidate, cite concrete code, failures, or supplied user feedback as evidence, distinguish hypotheses from measured impact, and provide testable acceptance criteria. Include mustDo.productManager and mustDo.subjectMatterExpert, each with a score and rationale, plus the expert's domain. Use this shared must-do scale: 1 = optional, 2 = useful but deferrable, 3 = important, 4 = urgent with significant learner consequences, 5 = essential because a core learner outcome is blocked or materially wrong. Score necessity, not ease of implementation.
+Also score impact, confidence, effort, and risk from 1 to 5; higher effort/risk means more expensive/dangerous. The orchestrator selects the highest sum of the two must-do scores, using impact * confidence / (effort * risk) only to break ties. The winner becomes the concrete product improvement pursued by this Ralph iteration under the supplied goal. Return exactly five candidates only; do not edit files.`;
 
 // Spawn argument arrays directly: goal text and model output never become shell code.
 async function command(bin: string, args: string[], cwd: string, options: {
@@ -352,16 +371,17 @@ export async function runRalph(options: Options, cwd = process.cwd(), signal?: A
         }
         case "discover": {
           const result = await agent(proposalsSchema,
-            "Inspect the current implementation and propose exactly five diverse, small, independently useful improvements grounded in the goal. Cover user value, reliability, usability, performance, and one creative wildcard where relevant. Avoid completed ideas and cosmetic churn. Evidence should cite concrete code, failures, or supplied user feedback; distinguish hypotheses from measured impact. Each candidate must have testable acceptance criteria and scores from 1 to 5; higher effort/risk means more expensive/dangerous. Return candidates only; do not edit files.", false, proposalsWireSchema);
+            discoveryPrompt, false, proposalsWireSchema);
           const ranked = rankCandidates(result.candidates);
-          await record("Five candidates generated and ranked", { formula: "impact * confidence / (effort * risk)", ranked });
+          const ranking = { formula: "mustDo.productManager.score + mustDo.subjectMatterExpert.score", tieBreaker: "impact * confidence / (effort * risk), higher impact, lower effort, proposal order" };
+          await record("Five candidates generated and ranked", { ...ranking, ranked });
           const completedTitles = new Set(s.history.map(item => item.title.toLowerCase()));
           const winner = ranked.find(item => !completedTitles.has(item.title.toLowerCase()));
           if (!winner) throw new Error("All five candidates repeat completed features; no new improvement selected");
           s.candidate = candidateSchema.parse(result.candidates[winner.index]);
-          await atomicJson(artifact("ranking.json"), { formula: "impact * confidence / (effort * risk)", ranked, selected: s.candidate.title });
-          await record("Candidate selected", { iteration: s.completed + 1, candidate: s.candidate, score: winner.score, reason: "Highest score among candidates whose titles have not been completed; ties use higher impact, lower effort, then proposal order", excludedCompletedTitles: ranked.filter(item => completedTitles.has(item.title.toLowerCase())).map(item => item.title) });
-          console.log(`  Selected: ${s.candidate.title} (score ${winner.score.toFixed(2)})`);
+          await atomicJson(artifact("ranking.json"), { ...ranking, ranked, selected: s.candidate.title });
+          await record("Candidate selected", { iteration: s.completed + 1, candidate: s.candidate, mustDoScore: winner.mustDoScore, score: winner.score, reason: "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order", excludedCompletedTitles: ranked.filter(item => completedTitles.has(item.title.toLowerCase())).map(item => item.title) });
+          console.log(`  Selected: ${s.candidate.title} (must-do ${winner.mustDoScore}/10; value/cost ${winner.score.toFixed(2)})`);
           s.repairs = 0; s.feedback = []; s.summary = ""; s.browserResult = null; s.phase = "implement";
           break;
         }

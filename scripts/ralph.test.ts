@@ -9,6 +9,10 @@ const candidate = (title: string, impact = 4, effort = 2) => ({
   title, category: "reliability", rationale: "Improves the goal", evidence: ["fixture.txt needs improvement"],
   acceptanceCriteria: ["Fixture improves"], impact, confidence: 4, effort, risk: 1,
 });
+const mustDo = (productManager: number, subjectMatterExpert: number) => ({
+  productManager: { score: productManager, rationale: "Core learner need" },
+  subjectMatterExpert: { score: subjectMatterExpert, rationale: "Required for mastery", domain: "Learning science" },
+});
 let root: string;
 const git = (...args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
 const options = () => parseOptions(["--goal", "Improve fixture", "--iterations", "1"]);
@@ -48,6 +52,9 @@ process.stdin.on('end', () => {
   if (phase === 'discover') {
     const names = mode === 'duplicate' ? ['same','same','c','d','e'] : ['a','b','c','d','e'];
     const candidates = names.map((title,i) => ({title,category:'reliability',rationale:'Useful',evidence:['fixture.txt'],acceptanceCriteria:['Fixture improves'],impact:5-i,confidence:4,effort:1,risk:1}));
+    candidates.forEach((c,i) => c.mustDo = {productManager:{score:i===1?5:3,rationale:'Core learner need'},subjectMatterExpert:{score:i===1?5:3,rationale:'Required for mastery',domain:'Learning science'}});
+    if (mode === 'missing-role') delete candidates[0].mustDo.subjectMatterExpert;
+    if (mode === 'invalid-score') candidates[0].mustDo.productManager.score = 6;
     if (mode === 'four') candidates.pop();
     fs.writeFileSync(output, JSON.stringify({ candidates }));
   } else if (phase === 'browser-prepare') {
@@ -107,6 +114,19 @@ describe("options and ranking", () => {
     expect(rankCandidates([candidate("small", 2, 1), candidate("large", 4, 2)])[0].title).toBe("large");
     expect(rankCandidates([candidate("expensive", 4, 2), { ...candidate("cheap", 4, 1), risk: 2 }])[0].title).toBe("cheap");
   });
+  it("prioritizes combined must-do scores over implementation value/cost", () => {
+    const ranked = rankCandidates([
+      { ...candidate("easy", 5, 1), mustDo: mustDo(3, 3) },
+      { ...candidate("essential", 2, 5), mustDo: mustDo(5, 5) },
+      { ...candidate("PM favorite", 5, 1), mustDo: mustDo(5, 2) },
+    ]);
+    expect(ranked.map(item => item.title)).toEqual(["essential", "PM favorite", "easy"]);
+    expect(ranked[0].mustDoScore).toBe(10);
+    expect(rankCandidates([
+      { ...candidate("costly", 4, 5), mustDo: mustDo(5, 3) },
+      { ...candidate("efficient", 4, 1), mustDo: mustDo(4, 4) },
+    ])[0].title).toBe("efficient");
+  });
 });
 
 it("runs real subprocesses, commits a verified iteration, and resumes a finished run", async () => {
@@ -114,6 +134,7 @@ it("runs real subprocesses, commits a verified iteration, and resumes a finished
   const saved = await state();
   expect(saved.data.phase).toBe("done");
   expect(saved.data.completed).toBe(1);
+  expect(saved.data.history[0].title).toBe("b");
   expect(git("rev-list", "--count", "HEAD")).toBe("2");
   expect(git("branch", "--show-current")).toMatch(/^ralph\//);
   expect(git("status", "--porcelain")).toBe("");
@@ -123,6 +144,16 @@ it("runs real subprocesses, commits a verified iteration, and resumes a finished
   expect(progress).toContain("Highest score among candidates");
   expect(progress).toContain("Satisfies the selected acceptance criterion");
   expect(progress).toContain("iteration limit reached");
+  expect(progress).toContain('"mustDoScore": 10');
+  const files = await readdir(path.join(root, ".ralph", saved.id));
+  const rankingFile = files.find(file => file.endsWith("ranking.json"))!;
+  const ranking = JSON.parse(await readFile(path.join(root, ".ralph", saved.id, rankingFile), "utf8"));
+  expect(ranking.ranked).toHaveLength(5);
+  expect(ranking.selected).toBe("b");
+  const implementationPrompt = files.find(file => file.includes("-implement-") && file.endsWith("prompt.txt"))!;
+  const prompt = await readFile(path.join(root, ".ralph", saved.id, implementationPrompt), "utf8");
+  expect(prompt).toContain('"candidate":{"title":"b"');
+  expect(prompt).toContain('"subjectMatterExpert":{"score":5');
   expect(git("show", "HEAD:progress.txt")).toBe(progress.trim());
   expect(await readFile(path.join(root, "bin", "phases"), "utf8")).toBe("discover\nimplement\nbrowser-prepare\nreview\n");
   const calls = await readFile(path.join(root, "bin", "calls"), "utf8");
@@ -140,7 +171,7 @@ it("remembers completed features across multiple iterations", async () => {
   expect(git("rev-list", "--count", "HEAD")).toBe("3");
 });
 
-it.each(["four", "duplicate", "malformed", "auth"])("rejects %s output without committing", async value => {
+it.each(["four", "duplicate", "malformed", "auth", "missing-role", "invalid-score"])("rejects %s output without committing", async value => {
   await mode(value);
   await expect(runRalph(options(), root)).rejects.toThrow();
   expect((await state()).data.phase).toBe("discover");
