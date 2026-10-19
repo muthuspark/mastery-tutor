@@ -19,7 +19,7 @@ async function mount(submit = vi.fn().mockResolvedValue({ ok: true, json: async 
   });
   vi.stubGlobal("fetch", fetch);
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><QuizPage /></QueryClientProvider>);
-  await screen.findByRole("heading", { name: "Question 1" });
+  await screen.findByRole("heading", { name: quizQuestions[0].prompt });
   return submit;
 }
 const next = () => fireEvent.click(screen.getByRole("button", { name: "Next question" }));
@@ -172,4 +172,36 @@ it.each([
   expect(review).toContainElement(screen.getByText(graded.feedback));
   expect(review).toContainElement(screen.getByText(`Model answer: ${modelAnswer}`));
   expect(review.querySelector("img, script, strong")).toBeNull();
+});
+
+
+it.each([
+  { name: "long prose", text: "Explain how repeated retrieval supports learning across different contexts. ".repeat(12).trim() },
+  { name: "URL", text: `https://example.test/assessment/${"long-path-segment".repeat(20)}?context=practice` },
+  { name: "uninterrupted token", text: "x".repeat(300) },
+])("keeps the full $name prompt and option associated while navigating and submitting", async ({ text }) => {
+  const quizQuestions = [
+    { ...questions[0], prompt: text, options: [text, "Alternative answer"] },
+    questions[1],
+  ];
+  const submit = await mount(undefined, quizQuestions);
+  expect(screen.getByRole("heading", { name: text }).textContent).toBe(text);
+  const radio = screen.getByRole<HTMLInputElement>("radio", { name: `A. ${text}` });
+  expect(radio.labels).toHaveLength(1);
+  const label = radio.labels![0];
+  expect(label.textContent).toBe(`A. ${text}`);
+  expect(label).toContainElement(radio);
+  radio.focus();
+  expect(radio).toHaveFocus();
+  // Click the text, exercising the implicit native label association after wrapping it.
+  fireEvent.click(screen.getByText(`A. ${text}`));
+  expect(radio).toBeChecked();
+  next(); answer(2); previous();
+  expect(screen.getByRole("radio", { name: `A. ${text}` })).toBeChecked();
+  next(); submitAnswers();
+  await screen.findByRole("heading", { name: "Chapter complete" });
+  expect(JSON.parse(submit.mock.calls[0][1].body)).toEqual({ answers: [
+    { questionId: "q1", response: text },
+    { questionId: "q2", response: "Answer 2" },
+  ] });
 });

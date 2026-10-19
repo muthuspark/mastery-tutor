@@ -464,3 +464,410 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Give chapter loading and failure states consistent, accessible recovery controls\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 1"
 }
+
+[2026-10-19T01:01:25.336Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 2,
+  "phase": "discover"
+}
+
+[2026-10-19T01:02:18.532Z] 20261019005423535-521173d2 — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Keep assessment prompts and answer options readable within the reading container",
+      "category": "Responsive assessment UI",
+      "rationale": "First slice: introduce reusable assessment text and option styles that wrap long content, preserve radio visibility, and use a responsive heading scale. Source inspection identifies missing containment; actual overflow and learner impact require host browser verification.",
+      "evidence": [
+        "components/quiz-page.tsx:105 renders every question at text-5xl with leading-none and no explicit overflow wrapping.",
+        "components/quiz-page.tsx:105 places option text directly inside a flex label without a shrinkable text wrapper or overflow-wrap rule.",
+        "app/globals.css:44 protects course and chapter titles with overflow-wrap:anywhere, but assessment prompts and options have no equivalent.",
+        "components/quiz-page.test.tsx includes a long answer ending in 200 uninterrupted characters, but its jsdom assertions verify content rather than browser geometry."
+      ],
+      "acceptanceCriteria": [
+        "Prompts and options containing long prose, URLs, and uninterrupted tokens stay within the reading container at 375, 768, and 1440 pixels without hiding content.",
+        "Radio controls remain visible, keyboard operable, and associated with their complete option labels.",
+        "Question typography uses a reusable responsive convention; question navigation preserves selections.",
+        "Host verification completes a balanced, test-owned ten-question MCQ assessment with real delivery and grading; lint, typecheck, and relevant component tests pass."
+      ],
+      "impact": 4,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "Reading and selecting answers are core tasks. Missing containment can make legitimate course content difficult to assess on mobile. The source risk is concrete, although its frequency and effect have not been measured."
+        },
+        "subjectMatterExpert": {
+          "score": 4,
+          "rationale": "Assessment presentation should let learners demonstrate knowledge without interference from clipped text or displaced choices. These safeguards reduce a plausible source of assessment difficulty unrelated to subject knowledge.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 0,
+      "score": 4,
+      "mustDoScore": 8
+    },
+    {
+      "title": "Use course-width loading, failure, and empty states with clear navigation",
+      "category": "Course state consistency",
+      "rationale": "Keep the course overview in its wide layout throughout loading and recovery, and give failure and empty states a consistent heading and return action. Limit this increment to course overview states.",
+      "evidence": [
+        "components/course-page.tsx:19-25 uses reading-shell for loading and failure, while the loaded overview at line 48 uses page-shell.",
+        "app/globals.css:29-30 defines those shells at different desktop maximum widths, 76rem and 48rem.",
+        "components/course-page.tsx:20-25 provides a failure paragraph and retry but no page heading or explicit return-to-learning action.",
+        "components/course-page.tsx renders a zero-chapter course as a standalone sentence without an actionable recovery path."
+      ],
+      "acceptanceCriteria": [
+        "Loading, failure, empty, and loaded course states have identical container bounds at each tested viewport.",
+        "Failure and empty states have descriptive headings and a keyboard-accessible link back to learning.",
+        "Retry retains navigation, disables duplicate activation while pending, and recovers through a read request without resetting progress.",
+        "Host verification checks all four states at 375, 768, and 1440 pixels; lint, typecheck, and relevant component tests pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "The overview is the learner's chapter-selection hub. Consistent geometry and explicit exits make degraded states easier to recover from, although retry and global navigation already provide partial recovery."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Learners need a clear route to usable study material when a course cannot display chapters. This improves continuity without changing mastery criteria or recorded evidence.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 2,
+      "score": 7.5,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Keep quiz recovery controls stable while retrying",
+      "category": "Loading and error consistency",
+      "rationale": "Extend the established chapter recovery pattern to quiz loading failures. Keep a disabled pending retry control and an available return link instead of replacing the recovery screen during a request. This is a distinct quiz slice beyond the completed chapter increment.",
+      "evidence": [
+        "components/quiz-page.tsx:61-63 returns only a loading paragraph when a failed query starts fetching again.",
+        "components/quiz-page.tsx:77-84 separately implements error headings and recovery actions.",
+        "components/quiz-page-loading.test.tsx:73-76 explicitly expects the retry button to disappear during recovery.",
+        "components/reading-page-state.tsx already provides the chapter precedent for pending status, disabled retry, and persistent course navigation."
+      ],
+      "acceptanceCriteria": [
+        "Manual quiz recovery retains its heading, return link, and disabled 'Trying again…' button until the request settles.",
+        "Pending recovery announces status; a subsequent failure restores an enabled retry and an appropriate alert.",
+        "Existing bounded 202 retries and unavailable-state behavior remain intact; retry only refetches the failed resource.",
+        "Host verification covers delayed recovery at 375, 768, and 1440 pixels and completes a real prepared MCQ flow without starting generation jobs; relevant tests, lint, and typecheck pass."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Recovery exists, but removing both controls during a slow retry leaves learners without a local exit and creates inconsistent behavior beside chapter recovery. This is important friction rather than a demonstrated assessment blocker."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "A stable route back to the lesson supports the study–assessment loop when delivery fails. Educational benefit is inferred; grading correctness is already separate from this presentation issue.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 1,
+      "score": 5,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Define shared container tokens and document reading-layout exceptions",
+      "category": "Layout primitives",
+      "rationale": "Consolidate existing widths, gutters, and page spacing into shared tokens used by page shells, the site header, and generation overlay. Preserve the useful narrow reading layout and explicitly document its alignment relationship to the wide site header.",
+      "evidence": [
+        "app/globals.css:29-30 separately declares wide and reading shell geometry.",
+        "app/globals.css:65 and 90 repeat wide container geometry for the site header and generation overlay.",
+        "app/globals.css:82 and 122-123 distribute mobile gutter and spacing rules across separate media blocks.",
+        "app/page.tsx and components/course-page.tsx use the wide variant; settings, chapter, and quiz pages use the reading variant. e2e/header.spec.ts compares headers across routes but does not assert the complete container variant contract."
+      ],
+      "acceptanceCriteria": [
+        "Shared tokens own wide width, reading width, responsive gutters, and standard page vertical spacing.",
+        "Every existing page and overlay uses a named variant without unexplained duplicate geometry.",
+        "Documentation identifies narrow reading/form layouts, their intentional inset from the global header, and the home page's vertical-spacing exception.",
+        "Host geometry checks cover all five page routes at 375, 768, and 1440 pixels, including equal bounds within each variant and no document overflow; lint and typecheck pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "This directly establishes the requested cross-page layout contract and prevents future drift. Existing shells already provide substantial consistency, so it is important foundational work rather than an urgent learner blockage."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Predictable reading and navigation regions support sustained study. Preserving an explicit narrow variant avoids sacrificing reading comfort to uniform full-width layouts; learning gains remain unmeasured.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 3,
+      "score": 3.75,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Standardize secondary learning actions and disabled control states",
+      "category": "Shared controls and accessibility",
+      "rationale": "Create a reusable compact action convention with adequate target size, visible focus, and consistent disabled behavior. Apply it first to lesson feedback, regeneration, and the assessment result's review link.",
+      "evidence": [
+        "app/globals.css:42 gives text-button zero padding and no minimum target height.",
+        "components/chapter-page.tsx:79 uses that control for 'Too easy', 'Too hard', and 'Regenerate chapter'.",
+        "components/quiz-page.tsx:104 renders 'Review chapter' as a text-xs link with no shared action sizing.",
+        "components/course-list.tsx adds min-h-11 locally to its retry text-button; app/globals.css:66 and 70 similarly give header links explicit minimum heights.",
+        "app/globals.css:41 defines secondary disabled styling, while text-button has no disabled rule and its hover rule remains active."
+      ],
+      "acceptanceCriteria": [
+        "The scoped secondary actions share typography, visible keyboard focus, and a minimum 44px target height without overlapping neighboring controls.",
+        "Disabled regeneration is visually distinct and does not present an enabled hover treatment.",
+        "At 375, 768, and 1440 pixels, actions wrap without overflow and remain usable by keyboard.",
+        "Host verification reaches 'Review chapter' after a real failed prepared MCQ attempt, preserves learning evidence, and isolates out-of-scope regeneration; lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Inconsistent small targets affect recurring mobile actions and recovery from failed assessments. The source inconsistency is established; missed taps and abandonment have not been measured."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Reviewing lessons and communicating difficulty support corrective study. Making these actions consistently operable improves access to tutoring support without changing instructional decisions.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 4,
+      "score": 3.75,
+      "mustDoScore": 6
+    }
+  ]
+}
+
+[2026-10-19T01:02:18.532Z] 20261019005423535-521173d2 — Candidate selected
+{
+  "iteration": 2,
+  "candidate": {
+    "title": "Keep assessment prompts and answer options readable within the reading container",
+    "category": "Responsive assessment UI",
+    "rationale": "First slice: introduce reusable assessment text and option styles that wrap long content, preserve radio visibility, and use a responsive heading scale. Source inspection identifies missing containment; actual overflow and learner impact require host browser verification.",
+    "evidence": [
+      "components/quiz-page.tsx:105 renders every question at text-5xl with leading-none and no explicit overflow wrapping.",
+      "components/quiz-page.tsx:105 places option text directly inside a flex label without a shrinkable text wrapper or overflow-wrap rule.",
+      "app/globals.css:44 protects course and chapter titles with overflow-wrap:anywhere, but assessment prompts and options have no equivalent.",
+      "components/quiz-page.test.tsx includes a long answer ending in 200 uninterrupted characters, but its jsdom assertions verify content rather than browser geometry."
+    ],
+    "acceptanceCriteria": [
+      "Prompts and options containing long prose, URLs, and uninterrupted tokens stay within the reading container at 375, 768, and 1440 pixels without hiding content.",
+      "Radio controls remain visible, keyboard operable, and associated with their complete option labels.",
+      "Question typography uses a reusable responsive convention; question navigation preserves selections.",
+      "Host verification completes a balanced, test-owned ten-question MCQ assessment with real delivery and grading; lint, typecheck, and relevant component tests pass."
+    ],
+    "impact": 4,
+    "confidence": 4,
+    "effort": 2,
+    "risk": 2,
+    "mustDo": {
+      "productManager": {
+        "score": 4,
+        "rationale": "Reading and selecting answers are core tasks. Missing containment can make legitimate course content difficult to assess on mobile. The source risk is concrete, although its frequency and effect have not been measured."
+      },
+      "subjectMatterExpert": {
+        "score": 4,
+        "rationale": "Assessment presentation should let learners demonstrate knowledge without interference from clipped text or displaced choices. These safeguards reduce a plausible source of assessment difficulty unrelated to subject knowledge.",
+        "domain": "Learning science, mastery learning, assessment, and tutoring"
+      }
+    }
+  },
+  "mustDoScore": 8,
+  "score": 4,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T01:02:18.551Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 2,
+  "phase": "implement"
+}
+
+[2026-10-19T01:03:18.297Z] 20261019005423535-521173d2 — Implementation completed; verification required
+{
+  "summary": "Implemented responsive assessment headings, wrapping prompts/options, and non-shrinking radios. Lint, typecheck, and 55 component tests pass. Host viewport, keyboard, and real ten-question grading verification remain pending. Evidence: .ralph/20261019005423535-521173d2/iteration-2-implementation-evidence.md.",
+  "decisions": [
+    {
+      "decision": "Preserve the existing reading container and visual language.",
+      "reason": "Keep this increment focused on assessment readability."
+    },
+    {
+      "decision": "Use reusable wrapping styles and breakpoint-based question typography.",
+      "reason": "Accommodate long content and improve mobile readability without truncation."
+    },
+    {
+      "decision": "Keep native radios beside shrinkable option text.",
+      "reason": "Preserve complete labels and native interaction while preventing controls from shrinking."
+    },
+    {
+      "decision": "Add long-content navigation and submission tests; defer browser execution to the host.",
+      "reason": "Verify label association and answer preservation locally while respecting phase constraints."
+    }
+  ]
+}
+
+[2026-10-19T01:03:18.321Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 2,
+  "phase": "verify"
+}
+
+[2026-10-19T01:03:21.358Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 2,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/2-verify-1792371798321-37-lint.log"
+}
+
+[2026-10-19T01:03:23.054Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 2,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/2-verify-1792371801363-38-typecheck.log"
+}
+
+[2026-10-19T01:03:42.779Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 2,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/2-verify-1792371803058-39-test.log"
+}
+
+[2026-10-19T01:03:48.644Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 2,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/2-verify-1792371822784-40-build.log"
+}
+
+[2026-10-19T01:03:48.649Z] 20261019005423535-521173d2 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T01:03:48.668Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 2,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T01:04:58.082Z] 20261019005423535-521173d2 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-2.spec.ts",
+  "summary": "Created iteration-2.spec.ts. Targeted ESLint and TypeScript checks passed. Browser execution remains with the host.",
+  "decisions": [
+    {
+      "decision": "Test at 375, 768, and 1440 pixels.",
+      "reason": "Verify long prose, URLs, tokens, text containment, radio visibility, and responsive typography."
+    },
+    {
+      "decision": "Exercise keyboard selection and backward/forward navigation.",
+      "reason": "Verify complete label association and retained answers."
+    },
+    {
+      "decision": "Complete real ten-question grading and verify progress after reload.",
+      "reason": "Balanced, self-cleaning fixtures preserve real persistence coverage while avoiding generation."
+    }
+  ]
+}
+
+[2026-10-19T01:05:01.288Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 2,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/2-browser-prepare-1792371898082-45-lint.log"
+}
+
+[2026-10-19T01:05:03.643Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 2,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/2-browser-prepare-1792371901293-46-typecheck.log"
+}
+
+[2026-10-19T01:05:03.672Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 2,
+  "phase": "browser-run"
+}
+
+[2026-10-19T01:05:20.692Z] 20261019005423535-521173d2 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 3,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-2.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/2-browser-run-1792371903753-47-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/2-browser-run-1792371903753-47-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/2-browser-run-1792371903753-47-playwright/artifacts"
+}
+
+[2026-10-19T01:05:20.710Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 2,
+  "phase": "review"
+}
+
+[2026-10-19T01:06:06.762Z] 20261019005423535-521173d2 — Independent review decision
+{
+  "summary": "Selected assessment increment passes review. No unresolved defects found.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Host tests verify prose, URLs, and uninterrupted tokens fit without clipping or horizontal overflow at 375, 768, and 1440px.",
+    "Complete radio labels, visible controls, Space/arrow keyboard selection, and label-click selection pass.",
+    "Reusable responsive heading styles render at 36/48px; backward/forward navigation preserves answers.",
+    "Each viewport completes a balanced, test-owned ten-question assessment with real delivery, grading, persisted answers, and completed progress after reload.",
+    "Verification logs show lint, typecheck, and all 160 tests passing, including 55 component tests. Review-time git diff --check passes."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-2.spec.ts and the supplied results.json: 3 passed, zero skips, retries, failures, or report errors.",
+    "Inspected saved screenshots at all three viewport sizes.",
+    "Inspected all three trace archives; each records successful quiz GET and grading POST responses."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T01:06:06.780Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 2,
+  "phase": "commit"
+}
+
+[2026-10-19T01:06:06.785Z] 20261019005423535-521173d2 — Verified iteration approved for commit
+{
+  "iteration": 2,
+  "candidate": "Keep assessment prompts and answer options readable within the reading container",
+  "summary": "Implemented responsive assessment headings, wrapping prompts/options, and non-shrinking radios. Lint, typecheck, and 55 component tests pass. Host viewport, keyboard, and real ten-question grading verification remain pending. Evidence: .ralph/20261019005423535-521173d2/iteration-2-implementation-evidence.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Keep assessment prompts and answer options readable within the reading container\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 2"
+}
