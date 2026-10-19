@@ -94,7 +94,6 @@ export function CoursePage() {
                 )}
                 {isPassed ? (
                   <div className="ui flex flex-wrap items-center justify-between gap-3 pb-5 text-sm">
-                    <p className="text-[var(--muted)]">Reread without resetting your progress.</p>
                     <Link className="button-secondary shrink-0" href={`/course/${params.id}/ch/${chapter.idx}`} aria-label={`Read lesson → ${chapter.title}`}>Read lesson →</Link>
                   </div>
                 ) : null}
