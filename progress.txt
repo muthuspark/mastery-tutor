@@ -3437,3 +3437,507 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Recover agent discovery failures without blocking course creation\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 8"
 }
+
+[2026-10-19T01:43:21.201Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 9,
+  "phase": "discover"
+}
+
+[2026-10-19T01:44:21.146Z] 20261019005423535-521173d2 — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Make course-generation loading accessible as a true modal",
+      "category": "Accessible loading states",
+      "rationale": "The generation overlay declares itself modal but does not manage focus or disable background interaction. Bring this loading state into line with the existing accessible confirmation dialog. Source inspection establishes the implementation gap; learner impact has not been measured.",
+      "evidence": [
+        "components/new-course-form.tsx:110: GenerationOverlay renders a div with role=\"dialog\" and aria-modal=\"true\", without focus placement, focus containment, or background inertness.",
+        "components/new-course-form.tsx:117: Changing generation-detail text has no live status announcement.",
+        "components/revisit-dialog.tsx:18: The existing confirmation dialog uses showModal(), initial focus, focus restoration, and keyboard containment."
+      ],
+      "acceptanceCriteria": [
+        "Opening generation moves focus into the named dialog; Tab and Shift+Tab cannot reach background navigation or studies.",
+        "Pending progress has an accessible announcement without announcing decorative elements.",
+        "Creation failure closes the overlay, preserves the topic, and restores focus to a useful recovery location.",
+        "Preserve existing creation requests and success navigation; do not add cancellation semantics.",
+        "Host verifies keyboard behavior and layout at 375, 768, and 1440px using controlled creation responses without paid generation; lint, typecheck, and relevant component tests pass."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "The entry flow visually blocks the page while keyboard users can still reach hidden destinations. Consistent pending interaction is urgent because accidental navigation can interrupt onboarding."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Accessible entry into a learning path is important. Hidden focus and unannounced waiting add avoidable uncertainty before instruction, although effects on learning outcomes are unmeasured.",
+          "domain": "Learning science, mastery learning, assessment, and accessible tutoring"
+        }
+      },
+      "index": 0,
+      "score": 5,
+      "mustDoScore": 7
+    },
+    {
+      "title": "Give the studies list a clear, guarded retry state",
+      "category": "Learning-library recovery",
+      "rationale": "Apply the established pending recovery convention to the home-page studies list. Learners should be able to distinguish a retry in progress from another failure without repeatedly activating the control.",
+      "evidence": [
+        "components/course-list.tsx:9: The query exposes isLoading and isError but does not use isFetching for recovery.",
+        "components/course-list.tsx:18: The error branch retains an enabled Try again button and failure alert while refetching.",
+        "components/course-page.tsx:20: Course recovery already announces pending work and disables its retry button."
+      ],
+      "acceptanceCriteria": [
+        "Retry shows a studies-specific pending status and disables repeated activation until the request settles.",
+        "Another failure restores an actionable alert; success restores the actual studies list or genuine empty state.",
+        "Recovery never creates courses or changes learner progress and preserves any topic entered in the adjacent form.",
+        "Host verifies delayed failure and recovery at 375, 768, and 1440px, with status and alert assertions scoped to Your studies.",
+        "Lint, typecheck, and component tests covering delayed retries and repeated activation pass."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 1,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Returning learners depend on this list to resume study. Ambiguous recovery is an important interruption, although an existing retry path remains available."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Reliable access to existing learning paths supports continued practice. Clear recovery reduces administrative friction without changing instructional sequencing or assessment evidence.",
+          "domain": "Learning science, mastery learning, assessment, and accessible tutoring"
+        }
+      },
+      "index": 1,
+      "score": 20,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Make selected and focused quiz options clear across the full answer row",
+      "category": "Assessment control states",
+      "rationale": "Extend the shared assessment option styling with persistent selected, keyboard-focus, and disabled states. Native radios already preserve correctness and accessibility; the useful slice is making their state easier to identify across long answer rows.",
+      "evidence": [
+        "components/quiz-page.tsx:120: Every answer label uses the same border and hover classes regardless of checked state.",
+        "app/globals.css:59: Assessment-specific rules address wrapping and radio sizing but provide no selected-row or focus-within styling.",
+        "components/quiz-page.test.tsx: Existing tests verify checked values and navigation preservation, establishing behavior that must remain intact."
+      ],
+      "acceptanceCriteria": [
+        "The selected option has persistent row-level styling distinguishable from hover while retaining the native checked indicator.",
+        "Keyboard focus is visible across the answer row; selection and focus remain distinguishable.",
+        "Disabled grading options have a consistent appearance and cannot change answers.",
+        "Long options retain their complete accessible names and wrap without page overflow.",
+        "Host verifies keyboard selection, backward navigation, and real ten-question grading with a balanced prepared fixture at 375, 768, and 1440px; lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 1,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Answer confirmation is central to assessment confidence. The current native indicator works, but long answer rows make a stronger shared state convention independently useful."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Assessment responses should reflect intended choices. Clear selection feedback can reduce interaction mistakes unrelated to knowledge; no reduction in mistakes has been measured.",
+          "domain": "Learning science, mastery learning, assessment, and accessible tutoring"
+        }
+      },
+      "index": 2,
+      "score": 12,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Extend keyboard-accessible lesson scrolling to code examples",
+      "category": "Reading-content accessibility",
+      "rationale": "Use the established equation overflow convention for long code examples. Preserve code formatting while making local scrolling discoverable and consistently keyboard accessible.",
+      "evidence": [
+        "app/globals.css:102: Preformatted code deliberately preserves unwrapped content.",
+        "components/mermaid-content.tsx:10: Overflow detection, region naming, and conditional tab stops currently target only .katex-display.",
+        "e2e/ralph/20261019005423535-521173d2/iteration-3.spec.ts: Code overflow is verified through programmatic scrolling, whereas equations receive actual Tab and ArrowRight checks."
+      ],
+      "acceptanceCriteria": [
+        "Overflowing code examples expose a named, keyboard-focusable local scroll region with the shared focus treatment.",
+        "Keyboard scrolling reaches the final code characters without horizontal document overflow.",
+        "Short code examples introduce no unnecessary tab stops; resizing updates overflow accessibility.",
+        "Code text, whitespace, syntax highlighting, and lesson content remain unchanged.",
+        "Host verifies actual keyboard scrolling at 375, 768, and 1440px using a test-owned lesson fixture; lint, typecheck, and relevant component tests pass."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Complete access to instructional examples matters. Explicit handling removes reliance on browser-specific scroll-container focus behavior; an actual browser access failure has not yet been established."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Hidden code suffixes can contain essential syntax or explanatory steps. Applying the existing equation access pattern supports complete worked-example study without modifying instructional content.",
+          "domain": "Learning science, mastery learning, assessment, and accessible tutoring"
+        }
+      },
+      "index": 3,
+      "score": 6,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Keep profile editing available through background refresh failures",
+      "category": "Form recovery and draft preservation",
+      "rationale": "Separate initial profile-load failures from refresh failures when usable data already exists. Preserve the editor and draft, and give explicit pending feedback during recovery.",
+      "evidence": [
+        "components/profile-form.tsx:35: Initial loading has a status announcement.",
+        "components/profile-form.tsx:36: Any profile query error replaces the form, even when cached profile data and a local draft exist; retry has no pending guard.",
+        "components/profile-form.test.tsx: Tests cover failed saves and initial-load recovery, but not an edited draft during a failed background refresh."
+      ],
+      "acceptanceCriteria": [
+        "An initial-load failure offers a disabled pending retry with an accessible status, followed by success or renewed failure feedback.",
+        "A background refresh failure with existing data keeps the editor and unsaved draft visible and usable.",
+        "Refresh recovery never replaces an unsaved draft with fetched text or initiates a save.",
+        "Existing save, clear, success, and failed-save draft preservation behavior remains intact.",
+        "Component tests cover editing during refresh failure and recovery; host verifies form layout and recovery at 375, 768, and 1440px using isolated profile responses; lint and typecheck pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "A transient refresh should not remove an active editor. This is an important form-reliability gap, though personalization remains optional and draft loss has not been observed."
+        },
+        "subjectMatterExpert": {
+          "score": 2,
+          "rationale": "Background and learning goals inform future tutoring explanations. Preserving their editor is useful, but this issue does not directly block existing lessons or invalidate assessments.",
+          "domain": "Learning science, mastery learning, assessment, and accessible tutoring"
+        }
+      },
+      "index": 4,
+      "score": 3.75,
+      "mustDoScore": 5
+    }
+  ]
+}
+
+[2026-10-19T01:44:21.147Z] 20261019005423535-521173d2 — Candidate selected
+{
+  "iteration": 9,
+  "candidate": {
+    "title": "Make course-generation loading accessible as a true modal",
+    "category": "Accessible loading states",
+    "rationale": "The generation overlay declares itself modal but does not manage focus or disable background interaction. Bring this loading state into line with the existing accessible confirmation dialog. Source inspection establishes the implementation gap; learner impact has not been measured.",
+    "evidence": [
+      "components/new-course-form.tsx:110: GenerationOverlay renders a div with role=\"dialog\" and aria-modal=\"true\", without focus placement, focus containment, or background inertness.",
+      "components/new-course-form.tsx:117: Changing generation-detail text has no live status announcement.",
+      "components/revisit-dialog.tsx:18: The existing confirmation dialog uses showModal(), initial focus, focus restoration, and keyboard containment."
+    ],
+    "acceptanceCriteria": [
+      "Opening generation moves focus into the named dialog; Tab and Shift+Tab cannot reach background navigation or studies.",
+      "Pending progress has an accessible announcement without announcing decorative elements.",
+      "Creation failure closes the overlay, preserves the topic, and restores focus to a useful recovery location.",
+      "Preserve existing creation requests and success navigation; do not add cancellation semantics.",
+      "Host verifies keyboard behavior and layout at 375, 768, and 1440px using controlled creation responses without paid generation; lint, typecheck, and relevant component tests pass."
+    ],
+    "impact": 4,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 2,
+    "mustDo": {
+      "productManager": {
+        "score": 4,
+        "rationale": "The entry flow visually blocks the page while keyboard users can still reach hidden destinations. Consistent pending interaction is urgent because accidental navigation can interrupt onboarding."
+      },
+      "subjectMatterExpert": {
+        "score": 3,
+        "rationale": "Accessible entry into a learning path is important. Hidden focus and unannounced waiting add avoidable uncertainty before instruction, although effects on learning outcomes are unmeasured.",
+        "domain": "Learning science, mastery learning, assessment, and accessible tutoring"
+      }
+    }
+  },
+  "mustDoScore": 7,
+  "score": 5,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T01:44:21.168Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 9,
+  "phase": "implement"
+}
+
+[2026-10-19T01:46:12.749Z] 20261019005423535-521173d2 — Implementation completed; verification required
+{
+  "summary": "Implemented the accessible generation modal. Lint, typecheck, and 84 component tests pass. Host browser verification remains pending. Evidence: .ralph/20261019005423535-521173d2/iteration-9-implementation-evidence.md.",
+  "decisions": [
+    {
+      "decision": "Use a native modal with heading focus and contained Tab navigation.",
+      "reason": "Make background content inert during generation."
+    },
+    {
+      "decision": "Replace the overlay’s home link with static branding and prevent cancellation.",
+      "reason": "Preserve the existing creation flow without adding cancellation semantics."
+    },
+    {
+      "decision": "Announce changing progress and restore topic focus after failure.",
+      "reason": "Provide accessible feedback and immediate recovery while preserving input."
+    },
+    {
+      "decision": "Preserve existing requests, success navigation, and responsive geometry.",
+      "reason": "Keep the increment limited to modal accessibility."
+    }
+  ]
+}
+
+[2026-10-19T01:46:12.772Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 9,
+  "phase": "verify"
+}
+
+[2026-10-19T01:46:16.143Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-verify-1792374372772-214-lint.log"
+}
+
+[2026-10-19T01:46:17.879Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-verify-1792374376148-215-typecheck.log"
+}
+
+[2026-10-19T01:46:37.453Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-verify-1792374377884-216-test.log"
+}
+
+[2026-10-19T01:46:43.286Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-verify-1792374397458-217-build.log"
+}
+
+[2026-10-19T01:46:43.291Z] 20261019005423535-521173d2 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T01:46:43.310Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 9,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T01:47:49.685Z] 20261019005423535-521173d2 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-9.spec.ts",
+  "summary": "Prepared iteration-9.spec.ts. ESLint and TypeScript checks pass. Browser execution remains with the host.",
+  "decisions": [
+    {
+      "decision": "Test modal focus, keyboard containment, background inertness, Escape prevention, and progress updates at 375, 768, and 1440px.",
+      "reason": "Covers accessible pending behavior and responsive layout."
+    },
+    {
+      "decision": "Control creation responses for HTTP failure, network failure, and success.",
+      "reason": "Verifies topic preservation, focus recovery, and retry behavior without paid generation."
+    },
+    {
+      "decision": "Verify success navigation and reload using a self-cleaning prepared course fixture.",
+      "reason": "Checks the real destination while preserving existing learner data; does not claim newly generated content persistence."
+    }
+  ]
+}
+
+[2026-10-19T01:47:53.069Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 9,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-browser-prepare-1792374469686-222-lint.log"
+}
+
+[2026-10-19T01:47:55.251Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 9,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-browser-prepare-1792374473073-223-typecheck.log"
+}
+
+[2026-10-19T01:47:55.274Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 9,
+  "phase": "browser-run"
+}
+
+[2026-10-19T01:48:01.058Z] 20261019005423535-521173d2 — Host Playwright verification
+{
+  "status": "failed",
+  "reason": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m1\u001b[39m\nReceived:    \u001b[31m12\u001b[39m\nError: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m1\u001b[39m\nReceived:    \u001b[31m12\u001b[39m\n\n   7 | async function layout(page: Page, container: Locator, content: Locator[]) {\n   8 |   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);\n>  9 |   expect(await container.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);\n     |                                                                                          ^\n  10 |   for (const item of content) {\n  11 |     await expect(item).toBeVisible();\n  12 |     const box = await item.boundingBox();\n    at layout (/home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261019005423535-521173d2/iteration-9.spec.ts:9:90)\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261019005423535-521173d2/iteration-9.spec.ts:138:11\nError: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m1\u001b[39m\nReceived:    \u001b[31m12\u001b[39m\nError: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m1\u001b[39m\nReceived:    \u001b[31m12\u001b[39m\n\n   7 | async function layout(page: Page, container: Locator, content: Locator[]) {\n   8 |   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);\n>  9 |   expect(await container.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);\n     |                                                                                          ^\n  10 |   for (const item of content) {\n  11 |     await expect(item).toBeVisible();\n  12 |     const box = await item.boundingBox();\n    at layout (/home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261019005423535-521173d2/iteration-9.spec.ts:9:90)\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261019005423535-521173d2/iteration-9.spec.ts:138:11\nError: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m1\u001b[39m\nReceived:    \u001b[31m12\u001b[39m",
+  "passed": 0,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-9.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-browser-run-1792374475312-224-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-browser-run-1792374475312-224-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-browser-run-1792374475312-224-playwright/artifacts"
+}
+
+[2026-10-19T01:48:01.077Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 9,
+  "phase": "repair"
+}
+
+[2026-10-19T01:48:01.078Z] 20261019005423535-521173d2 — Repair selected
+{
+  "iteration": 9,
+  "attempt": 1,
+  "maximum": 3,
+  "reasons": [
+    "Playwright acceptance test failed: Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m1\u001b[39m\nReceived:    \u001b[31m12\u001b[39m\nError: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m1\u001b[39m\nReceived:    \u001b[31m12\u001b[39m\n\n   7 | async function layout(page: Page, container: Locator, content: Locator[]) {\n   8 |   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);\n>  9 |   expect(await container.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);\n     |                                                                                          ^\n  10 |   for (const item of content) {\n  11 |     await expect(item).toBeVisible();\n  12 |     const box = await item.boundingBox();\n    at layout (/home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261019005423535-521173d2/iteration-9.spec.ts:9:90)\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261019005423535-521173d2/iteration-9.spec.ts:138:11\nError: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m1\u001b[39m\nReceived:    \u001b[31m12\u001b[39m\nError: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m1\u001b[39m\nReceived:    \u001b[31m12\u001b[39m\n\n   7 | async function layout(page: Page, container: Locator, content: Locator[]) {\n   8 |   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);\n>  9 |   expect(await container.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);\n     |                                                                                          ^\n  10 |   for (const item of content) {\n  11 |     await expect(item).toBeVisible();\n  12 |     const box = await item.boundingBox();\n    at layout (/home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261019005423535-521173d2/iteration-9.spec.ts:9:90)\n    at /home/leopard/development/jovis.ai/mastery-tutor/e2e/ralph/20261019005423535-521173d2/iteration-9.spec.ts:138:11\nError: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeLessThanOrEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: <= \u001b[32m1\u001b[39m\nReceived:    \u001b[31m12\u001b[39m. Inspect /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-browser-run-1792374475312-224-playwright/results.json and /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-browser-run-1792374475312-224-playwright/runner.log."
+  ]
+}
+
+[2026-10-19T01:48:53.916Z] 20261019005423535-521173d2 — Repair completed; verification required
+{
+  "attempt": 1,
+  "summary": "Corrected the recovery layout assertion. Lint, typecheck, 11 component tests, and diff checks pass. Host browser rerun remains pending. Evidence: .ralph/20261019005423535-521173d2/iteration-9-repair-evidence.md.",
+  "decisions": [
+    {
+      "decision": "Measure recovery overflow within the course form.",
+      "reason": "The home container includes intentional 12px study-link hover margins that caused all three recorded failures."
+    },
+    {
+      "decision": "Add study-link viewport and internal-overflow checks; retain document and modal checks.",
+      "reason": "Preserves overflow coverage and existing thresholds while accounting for the intended gutter extension."
+    },
+    {
+      "decision": "Leave application code and creation-response isolation unchanged.",
+      "reason": "The recorded failure concerns test geometry; modal behavior still requires host verification."
+    }
+  ]
+}
+
+[2026-10-19T01:48:53.936Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 9,
+  "phase": "verify"
+}
+
+[2026-10-19T01:48:57.355Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-verify-1792374533937-229-lint.log"
+}
+
+[2026-10-19T01:48:59.074Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-verify-1792374537360-230-typecheck.log"
+}
+
+[2026-10-19T01:49:18.443Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-verify-1792374539080-231-test.log"
+}
+
+[2026-10-19T01:49:27.313Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 9,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-verify-1792374558448-232-build.log"
+}
+
+[2026-10-19T01:49:27.318Z] 20261019005423535-521173d2 — Verification decision
+{
+  "nextPhase": "browser-run",
+  "failures": []
+}
+
+[2026-10-19T01:49:27.337Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 9,
+  "phase": "browser-run"
+}
+
+[2026-10-19T01:49:36.353Z] 20261019005423535-521173d2 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 3,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-9.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-browser-run-1792374567377-233-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-browser-run-1792374567377-233-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/9-browser-run-1792374567377-233-playwright/artifacts"
+}
+
+[2026-10-19T01:49:36.375Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 9,
+  "phase": "review"
+}
+
+[2026-10-19T01:50:37.172Z] 20261019005423535-521173d2 — Independent review decision
+{
+  "summary": "Selected increment passes review. No concrete unresolved defects found.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Native showModal() and host tests verify named-dialog focus, Tab/Shift+Tab containment, and background inertness.",
+    "Atomic status updates announce progress; decorative content is aria-hidden. Component and browser assertions verify updates without focus movement.",
+    "HTTP and network failures close the dialog, preserve the topic, restore textarea focus, and re-enable recovery.",
+    "Tests verify unchanged creation payloads, successful destination navigation and reload, and prevented Escape cancellation.",
+    "Host verification logs record passing lint, typecheck, all 192 tests, and production build. Review diff checks pass."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Supplied results.json records 3 passing tests at 375, 768, and 1440px, with no skips, failures, or flaky results.",
+    "Reviewed iteration-9.spec.ts, recorded modal screenshots at all three widths, and all three trace artifacts; traces contain no action errors.",
+    "Tests cover keyboard interaction, progress, overflow, both failure paths, and success using controlled creation responses that prevent paid generation."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T01:50:37.192Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 9,
+  "phase": "commit"
+}
+
+[2026-10-19T01:50:37.195Z] 20261019005423535-521173d2 — Verified iteration approved for commit
+{
+  "iteration": 9,
+  "candidate": "Make course-generation loading accessible as a true modal",
+  "summary": "Implemented the accessible generation modal. Lint, typecheck, and 84 component tests pass. Host browser verification remains pending. Evidence: .ralph/20261019005423535-521173d2/iteration-9-implementation-evidence.md.\nRepair 1: Corrected the recovery layout assertion. Lint, typecheck, 11 component tests, and diff checks pass. Host browser rerun remains pending. Evidence: .ralph/20261019005423535-521173d2/iteration-9-repair-evidence.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Make course-generation loading accessible as a true modal\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 9"
+}

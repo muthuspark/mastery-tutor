@@ -1,8 +1,7 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, RefObject, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SiteHeader } from "@/components/site-header";
 
 type Agent = "codex" | "claude";
 
@@ -24,6 +23,7 @@ export function NewCourseForm() {
   const [availableAgents, setAvailableAgents] = useState<Agent[]>([]);
   const [agent, setAgent] = useState<Agent | "">("");
   const [generationStage, setGenerationStage] = useState(0);
+  const topicRef = useRef<HTMLTextAreaElement>(null);
 
   const discoverAgents = useCallback(() => {
     if (discoveringAgents.current) return;
@@ -80,10 +80,10 @@ export function NewCourseForm() {
 
   return (
     <>
-      {isSubmitting ? <GenerationOverlay stage={generationStage} agent={agent || availableAgents[0]} /> : null}
+      {isSubmitting ? <GenerationOverlay stage={generationStage} agent={agent || availableAgents[0]} returnFocusRef={topicRef} /> : null}
       <form className="new-course-form" onSubmit={submit}>
         <label className="sr-only" htmlFor="topic">I want to learn</label>
-        <textarea id="topic" name="topic" required rows={4} value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="the fundamentals of system design" className="field" disabled={isSubmitting} />
+        <textarea ref={topicRef} id="topic" name="topic" required rows={4} value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="the fundamentals of system design" className="field" disabled={isSubmitting} />
         <div className="course-form-actions">
           <div className="agent-control">
             {isLoadingAgents ? <p className="ui text-sm text-[var(--muted)]" role="status">Finding learning agents…</p> : agentDiscoveryFailed ? (
@@ -107,18 +107,42 @@ export function NewCourseForm() {
   );
 }
 
-function GenerationOverlay({ stage, agent }: { stage: number; agent?: Agent }) {
+function GenerationOverlay({ stage, agent, returnFocusRef }: { stage: number; agent?: Agent; returnFocusRef: RefObject<HTMLTextAreaElement | null> }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const returnFocusTarget = returnFocusRef.current;
+    if (!dialog) return;
+    dialog.showModal();
+    titleRef.current?.focus();
+    return () => {
+      dialog.close();
+      if (returnFocusTarget?.isConnected) returnFocusTarget.focus();
+    };
+  }, [returnFocusRef]);
+
   const current = generationStages[stage];
   return (
-    <div className="generation-overlay" role="dialog" aria-modal="true" aria-labelledby="generation-title" aria-describedby="generation-detail">
-      <SiteHeader status={agent === "claude" ? "Claude CLI" : "Codex CLI"} />
+    <dialog ref={dialogRef} className="generation-overlay" aria-modal="true" aria-labelledby="generation-title" aria-describedby="generation-detail" onCancel={(event) => event.preventDefault()} onKeyDown={(event) => {
+      // This pending dialog has no actions. Keep Tab in its readable content.
+      if (event.key === "Tab") {
+        event.preventDefault();
+        titleRef.current?.focus();
+      }
+    }}>
+      <header className="site-header">
+        <span className="site-brand eyebrow">Mastery Tutor</span>
+        <span className="site-header-status ui text-sm text-[var(--muted)]">{agent === "claude" ? "Claude CLI" : "Codex CLI"}</span>
+      </header>
       <div className="generation-overlay__inner">
 
         <div className="generation-layout">
           <section>
             <p className="eyebrow">Your curriculum desk</p>
-            <h1 id="generation-title" className="display generation-title">Building your learning path</h1>
-            <p id="generation-detail" className="generation-detail">{current.detail}.</p>
+            <h1 ref={titleRef} tabIndex={-1} id="generation-title" className="display generation-title">Building your learning path</h1>
+            <p id="generation-detail" role="status" aria-atomic="true" className="generation-detail">{current.detail}.</p>
             <div className="generation-progress" aria-hidden="true"><span style={{ width: `${((stage + 1) / generationStages.length) * 100}%` }} /></div>
             <p className="ui generation-time">This usually takes about a minute.</p>
           </section>
@@ -147,6 +171,6 @@ function GenerationOverlay({ stage, agent }: { stage: number; agent?: Agent }) {
           ))}
         </ol>
       </div>
-    </div>
+    </dialog>
   );
 }
