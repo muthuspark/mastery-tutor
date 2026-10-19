@@ -105,7 +105,7 @@ it("offers completed chapters a normal reading link without invoking reset", asy
   expect(fetch).toHaveBeenCalledWith("/api/courses/course");
   expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
   expect(screen.getByText("You completed this course.")).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /Separation\s*Mastered\s*Retake mastery check →/ })).toHaveAttribute("aria-haspopup", "dialog");
+  expect(screen.getByRole("button", { name: "Retake mastery check → Separation" })).toHaveAttribute("aria-haspopup", "dialog");
 });
 
 it("keeps open and locked chapter actions unchanged", async () => {
@@ -194,11 +194,54 @@ async function renderMasteredCourse() {
   }) });
   vi.stubGlobal("fetch", fetch);
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><CoursePage /></QueryClientProvider>);
-  const trigger = await screen.findByRole("link", { name: /Separation\s*Mastered\s*Retake mastery check →/ });
+  const trigger = await screen.findByRole("button", { name: "Retake mastery check → Separation" });
   trigger.focus();
   fireEvent.click(trigger);
   return { fetch, trigger, dialog: screen.getByRole("dialog", { name: "Reset Separation?" }) };
 }
+
+it.each([
+  { label: "mixed", statuses: ["passed", "open", "passed", "locked"] },
+  { label: "entirely mastered", statuses: ["passed", "passed", "passed"] },
+])("keeps every chapter in order with separate reading and retake controls in each mastered row: $label", async ({ statuses }) => {
+  const chapters = statuses.map((status, idx) => ({
+    id: `chapter-${idx}`, idx, status, prerequisites: [],
+    title: idx === 0 ? "Understanding interconnected systems and their behavior over time with a very long chapter title" : `Lesson ${idx + 1}`,
+  }));
+  const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+    course: { topic: "Compact outline" }, chapters,
+    progress: { passed: statuses.filter(status => status === "passed").length, total: chapters.length },
+  }) });
+  vi.stubGlobal("fetch", fetch);
+  render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
+  await screen.findByRole("heading", { name: "Compact outline" });
+  const rows = within(screen.getByRole("list")).getAllByRole("listitem");
+  expect(rows).toHaveLength(chapters.length);
+  for (const [index, chapter] of chapters.entries()) {
+    const row = rows[index];
+    expect(within(row).getByText(chapter.title)).toBeVisible();
+    if (chapter.status !== "passed") continue;
+    expect(within(row).getByText("Mastered")).toBeVisible();
+    const read = within(row).getByRole("link", { name: `Read lesson → ${chapter.title}` });
+    const retake = within(row).getByRole("button", { name: `Retake mastery check → ${chapter.title}` });
+    expect(within(row).getAllByRole("link")).toHaveLength(1);
+    expect(within(row).getAllByRole("button")).toHaveLength(1);
+    expect(read).toHaveAttribute("href", `/course/course/ch/${chapter.idx}`);
+    expect(retake).toHaveAttribute("aria-haspopup", "dialog");
+    expect(retake.closest(".chapter-row")).toBe(read.closest(".chapter-row"));
+    expect(row.children).toHaveLength(1);
+    read.focus();
+    expect(read).toHaveFocus();
+    retake.focus();
+    fireEvent.click(retake);
+    const dialog = screen.getByRole("dialog", { name: `Reset ${chapter.title}?` });
+    expect(within(dialog).getByRole("button", { name: "Keep mastered" })).toHaveFocus();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Keep mastered" }));
+    expect(retake).toHaveFocus();
+  }
+  expect(fetch.mock.calls).toEqual([["/api/courses/course"]]);
+  expect(push).not.toHaveBeenCalled();
+});
 
 it("explains the retake reset and safely cancels with focus restored without mutation", async () => {
   const { fetch, trigger, dialog } = await renderMasteredCourse();

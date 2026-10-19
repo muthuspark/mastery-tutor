@@ -13,7 +13,7 @@ test("preserves list semantics and contains dialog focus, then restores it", asy
   await expect(page.locator("main ol > li")).toHaveCount(3);
   await expect(page.locator("main ol > a")).toHaveCount(0);
   await expect(page.getByRole("progressbar", { name: "Course mastery" })).toHaveAttribute("aria-valuenow", "33");
-  const trigger = page.getByRole("link", { name: /Foundations.*Mastered.*Retake mastery check/ });
+  const trigger = page.getByRole("button", { name: "Retake mastery check → Foundations" });
   await trigger.click();
   const dialog = page.getByRole("dialog");
   const cancel = dialog.getByRole("button", { name: "Keep mastered" });
@@ -83,7 +83,7 @@ test("keeps reset modal open during submission and allows recovery after failure
     finishReset = async () => { await route.fulfill({ status: 500, json: { error: "Unavailable" } }); resolve(); };
   }));
   await page.goto("/course/audit");
-  const trigger = page.getByRole("link", { name: /Foundations.*Mastered.*Retake mastery check/ });
+  const trigger = page.getByRole("button", { name: "Retake mastery check → Foundations" });
   await trigger.click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("button", { name: "Reset and retake mastery check" }).click();
