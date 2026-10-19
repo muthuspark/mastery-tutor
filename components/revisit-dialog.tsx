@@ -53,7 +53,7 @@ export function RevisitDialog({ open, chapterTitle, isSubmitting, error, onCance
         <div className="revisit-dialog__mark" aria-hidden="true">↻</div>
         <p className="eyebrow">A fresh attempt</p>
         <h2 className="display revisit-dialog__title" id="revisit-dialog-title">Reset {chapterTitle}?</h2>
-        <p className="revisit-dialog__description" id="revisit-dialog-description">Your current mastery result and quiz questions will be cleared. We’ll generate a fresh set of questions so you can measure what you know again.</p>
+        <p className="revisit-dialog__description" id="revisit-dialog-description">This chapter’s current mastery result and quiz questions will be cleared, along with saved answers and review items associated with those questions. We’ll generate a fresh set of questions so you can measure what you know again.</p>
         <div className="revisit-dialog__details ui">
           <div><span>Mastery result</span><strong>Reset</strong></div>
           <div><span>Quiz questions</span><strong>Rebuilt</strong></div>
@@ -61,7 +61,7 @@ export function RevisitDialog({ open, chapterTitle, isSubmitting, error, onCance
         {error ? <p className="revisit-dialog__error ui" role="alert">{error}</p> : null}
         <div className="revisit-dialog__actions ui">
           <button type="button" className="button-secondary" onClick={onCancel} disabled={isSubmitting} ref={cancelRef}>Keep mastered</button>
-          <button type="button" className="button-primary" onClick={onConfirm} disabled={isSubmitting}>{isSubmitting ? "Resetting…" : "Reset and revisit"}</button>
+          <button type="button" className="button-primary" onClick={onConfirm} disabled={isSubmitting}>{isSubmitting ? "Resetting…" : "Reset and retake mastery check"}</button>
         </div>
     </dialog>
   );

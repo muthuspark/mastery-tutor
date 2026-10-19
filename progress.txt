@@ -4410,3 +4410,2108 @@
   "error": "Error: Baseline checks failed. Fix the environment or repository before starting a new run.\nError: npm run exited 1. See /Users/muthukrishnan.thukkaram/code/misc/master-tutor/.ralph/20261019091315126-646f21d6/1-baseline-1792401202788-2-test.log",
   "resume": "ralph --resume 20261019091315126-646f21d6"
 }
+
+[2026-10-19T14:05:45.451Z] 20261019140545445-7b45bf6c — Run started
+{
+  "goal": "# Course Chapter Page Improvements\n\n## Problem\n\nLearners can see their course progress, but may have to scan many completed chapters to find where to continue. Locked chapters do not explain how to unlock them, and “Revisit” can be mistaken for rereading even though it starts a progress-reset flow. Repeated actions also make the chapter outline longer than necessary.\n\n## Goal\n\nHelp learners quickly identify the next lesson, understand chapter availability, and choose safely between reading and retaking.\n\n## Requirements\n\n1. **Make continuing obvious.** Show a prominent action near course progress that names and opens the current open chapter. Keep the ordered chapter list available.\n2. **Explain locked chapters.** Show the actual prerequisite for unlocking a chapter. Use the product’s real progression rule; do not imply a prerequisite that is not enforced.\n3. **Clarify completed-chapter actions.** Label the reset flow “Retake mastery check” (or equivalent). Keep “Read lesson” as a distinct action that does not reset progress. Preserve the existing reset confirmation and its safe cancel action.\n4. **Reduce list scanning and repetition.** Preserve course order while reducing the visual weight or number of repeated actions for mastered chapters. If completed chapters are collapsed, learners must still be able to find and open them, and the current and locked chapters must remain easy to locate.\n5. **Keep progress concise.** Retain clear course progress information while avoiding unnecessary duplication between the percentage and chapter count.\n\n## Acceptance Criteria\n\n- The current open chapter can be started from near the course progress summary without scanning completed rows.\n- Each locked chapter, or the locked section, explains the accurate unlock condition.\n- Reading a completed lesson is clearly distinct from retaking its mastery check; only the retake flow can reset progress.\n- All chapters remain accessible in their original learning order, including when completed chapters are collapsed.\n- Progress remains understandable without redundant labels or metrics.\n- The page remains keyboard accessible and usable on mobile and desktop; action names and status do not rely on color alone.\n- Verify the chapter page in the browser and run relevant checks.\n\n## Out of Scope\n\n- Changing course progression, mastery thresholds, or assessment behavior.\n- Reordering chapters or removing access to completed lessons.",
+  "branch": "ralph/20261019140545445-7b45bf6c",
+  "iterations": 5,
+  "model": "Codex configured default",
+  "maxFixAttempts": 3,
+  "timeoutMinutes": 30,
+  "baseUrl": "http://localhost:3000",
+  "agentSandbox": "phase-default"
+}
+
+[2026-10-19T14:05:45.469Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 1,
+  "phase": "baseline"
+}
+
+[2026-10-19T14:05:48.885Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 1,
+  "phase": "baseline",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-baseline-1792418745470-0-lint.log"
+}
+
+[2026-10-19T14:05:51.129Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 1,
+  "phase": "baseline",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-baseline-1792418748889-1-typecheck.log"
+}
+
+[2026-10-19T14:06:10.439Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 1,
+  "phase": "baseline",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-baseline-1792418751133-2-test.log"
+}
+
+[2026-10-19T14:06:15.553Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 1,
+  "phase": "baseline",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-baseline-1792418770443-3-build.log"
+}
+
+[2026-10-19T14:06:15.574Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 1,
+  "phase": "discover"
+}
+
+[2026-10-19T14:07:27.658Z] 20261019140545445-7b45bf6c — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Name the completed-chapter reset action “Retake mastery check”",
+      "category": "Learner safety",
+      "rationale": "Clarify the existing reset entry point and confirmation action while preserving the separate Read lesson link. Confusion is supported by the supplied problem and ambiguous source copy; accidental-reset frequency has not been measured.",
+      "evidence": [
+        "components/course-page.tsx:87–97 labels the mastered row “Revisit →”, intercepts its navigation to open a reset dialog, and separately provides “Read lesson →”.",
+        "components/revisit-dialog.tsx:55–64 explains the reset, defaults focus to “Keep mastered”, and labels confirmation “Reset and revisit”.",
+        "app/api/chapters/[id]/revisit/route.ts:17–29 deletes quiz questions, answers and associated review items, changes chapter status to open, and queues fresh quiz generation."
+      ],
+      "acceptanceCriteria": [
+        "Replace the course-row “Revisit” action with “Retake mastery check” and give the confirmation action consistent, explicit reset wording.",
+        "Keep Read lesson as a separate direct navigation action; reading must not call the revisit endpoint or reset mastery.",
+        "Preserve the reset explanation, initial focus on Keep mastered, Escape cancellation, focus restoration, pending state and error recovery.",
+        "Host browser verification covers reading and canceling without mutation, keyboard operation, and mobile/desktop presentation using test-owned fixtures; isolate paid generation when verifying confirmation.",
+        "Run the configured lint, typecheck, test and build checks without weakening them."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "Ambiguous wording fronts an action that clears learner progress and assessment material. Clear intent is urgent even though confirmation already mitigates the risk."
+        },
+        "subjectMatterExpert": {
+          "score": 4,
+          "rationale": "Rereading and reassessment serve different learning purposes. Learners should deliberately choose when to discard the current mastery result and rebuild assessment questions.",
+          "domain": "Mastery-based digital learning and formative assessment"
+        }
+      },
+      "index": 0,
+      "score": 5,
+      "mustDoScore": 8
+    },
+    {
+      "title": "Add a named Continue action beside course progress",
+      "category": "Learning navigation",
+      "rationale": "Expose the first open chapter in course order near the progress summary so returning learners can resume immediately. Reduced scanning is a plausible benefit, not a measured outcome.",
+      "evidence": [
+        "components/course-page.tsx:53–70 renders the title, progress and export action without a learning continuation action.",
+        "components/course-page.tsx:78–103 renders every chapter before or after the open chapter in one ordered list; Continue appears only inside open rows.",
+        "app/api/courses/[id]/route.ts:25–33 returns chapters sorted by idx.",
+        "app/api/chapters/[id]/revisit/route.ts:26 reopens a mastered chapter without relocking other chapters, so multiple open chapters are possible."
+      ],
+      "acceptanceCriteria": [
+        "Place a prominent action near progress that includes the first open chapter’s title and links to its existing lesson route.",
+        "Choose deterministically by course order when multiple chapters are open; do not change progression or chapter statuses.",
+        "Retain the complete ordered chapter list and its current-step indication.",
+        "Show no Continue action for an empty course or a course with no open chapters; preserve completion messaging.",
+        "Host browser verification covers a long mastered prefix, multiple open chapters, empty/completed states, keyboard activation and mobile/desktop layout; run configured checks."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "Resuming study is a primary course-overview task. Requiring learners to scan completed rows creates significant friction as courses grow."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "A clear next study action supports continuity and self-regulation, although the existing ordered list still permits learning to continue.",
+          "domain": "Mastery-based digital learning and formative assessment"
+        }
+      },
+      "index": 1,
+      "score": 10,
+      "mustDoScore": 7
+    },
+    {
+      "title": "Explain each locked chapter’s enforced unlock condition",
+      "category": "Progression transparency",
+      "rationale": "Explain the sequential pass trigger and recorded prerequisites using actual course data. This makes availability actionable without changing the gating algorithm.",
+      "evidence": [
+        "components/course-page.tsx:87–93 displays only “Locked”, with no prerequisite explanation.",
+        "lib/gating.ts:3–12 defines passing as score >= 0.8 and requires every recorded prerequisite chapter to have passed status.",
+        "app/api/chapters/[id]/attempts/route.ts:59–64 opens only the immediately next chapter after a passing attempt, provided its recorded prerequisites are passed.",
+        "app/api/courses/[id]/route.ts:33 already returns full chapter records, but components/course-page.tsx:9 omits prerequisites from its local chapter type."
+      ],
+      "acceptanceCriteria": [
+        "Each locked chapter names the immediately preceding chapter whose passing attempt triggers unlocking and identifies any additional recorded prerequisites.",
+        "Explain that passing the mastery check requires at least 80%, deriving the value from the existing threshold rather than introducing a separate rule.",
+        "Do not claim that merely reading a lesson unlocks a chapter or that every earlier chapter is independently checked.",
+        "Keep locked titles and explanations readable without hover, usable on mobile, and understandable without color.",
+        "Verify explanations against fixtures with empty and nonadjacent prerequisite lists and unmet prerequisites; host verifies browser presentation and configured checks run without changing gating behavior."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 3,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Learners currently receive a restriction without actionable guidance. Explaining it is important for deciding what to do next, though open chapters remain available."
+        },
+        "subjectMatterExpert": {
+          "score": 4,
+          "rationale": "A mastery gate must accurately explain the evidence required to advance. Incorrect prerequisite guidance can direct learners toward work that will not unlock the chapter.",
+          "domain": "Mastery-based digital learning and formative assessment"
+        }
+      },
+      "index": 2,
+      "score": 3.3333333333333335,
+      "mustDoScore": 7
+    },
+    {
+      "title": "Make mastered rows compact while preserving chapter order",
+      "category": "Outline usability",
+      "rationale": "Reduce the repeated second action row for mastered chapters with a compact, wrapping action layout. This first slice preserves all chapters visibly in order and avoids introducing collapse state.",
+      "evidence": [
+        "components/course-page.tsx:83–99 gives each mastered chapter a full row containing status and Revisit plus a separate padded row containing Read lesson.",
+        "app/globals.css:63–64 gives chapter rows substantial padding and a dedicated action group; :78 already changes the layout for mobile.",
+        "The supplied goal identifies repeated actions and scanning past completed chapters as problems; no usability timing measurements were supplied."
+      ],
+      "acceptanceCriteria": [
+        "Render mastered status and the two existing action intents within one compact chapter entry, eliminating the separate padded Read lesson row.",
+        "Preserve original chapter order and keep every completed lesson directly discoverable and openable.",
+        "Keep open and locked chapter statuses explicit; give mastered actions chapter-specific accessible names.",
+        "Preserve whichever reset wording is current when this increment lands and retain its confirmation behavior.",
+        "Host browser verification covers a long mastered prefix, long titles, keyboard traversal and narrow/desktop widths with no horizontal overflow; run configured checks."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Repeated action rows consume space and attention on the learner’s route to the next chapter. Compacting them is a useful functional improvement for longer courses."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Completed lessons should remain easy to revisit for consolidation while contributing less distraction from unfinished learning. Preserving sequence protects the course’s instructional structure.",
+          "domain": "Mastery-based digital learning and formative assessment"
+        }
+      },
+      "index": 3,
+      "score": 3,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Consolidate progress into one concise mastery summary",
+      "category": "Progress comprehension",
+      "rationale": "Use one visible mastered-chapter count alongside the progress bar, retaining an accessible numerical value without repeating the percentage as another visible metric. The expected comprehension benefit remains a hypothesis.",
+      "evidence": [
+        "components/course-page.tsx:59–63 displays Progress and a percentage above a course-mastery progress bar.",
+        "components/course-page.tsx:67–68 separately displays the mastered chapter count.",
+        "components/course-page.tsx:30–33 derives both metrics from the same passed chapter count; the progress bar already exposes the count through aria-valuetext."
+      ],
+      "acceptanceCriteria": [
+        "Present a single visible “X of Y chapters mastered” summary beside the progress bar and remove the separate visible percentage/progress duplication.",
+        "Retain the progress bar’s accessible name, numerical bounds/value and descriptive mastered-count text.",
+        "Preserve accurate zero, partial and complete progress states and the existing course-completion message.",
+        "Keep export and continuation actions clearly distinguishable from progress information.",
+        "Host browser verification covers empty, partial and complete courses on mobile and desktop and checks progressbar accessibility; run configured checks."
+      ],
+      "impact": 2,
+      "confidence": 4,
+      "effort": 1,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 2,
+          "rationale": "The present information is accurate and usable. Consolidation reduces interpretation work but is deferrable behind continuation and action safety."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "The mastered-chapter count makes the unit of progress explicit and avoids encouraging learners to interpret course completion percentage as a direct measure of knowledge proficiency.",
+          "domain": "Mastery-based digital learning and formative assessment"
+        }
+      },
+      "index": 4,
+      "score": 8,
+      "mustDoScore": 5
+    }
+  ]
+}
+
+[2026-10-19T14:07:27.659Z] 20261019140545445-7b45bf6c — Candidate selected
+{
+  "iteration": 1,
+  "candidate": {
+    "title": "Name the completed-chapter reset action “Retake mastery check”",
+    "category": "Learner safety",
+    "rationale": "Clarify the existing reset entry point and confirmation action while preserving the separate Read lesson link. Confusion is supported by the supplied problem and ambiguous source copy; accidental-reset frequency has not been measured.",
+    "evidence": [
+      "components/course-page.tsx:87–97 labels the mastered row “Revisit →”, intercepts its navigation to open a reset dialog, and separately provides “Read lesson →”.",
+      "components/revisit-dialog.tsx:55–64 explains the reset, defaults focus to “Keep mastered”, and labels confirmation “Reset and revisit”.",
+      "app/api/chapters/[id]/revisit/route.ts:17–29 deletes quiz questions, answers and associated review items, changes chapter status to open, and queues fresh quiz generation."
+    ],
+    "acceptanceCriteria": [
+      "Replace the course-row “Revisit” action with “Retake mastery check” and give the confirmation action consistent, explicit reset wording.",
+      "Keep Read lesson as a separate direct navigation action; reading must not call the revisit endpoint or reset mastery.",
+      "Preserve the reset explanation, initial focus on Keep mastered, Escape cancellation, focus restoration, pending state and error recovery.",
+      "Host browser verification covers reading and canceling without mutation, keyboard operation, and mobile/desktop presentation using test-owned fixtures; isolate paid generation when verifying confirmation.",
+      "Run the configured lint, typecheck, test and build checks without weakening them."
+    ],
+    "impact": 4,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 2,
+    "mustDo": {
+      "productManager": {
+        "score": 4,
+        "rationale": "Ambiguous wording fronts an action that clears learner progress and assessment material. Clear intent is urgent even though confirmation already mitigates the risk."
+      },
+      "subjectMatterExpert": {
+        "score": 4,
+        "rationale": "Rereading and reassessment serve different learning purposes. Learners should deliberately choose when to discard the current mastery result and rebuild assessment questions.",
+        "domain": "Mastery-based digital learning and formative assessment"
+      }
+    }
+  },
+  "mustDoScore": 8,
+  "score": 5,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T14:07:27.680Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 1,
+  "phase": "implement"
+}
+
+[2026-10-19T14:09:22.916Z] 20261019140545445-7b45bf6c — Implementation completed; verification required
+{
+  "summary": "Implemented “Retake mastery check →” and “Reset and retake mastery check.” Read lesson and reset safeguards remain intact. Evidence: components/course-page.test.tsx passes all 7 tests, covering reading without reset, cancellation, focus restoration, pending state, and error recovery. Updated existing browser locators in e2e/course-accessibility.spec.ts; browser execution and mobile/desktop verification remain pending with the host. Lint, typecheck, and diff checks pass. Full tests: 165 passed; 33 Ralph tests blocked by spawnSync git EPERM. Build blocked by Turbopack port binding permission denial. No checks were weakened.",
+  "decisions": [
+    {
+      "decision": "Use explicit retake wording at entry and explicit reset wording at confirmation.",
+      "reason": "Distinguishes reassessment from reading and makes the destructive consequence clear."
+    },
+    {
+      "decision": "Preserve the existing reading link, confirmation behavior, endpoint, and responsive styles.",
+      "reason": "Keeps the selected increment limited to wording while retaining established safety behavior."
+    },
+    {
+      "decision": "Add mocked component regression tests and update existing browser locators.",
+      "reason": "Verifies behavior without changing learner data or starting paid generation; native keyboard and presentation checks remain host-owned."
+    }
+  ]
+}
+
+[2026-10-19T14:09:22.938Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 1,
+  "phase": "verify"
+}
+
+[2026-10-19T14:09:26.360Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 1,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-verify-1792418962938-13-lint.log"
+}
+
+[2026-10-19T14:09:28.092Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 1,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-verify-1792418966364-14-typecheck.log"
+}
+
+[2026-10-19T14:09:47.323Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 1,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-verify-1792418968096-15-test.log"
+}
+
+[2026-10-19T14:09:52.569Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 1,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-verify-1792418987327-16-build.log"
+}
+
+[2026-10-19T14:09:52.573Z] 20261019140545445-7b45bf6c — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T14:09:52.590Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 1,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T14:11:40.939Z] 20261019140545445-7b45bf6c — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019140545445-7b45bf6c/iteration-1.spec.ts",
+  "summary": "Created the requested spec. Playwright discovers both tests; browser execution remains for the host.",
+  "decisions": [
+    {
+      "decision": "Cover desktop and mobile labels, keyboard focus, cancellation, reading, and reload persistence using real test-owned mastery.",
+      "reason": "Verify that reading and canceling preserve learner progress."
+    },
+    {
+      "decision": "Inject a delayed reset failure to test confirmation, pending state, and recovery.",
+      "reason": "Avoid paid generation. Successful reset persistence is outside this spec’s coverage."
+    }
+  ]
+}
+
+[2026-10-19T14:11:44.430Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 1,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-browser-prepare-1792419100939-21-lint.log"
+}
+
+[2026-10-19T14:11:46.726Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 1,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-browser-prepare-1792419104434-22-typecheck.log"
+}
+
+[2026-10-19T14:11:46.748Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 1,
+  "phase": "browser-run"
+}
+
+[2026-10-19T14:11:47.790Z] 20261019140545445-7b45bf6c — Host Playwright verification
+{
+  "status": "blocked",
+  "passed": 0,
+  "reason": "Playwright reported runner errors; inspect the report and runner log",
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019140545445-7b45bf6c/iteration-1.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-browser-run-1792419106833-23-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-browser-run-1792419106833-23-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-browser-run-1792419106833-23-playwright/artifacts"
+}
+
+[2026-10-19T14:11:47.790Z] 20261019140545445-7b45bf6c — Run stopped; changes preserved
+{
+  "iteration": 1,
+  "pendingPhase": "browser-run",
+  "repairs": 0,
+  "error": "Error: Browser verification blocked: Playwright reported runner errors; inspect the report and runner log. See /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-browser-run-1792419106833-23-playwright/results.json. Resume after fixing the environment; no repair attempt was consumed.",
+  "resume": "ralph --resume 20261019140545445-7b45bf6c"
+}
+
+[2026-10-19T14:18:17.564Z] 20261019140545445-7b45bf6c — Run resumed
+{
+  "phase": "browser-run",
+  "completed": 0,
+  "repairs": 0,
+  "previousError": "Error: Browser verification blocked: Playwright reported runner errors; inspect the report and runner log. See /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-browser-run-1792419106833-23-playwright/results.json. Resume after fixing the environment; no repair attempt was consumed.",
+  "baseUrl": "http://localhost:3000",
+  "agentSandbox": "phase-default",
+  "reverifyCurrentEdits": false,
+  "note": "Resume checkpoint"
+}
+
+[2026-10-19T14:18:17.582Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 1,
+  "phase": "browser-run"
+}
+
+[2026-10-19T14:18:25.323Z] 20261019140545445-7b45bf6c — Host Playwright verification
+{
+  "status": "passed",
+  "passed": 2,
+  "reason": "All 2 browser tests passed",
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019140545445-7b45bf6c/iteration-1.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-browser-run-1792419497639-0-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-browser-run-1792419497639-0-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/1-browser-run-1792419497639-0-playwright/artifacts"
+}
+
+[2026-10-19T14:18:25.341Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 1,
+  "phase": "review"
+}
+
+[2026-10-19T14:19:26.772Z] 20261019140545445-7b45bf6c — Independent review decision
+{
+  "summary": "The selected increment passes review. No unresolved defects found. Host verification supersedes the implementation report’s earlier testing blockers.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "The source diff changes the row action to “Retake mastery check →” and confirmation to “Reset and retake mastery check.”",
+    "Read lesson remains a separate direct link. Browser tests verify navigation and reload preserve persisted mastery, questions, answers, and attempts without reset requests.",
+    "Unit and browser tests cover the reset explanation, initial Keep mastered focus, Escape and button cancellation, focus restoration, disabled pending actions, and error recovery.",
+    "Host browser tests use test-owned fixtures and intercept reset confirmation with a failing response, avoiding paid generation.",
+    "Recorded host checks show lint, typecheck, all 198 tests, and build passed. Independent git diff HEAD --check also passed."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected the supplied browser spec, results.json, runner.log, artifacts/.last-run.json, and all six embedded screenshots.",
+    "Both host tests passed at 375px and 1440px with no failures, skips, or flaky results.",
+    "Screenshots show readable, distinct reading and retake actions, explicit reset wording, visible cancellation focus, and usable error recovery on mobile and desktop."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T14:19:26.790Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 1,
+  "phase": "commit"
+}
+
+[2026-10-19T14:19:26.793Z] 20261019140545445-7b45bf6c — Verified iteration approved for commit
+{
+  "iteration": 1,
+  "candidate": "Name the completed-chapter reset action “Retake mastery check”",
+  "summary": "Implemented “Retake mastery check →” and “Reset and retake mastery check.” Read lesson and reset safeguards remain intact. Evidence: components/course-page.test.tsx passes all 7 tests, covering reading without reset, cancellation, focus restoration, pending state, and error recovery. Updated existing browser locators in e2e/course-accessibility.spec.ts; browser execution and mobile/desktop verification remain pending with the host. Lint, typecheck, and diff checks pass. Full tests: 165 passed; 33 Ralph tests blocked by spawnSync git EPERM. Build blocked by Turbopack port binding permission denial. No checks were weakened.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Name the completed-chapter reset action “Retake mastery check”\n\nRalph-Run: 20261019140545445-7b45bf6c\nRalph-Iteration: 1"
+}
+
+[2026-10-19T14:19:26.827Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 2,
+  "phase": "discover"
+}
+
+[2026-10-19T14:20:44.576Z] 20261019140545445-7b45bf6c — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Add a named Continue action beside course progress",
+      "category": "Learning navigation",
+      "rationale": "Give learners direct access to the first open chapter in course order. Reduced scanning is an expected benefit, not a measured result.",
+      "evidence": [
+        "components/course-page.tsx:53–70 renders progress and Export notes without a continuation action.",
+        "components/course-page.tsx:79–93 places Continue → only within individual chapter rows.",
+        "app/api/chapters/[id]/revisit/route.ts:26 can reopen a completed chapter, so multiple open chapters must be handled deterministically."
+      ],
+      "acceptanceCriteria": [
+        "A prominent link near progress names the first open chapter in learning order and opens its existing lesson route.",
+        "The ordered outline remains available and unchanged in order.",
+        "Empty, completed, and locked-only courses show no misleading Continue link.",
+        "Component tests cover mixed statuses and multiple open chapters; host browser verification checks keyboard activation, long titles, and mobile/desktop layout without paid generation."
+      ],
+      "impact": 5,
+      "confidence": 5,
+      "effort": 1,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "Finding where to resume is the central unmet need in the supplied goal. The current placement imposes repeated scanning as courses grow, although abandonment has not been measured."
+        },
+        "subjectMatterExpert": {
+          "score": 4,
+          "rationale": "A clear next study action supports learners returning to a sequential course and reduces navigation effort before learning can resume. Existing access works, so this is urgent rather than a blocked core outcome.",
+          "domain": "Mastery-based learning and formative assessment"
+        }
+      },
+      "index": 0,
+      "score": 25,
+      "mustDoScore": 8
+    },
+    {
+      "title": "Explain locked chapters using the enforced unlock conditions",
+      "category": "Progression clarity",
+      "rationale": "Explain sequential advancement and actual stored prerequisites without implying that reading alone unlocks chapters.",
+      "evidence": [
+        "components/course-page.tsx:87–92 displays only Locked.",
+        "lib/gating.ts:3–12 defines passing as a score of at least 80% and checks each stored prerequisite's passed status.",
+        "app/api/chapters/[id]/attempts/route.ts:59–64 opens only the immediately following chapter after a pass and successful prerequisite checks.",
+        "app/api/courses/[id]/route.ts:25–33 already returns chapter records, including prerequisite data; the component's Chapter type omits it."
+      ],
+      "acceptanceCriteria": [
+        "Locked rows explain that advancement requires passing the preceding chapter's mastery check and satisfying the chapter's stored prerequisites.",
+        "Additional unmet prerequisites are identified by chapter title where applicable; copy does not claim every earlier chapter must currently be mastered.",
+        "Any displayed passing threshold comes from the existing rule, and no progression behavior changes.",
+        "Tests cover empty prerequisite lists, additional unmet prerequisites, and reopened earlier chapters; host browser verification checks readable explanations on mobile and desktop."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 3,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "Locked content currently provides no actionable explanation. Resolving this significant information gap helps learners understand how to advance; support or conversion effects remain hypotheses."
+        },
+        "subjectMatterExpert": {
+          "score": 4,
+          "rationale": "Learners need to distinguish reading completion from demonstrated mastery. Incorrect prerequisite copy would misrepresent the educational contract, particularly when stored prerequisites differ from simple sequence.",
+          "domain": "Mastery-based learning and formative assessment"
+        }
+      },
+      "index": 1,
+      "score": 3.3333333333333335,
+      "mustDoScore": 8
+    },
+    {
+      "title": "Make completed chapter titles open reading and isolate retake controls",
+      "category": "Safe lesson review",
+      "rationale": "Keep the completed retake wording, but make the chapter title lead to reading and provide a separate explicit retake button. This changes the interaction hierarchy rather than repeating the completed label change.",
+      "evidence": [
+        "components/course-page.tsx:93 intercepts the entire mastered-row link to open the reset dialog.",
+        "components/course-page.tsx:95–98 provides reading through a separate secondary button beneath that row.",
+        "components/course-page.test.tsx already distinguishes normal reading navigation from explicitly confirmed reset."
+      ],
+      "acceptanceCriteria": [
+        "Activating a mastered chapter title opens its lesson without a reset request or dialog.",
+        "A distinct Retake mastery check button alone opens the existing confirmation.",
+        "Keep mastered, Escape cancellation, focus restoration, pending protection, and error recovery remain intact.",
+        "Each mastered row has one reading destination and one explicit retake control, eliminating the extra reading action area.",
+        "Component tests verify action separation; host browser verification checks keyboard semantics and confirmation focus."
+      ],
+      "impact": 4,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "The dominant row interaction still leads toward reset while ordinary reading is secondary. Explicit labels and confirmation already mitigate harm, making this important but less urgent."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Reviewing instructional material should be easy without implying reassessment. Separating these intentions supports revision while keeping mastery evidence protected by confirmation.",
+          "domain": "Mastery-based learning and formative assessment"
+        }
+      },
+      "index": 3,
+      "score": 4,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Collapse mastered chapter runs while preserving learning order",
+      "category": "Outline navigation",
+      "rationale": "Use keyboard-operable disclosures for contiguous mastered runs, leaving open and locked chapters visible. This reduces scanning without regrouping chapters out of sequence.",
+      "evidence": [
+        "components/course-page.tsx:78–103 renders every chapter and its actions in full.",
+        "components/course-page.tsx:95–98 adds a separate action area beneath every mastered row.",
+        "app/api/courses/[id]/route.ts:25–29 returns chapters in ascending learning order."
+      ],
+      "acceptanceCriteria": [
+        "Each contiguous mastered run has a disclosure identifying its chapter range and count.",
+        "Expanding a run exposes every chapter and its reading and retake actions in original order.",
+        "Open and locked chapters remain visible, including when a reopened chapter splits mastered runs.",
+        "Tests cover mixed runs and fully mastered courses; host browser verification checks keyboard expansion, focus visibility, reading access, and mobile layout."
+      ],
+      "impact": 4,
+      "confidence": 4,
+      "effort": 3,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Long completed outlines compete with unfinished work. This addresses the supplied scanning problem, but its necessity depends on course length and is below direct continuation."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Progressive disclosure can keep attention on current learning while preserving retrieval and review access. Maintaining sequence and discoverability is essential to avoid impairing revision.",
+          "domain": "Mastery-based learning and formative assessment"
+        }
+      },
+      "index": 2,
+      "score": 2.6666666666666665,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Consolidate progress into one chapter-mastery summary",
+      "category": "Progress comprehension",
+      "rationale": "Use one visible mastered-chapter count beside the existing progress bar, removing the separate percentage and duplicated summary area while retaining accessible numeric progress.",
+      "evidence": [
+        "components/course-page.tsx:59–63 displays Progress and a percentage.",
+        "components/course-page.tsx:67–68 separately displays the mastered chapter count.",
+        "components/course-page.tsx:61 already supplies the count through aria-valuetext."
+      ],
+      "acceptanceCriteria": [
+        "One visible summary states how many chapters are mastered out of the total.",
+        "The progress bar retains its accessible name, numeric bounds, percentage value, and meaningful value text.",
+        "Zero-chapter and fully mastered courses remain understandable without invalid percentages.",
+        "Export notes remains accessible.",
+        "Component assertions cover zero, partial, and complete progress; host browser verification checks mobile wrapping and enlarged text."
+      ],
+      "impact": 2,
+      "confidence": 5,
+      "effort": 1,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 2,
+          "rationale": "This directly satisfies the concision requirement and frees attention for continuation, but existing progress information is already understandable."
+        },
+        "subjectMatterExpert": {
+          "score": 2,
+          "rationale": "A chapter count communicates the unit of recorded achievement clearly. Consolidation improves interpretation but does not change the learner's ability to study or demonstrate mastery.",
+          "domain": "Mastery-based learning and formative assessment"
+        }
+      },
+      "index": 4,
+      "score": 10,
+      "mustDoScore": 4
+    }
+  ]
+}
+
+[2026-10-19T14:20:44.577Z] 20261019140545445-7b45bf6c — Candidate selected
+{
+  "iteration": 2,
+  "candidate": {
+    "title": "Add a named Continue action beside course progress",
+    "category": "Learning navigation",
+    "rationale": "Give learners direct access to the first open chapter in course order. Reduced scanning is an expected benefit, not a measured result.",
+    "evidence": [
+      "components/course-page.tsx:53–70 renders progress and Export notes without a continuation action.",
+      "components/course-page.tsx:79–93 places Continue → only within individual chapter rows.",
+      "app/api/chapters/[id]/revisit/route.ts:26 can reopen a completed chapter, so multiple open chapters must be handled deterministically."
+    ],
+    "acceptanceCriteria": [
+      "A prominent link near progress names the first open chapter in learning order and opens its existing lesson route.",
+      "The ordered outline remains available and unchanged in order.",
+      "Empty, completed, and locked-only courses show no misleading Continue link.",
+      "Component tests cover mixed statuses and multiple open chapters; host browser verification checks keyboard activation, long titles, and mobile/desktop layout without paid generation."
+    ],
+    "impact": 5,
+    "confidence": 5,
+    "effort": 1,
+    "risk": 1,
+    "mustDo": {
+      "productManager": {
+        "score": 4,
+        "rationale": "Finding where to resume is the central unmet need in the supplied goal. The current placement imposes repeated scanning as courses grow, although abandonment has not been measured."
+      },
+      "subjectMatterExpert": {
+        "score": 4,
+        "rationale": "A clear next study action supports learners returning to a sequential course and reduces navigation effort before learning can resume. Existing access works, so this is urgent rather than a blocked core outcome.",
+        "domain": "Mastery-based learning and formative assessment"
+      }
+    }
+  },
+  "mustDoScore": 8,
+  "score": 25,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T14:20:44.596Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 2,
+  "phase": "implement"
+}
+
+[2026-10-19T14:22:45.125Z] 20261019140545445-7b45bf6c — Implementation completed; verification required
+{
+  "summary": "Implemented “Continue: [chapter title] →” near course progress in components/course-page.tsx. Evidence: components/course-page.test.tsx passes all 14 tests, covering mixed statuses, multiple open chapters, outline order, no-open states, focusability, and full long titles. Lint, typecheck, and diff checks pass. Full suite: 172 passed; 33 Ralph tests blocked by spawnSync git EPERM. Build blocked by Turbopack port-binding permission denial. Host browser verification remains pending for keyboard activation and mobile/desktop layout. No browser or server was launched.",
+  "decisions": [
+    {
+      "decision": "Select the first open chapter from the existing ordered response.",
+      "reason": "The API sorts by chapter index, giving deterministic continuation when retakes leave multiple chapters open."
+    },
+    {
+      "decision": "Use a named primary link beside the mastery summary.",
+      "reason": "Makes the destination prominent before the outline and uses the existing lesson route."
+    },
+    {
+      "decision": "Hide Continue when no chapter is open.",
+      "reason": "Avoids misleading navigation for empty, completed, and locked-only courses."
+    },
+    {
+      "decision": "Preserve the outline and use existing button styles with title wrapping.",
+      "reason": "Maintains learning order and familiar focus styling while accommodating long titles."
+    }
+  ]
+}
+
+[2026-10-19T14:22:45.147Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 2,
+  "phase": "verify"
+}
+
+[2026-10-19T14:22:48.775Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 2,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/2-verify-1792419765148-14-lint.log"
+}
+
+[2026-10-19T14:22:50.588Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 2,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/2-verify-1792419768779-15-typecheck.log"
+}
+
+[2026-10-19T14:23:11.987Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 2,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/2-verify-1792419770592-16-test.log"
+}
+
+[2026-10-19T14:23:17.775Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 2,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/2-verify-1792419791995-17-build.log"
+}
+
+[2026-10-19T14:23:17.779Z] 20261019140545445-7b45bf6c — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T14:23:17.798Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 2,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T14:24:46.553Z] 20261019140545445-7b45bf6c — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019140545445-7b45bf6c/iteration-2.spec.ts",
+  "summary": "Created iteration-2.spec.ts. Typecheck and diff checks passed. Browser tests were not run; host execution is pending.",
+  "decisions": [
+    {
+      "decision": "Test mixed statuses, multiple open chapters, and original outline order.",
+      "reason": "Verify Continue names and links to the first open chapter."
+    },
+    {
+      "decision": "Check long titles at mobile and desktop widths, including enlarged text.",
+      "reason": "Verify the summary action wraps without horizontal overflow."
+    },
+    {
+      "decision": "Use a self-cleaning prepared course for real keyboard navigation and reload checks.",
+      "reason": "Verify lesson access and unchanged persisted state without paid generation."
+    },
+    {
+      "decision": "Cover empty, completed, locked-only, and mastered-plus-locked courses.",
+      "reason": "Ensure courses without an open chapter show no misleading Continue action."
+    }
+  ]
+}
+
+[2026-10-19T14:24:50.089Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 2,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/2-browser-prepare-1792419886554-22-lint.log"
+}
+
+[2026-10-19T14:24:52.372Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 2,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/2-browser-prepare-1792419890093-23-typecheck.log"
+}
+
+[2026-10-19T14:24:52.394Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 2,
+  "phase": "browser-run"
+}
+
+[2026-10-19T14:25:01.548Z] 20261019140545445-7b45bf6c — Host Playwright verification
+{
+  "status": "passed",
+  "passed": 10,
+  "reason": "All 10 browser tests passed",
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019140545445-7b45bf6c/iteration-2.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/2-browser-run-1792419892434-24-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/2-browser-run-1792419892434-24-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/2-browser-run-1792419892434-24-playwright/artifacts"
+}
+
+[2026-10-19T14:25:01.567Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 2,
+  "phase": "review"
+}
+
+[2026-10-19T14:26:04.153Z] 20261019140545445-7b45bf6c — Independent review decision
+{
+  "summary": "Selected increment meets its acceptance criteria. No concrete unresolved defects found.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Continue names the first open chapter and links to its existing lesson route. The API returns chapters in learning order.",
+    "The ordered outline remains unchanged; component and browser tests cover mixed statuses and multiple open chapters.",
+    "Component and browser tests cover omission of Continue for empty, completed, locked-only, and mastered-plus-locked courses.",
+    "git diff HEAD --check passed. Independent component-test execution was blocked before collection by Vitest temporary-directory creation in the read-only sandbox."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected the browser spec, results.json, artifact status, and embedded screenshots: 10 passed, zero failures, skips, or flaky results.",
+    "Host tests verify keyboard activation to a prepared real lesson at 375px and 1440px, reload behavior, unchanged persisted state, and no mutation requests.",
+    "Host tests verify full long-title wrapping without horizontal overflow at both widths and enlarged text; inspected mobile and desktop screenshots."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T14:26:04.172Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 2,
+  "phase": "commit"
+}
+
+[2026-10-19T14:26:04.176Z] 20261019140545445-7b45bf6c — Verified iteration approved for commit
+{
+  "iteration": 2,
+  "candidate": "Add a named Continue action beside course progress",
+  "summary": "Implemented “Continue: [chapter title] →” near course progress in components/course-page.tsx. Evidence: components/course-page.test.tsx passes all 14 tests, covering mixed statuses, multiple open chapters, outline order, no-open states, focusability, and full long titles. Lint, typecheck, and diff checks pass. Full suite: 172 passed; 33 Ralph tests blocked by spawnSync git EPERM. Build blocked by Turbopack port-binding permission denial. Host browser verification remains pending for keyboard activation and mobile/desktop layout. No browser or server was launched.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Add a named Continue action beside course progress\n\nRalph-Run: 20261019140545445-7b45bf6c\nRalph-Iteration: 2"
+}
+
+[2026-10-19T14:26:04.211Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 3,
+  "phase": "discover"
+}
+
+[2026-10-19T14:27:24.354Z] 20261019140545445-7b45bf6c — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Explain the enforced unlock condition for locked chapters",
+      "category": "Progression clarity",
+      "rationale": "Locked rows provide no actionable explanation. Show guidance reflecting both sequential unlocking and declared prerequisites. Expected reduction in confusion is a hypothesis; no learner research or browser verification was performed.",
+      "evidence": [
+        "components/course-page.tsx:95–100 renders only “Locked”; the Chapter type at line 9 omits prerequisites.",
+        "app/api/courses/[id]/route.ts:25–33 already returns ordered chapter records, including prerequisites.",
+        "app/api/chapters/[id]/attempts/route.ts:59–65 opens only the next indexed chapter after a pass, conditional on prerequisitesPassed.",
+        "lib/gating.ts:3–12 defines an 80% pass threshold and requires every declared prerequisite to have passed."
+      ],
+      "acceptanceCriteria": [
+        "Locked rows or an associated section explain sequential progression and the declared prerequisite pass requirement without claiming every earlier chapter is explicitly required.",
+        "Chapter-specific prerequisite references use actual chapter titles and learning order; missing references do not produce invented requirements.",
+        "Tests cover empty prerequisite arrays, multiple prerequisites, and mixed passed/open states without changing progression behavior.",
+        "Host browser checks verify readable guidance at mobile and desktop widths and confirm locked chapters remain noninteractive."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "An explicit unmet requirement leaves learners unable to understand how to access future lessons. Actionable guidance is the highest remaining priority, although abandonment has not been measured."
+        },
+        "subjectMatterExpert": {
+          "score": 4,
+          "rationale": "Learners need an accurate relationship between assessment success, prerequisites, and progression. Bare lock labels obscure that relationship; incorrect generic guidance could prescribe unnecessary work.",
+          "domain": "Mastery-based digital learning and assessment"
+        }
+      },
+      "index": 0,
+      "score": 5,
+      "mustDoScore": 8
+    },
+    {
+      "title": "Make completed chapter titles open reading and give retaking a separate button",
+      "category": "Safe action hierarchy",
+      "rationale": "The renamed retake flow is already complete. This increment changes the default interaction: chapter-title navigation should read the lesson, while an explicit secondary button opens the existing reset confirmation.",
+      "evidence": [
+        "components/course-page.tsx:95–101 makes the entire mastered chapter row a link that intercepts navigation to open the reset dialog.",
+        "components/course-page.tsx:104–105 places safe reading in a separate block below that row.",
+        "components/course-page.test.tsx:83–108 verifies reading without reset, providing an existing safeguard to retain.",
+        "components/revisit-dialog.tsx:18–27 and 63–64 already provide safe initial focus, focus restoration, and explicit confirmation."
+      ],
+      "acceptanceCriteria": [
+        "Activating a mastered chapter title navigates to its lesson without opening confirmation or issuing a reset request.",
+        "A distinct “Retake mastery check” button opens the existing confirmation and supports Enter and Space.",
+        "Cancellation restores focus to the retake button; reset requests occur only after explicit confirmation.",
+        "Keep both actions in a compact row where space permits, with mobile wrapping and host browser coverage for keyboard operation."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "The label now explains the action, but the largest navigation target still initiates a reset decision. Making reading the default reduces avoidable interruptions and supports safe review."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Reviewing completed instruction should be straightforward and preserve recorded progress. A distinct retake control helps learners choose intentional reassessment rather than entering it through ordinary lesson navigation.",
+          "domain": "Mastery-based digital learning and assessment"
+        }
+      },
+      "index": 2,
+      "score": 5,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Collapse contiguous mastered chapters in their original positions",
+      "category": "Outline navigation",
+      "rationale": "Use accessible disclosures for contiguous mastered runs, preserving their position among open and locked chapters. This reduces scanning while retaining ordered access. The magnitude of the benefit is unmeasured.",
+      "evidence": [
+        "components/course-page.tsx:86–110 expands every chapter regardless of status.",
+        "components/course-page.tsx:103–106 adds another action block beneath every mastered row.",
+        "components/course-page.test.tsx:125–157 includes multiple open chapters separated by passed chapters, so grouping all mastered chapters at the top would break learning order.",
+        "The supplied goal explicitly requests reduced scanning while preserving ordered access."
+      ],
+      "acceptanceCriteria": [
+        "Each contiguous mastered run has a keyboard-operable disclosure identifying its chapter range and count.",
+        "Expanding a run exposes every chapter and its existing reading and retake actions in original order.",
+        "Open and locked chapters remain visible regardless of disclosure state; mixed statuses are never regrouped across intervening chapters.",
+        "Component tests cover mixed runs and fully completed courses; host browser checks verify disclosure operation, focus, and mobile layout."
+      ],
+      "impact": 4,
+      "confidence": 4,
+      "effort": 3,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "The new Continue action addresses immediate resumption, but long outlines still burden browsing. Collapsing completed runs directly addresses the remaining scanning requirement."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Progressive disclosure can foreground unfinished learning while preserving review access and curricular sequence. Hiding or regrouping completed content incorrectly would undermine those benefits.",
+          "domain": "Mastery-based digital learning and assessment"
+        }
+      },
+      "index": 1,
+      "score": 2.6666666666666665,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Consolidate course progress into one concise summary",
+      "category": "Progress comprehension",
+      "rationale": "Use one visible count-based summary with the progress bar, removing the separate visible percentage. Preserve accessible progress semantics and the already implemented named Continue action.",
+      "evidence": [
+        "components/course-page.tsx:60–64 displays a percentage and progress bar in the header.",
+        "components/course-page.tsx:68–74 separately displays the mastered chapter count and Continue action.",
+        "The progress bar already exposes “passed of total chapters mastered” through aria-valuetext at line 62.",
+        "Requirement 5 explicitly asks to avoid unnecessary duplication between percentage and chapter count."
+      ],
+      "acceptanceCriteria": [
+        "A single progress cluster visibly states the mastered chapter count and total alongside the bar.",
+        "The separate visible percentage is removed; the bar retains its accessible name and numeric values.",
+        "The named Continue action remains near progress and targets the same first open chapter.",
+        "Tests cover zero, partial, and complete progress; host browser checks verify mobile wrapping and desktop hierarchy."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 1,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "This directly closes a stated requirement and creates a clearer resumption area. It is less urgent than explaining unavailable lessons because existing metrics are understandable."
+        },
+        "subjectMatterExpert": {
+          "score": 2,
+          "rationale": "Chapter counts give concrete curricular context without requiring percentage interpretation. Existing values are correct, so the educational consequence of deferral is limited.",
+          "domain": "Mastery-based digital learning and assessment"
+        }
+      },
+      "index": 3,
+      "score": 15,
+      "mustDoScore": 5
+    },
+    {
+      "title": "Show course completion beside progress instead of below the outline",
+      "category": "Completion orientation",
+      "rationale": "When every chapter has passed, surface the existing completion message near progress, where Continue would otherwise be absent. This is a small terminal-state improvement independent of metric consolidation.",
+      "evidence": [
+        "components/course-page.tsx:32 derives completion from all chapter statuses.",
+        "components/course-page.tsx:71–75 omits Continue when no open chapter exists.",
+        "components/course-page.tsx:113 places “You completed this course” after the entire outline.",
+        "components/course-page.test.tsx:159–173 distinguishes completed, empty, and locked-only courses but only checks absence of Continue."
+      ],
+      "acceptanceCriteria": [
+        "A fully passed course displays the existing completion message near progress before the outline.",
+        "The message appears once and does not appear for empty, locked-only, or mixed unfinished courses.",
+        "Completed lessons remain available in original order; completion introduces no automatic reset or generation.",
+        "Component tests verify placement and state distinctions; host browser checks verify immediate visibility on mobile and desktop."
+      ],
+      "impact": 2,
+      "confidence": 4,
+      "effort": 1,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 2,
+          "rationale": "An explicit terminal state explains why continuation is absent without requiring a long scroll. The existing count already conveys completion, making this useful but deferrable."
+        },
+        "subjectMatterExpert": {
+          "score": 2,
+          "rationale": "Clear completion feedback supports learner orientation. Preserve the existing claim of course completion without adding unsupported claims about durable mastery.",
+          "domain": "Mastery-based digital learning and assessment"
+        }
+      },
+      "index": 4,
+      "score": 8,
+      "mustDoScore": 4
+    }
+  ]
+}
+
+[2026-10-19T14:27:24.355Z] 20261019140545445-7b45bf6c — Candidate selected
+{
+  "iteration": 3,
+  "candidate": {
+    "title": "Explain the enforced unlock condition for locked chapters",
+    "category": "Progression clarity",
+    "rationale": "Locked rows provide no actionable explanation. Show guidance reflecting both sequential unlocking and declared prerequisites. Expected reduction in confusion is a hypothesis; no learner research or browser verification was performed.",
+    "evidence": [
+      "components/course-page.tsx:95–100 renders only “Locked”; the Chapter type at line 9 omits prerequisites.",
+      "app/api/courses/[id]/route.ts:25–33 already returns ordered chapter records, including prerequisites.",
+      "app/api/chapters/[id]/attempts/route.ts:59–65 opens only the next indexed chapter after a pass, conditional on prerequisitesPassed.",
+      "lib/gating.ts:3–12 defines an 80% pass threshold and requires every declared prerequisite to have passed."
+    ],
+    "acceptanceCriteria": [
+      "Locked rows or an associated section explain sequential progression and the declared prerequisite pass requirement without claiming every earlier chapter is explicitly required.",
+      "Chapter-specific prerequisite references use actual chapter titles and learning order; missing references do not produce invented requirements.",
+      "Tests cover empty prerequisite arrays, multiple prerequisites, and mixed passed/open states without changing progression behavior.",
+      "Host browser checks verify readable guidance at mobile and desktop widths and confirm locked chapters remain noninteractive."
+    ],
+    "impact": 4,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 2,
+    "mustDo": {
+      "productManager": {
+        "score": 4,
+        "rationale": "An explicit unmet requirement leaves learners unable to understand how to access future lessons. Actionable guidance is the highest remaining priority, although abandonment has not been measured."
+      },
+      "subjectMatterExpert": {
+        "score": 4,
+        "rationale": "Learners need an accurate relationship between assessment success, prerequisites, and progression. Bare lock labels obscure that relationship; incorrect generic guidance could prescribe unnecessary work.",
+        "domain": "Mastery-based digital learning and assessment"
+      }
+    }
+  },
+  "mustDoScore": 8,
+  "score": 5,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T14:27:24.374Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 3,
+  "phase": "implement"
+}
+
+[2026-10-19T14:29:03.430Z] 20261019140545445-7b45bf6c — Implementation completed; verification required
+{
+  "summary": "Implemented locked-chapter guidance in components/course-page.tsx. Names the previous chapter and lists declared prerequisites in learning order with mastery status; missing references are flagged. components/course-page.test.tsx passes all 19 tests. Lint, typecheck, and diff checks pass. Full suite: 177 passed; 33 Ralph tests blocked by git EPERM. Build blocked by Turbopack port-binding permissions. Mobile/desktop browser verification remains pending with the host.",
+  "decisions": [
+    {
+      "decision": "Explain sequential unlocking alongside declared prerequisites.",
+      "reason": "Matches the enforced rule without claiming every earlier chapter is required."
+    },
+    {
+      "decision": "Use actual titles and explicit mastery statuses in learning order.",
+      "reason": "Makes requirements understandable without relying on color."
+    },
+    {
+      "decision": "Flag unavailable prerequisite references.",
+      "reason": "Avoids invented requirements or false promises of access."
+    },
+    {
+      "decision": "Keep guidance noninteractive and use existing course-response data.",
+      "reason": "Preserves locked behavior without API or progression changes."
+    }
+  ]
+}
+
+[2026-10-19T14:29:03.452Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 3,
+  "phase": "verify"
+}
+
+[2026-10-19T14:29:07.042Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/3-verify-1792420143452-38-lint.log"
+}
+
+[2026-10-19T14:29:08.806Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/3-verify-1792420147047-39-typecheck.log"
+}
+
+[2026-10-19T14:29:29.485Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/3-verify-1792420148811-40-test.log"
+}
+
+[2026-10-19T14:29:35.955Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 3,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/3-verify-1792420169489-41-build.log"
+}
+
+[2026-10-19T14:29:35.960Z] 20261019140545445-7b45bf6c — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T14:29:35.978Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 3,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T14:31:02.962Z] 20261019140545445-7b45bf6c — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019140545445-7b45bf6c/iteration-3.spec.ts",
+  "summary": "Created iteration-3.spec.ts with eight browser cases. ESLint and TypeScript syntax checks passed. Browser tests were not run; host execution remains pending.",
+  "decisions": [
+    {
+      "decision": "Cover four prerequisite scenarios at mobile and desktop widths.",
+      "reason": "Checks empty, multiple, mastered, and missing references, including chapter order and accurate guidance."
+    },
+    {
+      "decision": "Check wrapping, enlarged text, keyboard navigation, locked-row inactivity, and reload consistency.",
+      "reason": "Verifies readable guidance and preserves chapter availability."
+    },
+    {
+      "decision": "Use read-only synthetic course responses.",
+      "reason": "Tests presentation without generation jobs or user-data changes. Grading and database persistence are outside this spec’s coverage."
+    }
+  ]
+}
+
+[2026-10-19T14:31:06.706Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 3,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/3-browser-prepare-1792420262962-46-lint.log"
+}
+
+[2026-10-19T14:31:08.681Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 3,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/3-browser-prepare-1792420266710-47-typecheck.log"
+}
+
+[2026-10-19T14:31:08.705Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 3,
+  "phase": "browser-run"
+}
+
+[2026-10-19T14:31:20.937Z] 20261019140545445-7b45bf6c — Host Playwright verification
+{
+  "status": "passed",
+  "passed": 8,
+  "reason": "All 8 browser tests passed",
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019140545445-7b45bf6c/iteration-3.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/3-browser-run-1792420268746-48-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/3-browser-run-1792420268746-48-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/3-browser-run-1792420268746-48-playwright/artifacts"
+}
+
+[2026-10-19T14:31:20.955Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 3,
+  "phase": "review"
+}
+
+[2026-10-19T14:32:28.597Z] 20261019140545445-7b45bf6c — Independent review decision
+{
+  "summary": "Selected increment passes review. No concrete unresolved defects found. Host verification supersedes the earlier sandbox blockers.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Guidance matches enforced progression: passing the immediately preceding chapter unlocks the next chapter only when every declared prerequisite is mastered.",
+    "Prerequisites use actual chapter titles, sorted by learning index, with explicit mastery status. Missing references are flagged without invented titles.",
+    "Five added unit tests cover empty, multiple, mastered, mixed-state, and missing prerequisite references; progression code is unchanged.",
+    "Host logs confirm lint, typecheck, all 210 tests, and production build passed. Independent git diff --check passed."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-3.spec.ts and the supplied results.json: all 8 tests passed, with no failures, skips, or flaky results.",
+    "Tests cover four prerequisite scenarios at 375px and 1440px, text enlargement, wrapping, chapter order, reload consistency, click inactivity, and keyboard exclusion of locked content.",
+    "Inspected embedded mobile and desktop screenshots. Guidance and prerequisite statuses remain readable without horizontal overflow.",
+    "Inspected artifacts/.last-run.json: passed with no failed tests. Browser fixtures intercept API requests and verify no unexpected requests."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T14:32:28.615Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 3,
+  "phase": "commit"
+}
+
+[2026-10-19T14:32:28.618Z] 20261019140545445-7b45bf6c — Verified iteration approved for commit
+{
+  "iteration": 3,
+  "candidate": "Explain the enforced unlock condition for locked chapters",
+  "summary": "Implemented locked-chapter guidance in components/course-page.tsx. Names the previous chapter and lists declared prerequisites in learning order with mastery status; missing references are flagged. components/course-page.test.tsx passes all 19 tests. Lint, typecheck, and diff checks pass. Full suite: 177 passed; 33 Ralph tests blocked by git EPERM. Build blocked by Turbopack port-binding permissions. Mobile/desktop browser verification remains pending with the host.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Explain the enforced unlock condition for locked chapters\n\nRalph-Run: 20261019140545445-7b45bf6c\nRalph-Iteration: 3"
+}
+
+[2026-10-19T14:32:28.653Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 4,
+  "phase": "discover"
+}
+
+[2026-10-19T14:33:57.746Z] 20261019140545445-7b45bf6c — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Compact mastered chapters into a single row with secondary actions",
+      "category": "Chapter outline usability",
+      "rationale": "Keep every chapter visible in learning order, but place its title, Mastered status, Read lesson link, and secondary retake action in one responsive row. This directly addresses the remaining repetition requirement without adding collapse state. Reduced scanning effort is a hypothesis; no learner measurements or browser results were collected during discovery.",
+      "evidence": [
+        "components/course-page.tsx:108-134 renders every chapter in the ordered outline.",
+        "components/course-page.tsx:115-128 gives each mastered chapter a full-row retake link followed by a separate padded Read lesson action row.",
+        "The supplied history completed naming, continuation, and unlock guidance; it does not report reducing mastered-row repetition."
+      ],
+      "acceptanceCriteria": [
+        "Each mastered chapter uses one responsive row containing its title, textual Mastered status, reading link, and visually secondary retake action.",
+        "All chapters remain visible in their original order; open and locked chapters retain their actions and guidance.",
+        "Reading performs navigation without a reset request; retaking retains explicit confirmation, safe cancellation, and focus restoration.",
+        "Component tests cover mixed and entirely mastered outlines. Host browser verification covers keyboard operation, long titles, and mobile and desktop layouts."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Repeated two-row controls remain a concrete unmet requirement and grow with course completion. Compact rows improve outline scanning while preserving discoverability; the existing Continue action reduces urgency."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Keeping the learning sequence visible while lowering the prominence of completed assessment actions supports orientation and intentional lesson review. This is an educational usability judgment, not demonstrated learning efficacy.",
+          "domain": "Mastery-based learning and formative-assessment UX"
+        }
+      },
+      "index": 0,
+      "score": 5,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Use a button for the retake confirmation trigger",
+      "category": "Accessible action semantics",
+      "rationale": "Make Retake mastery check a chapter-specific button that consistently opens confirmation. Its current link destination opens the lesson, while ordinary activation opens a dialog. Correct semantics clarify the distinction between reading and an action that can reset assessment progress.",
+      "evidence": [
+        "components/course-page.tsx:57-60 intercepts an anchor click to open the reset dialog.",
+        "components/course-page.tsx:123 assigns the retake trigger a lesson href and aria-haspopup=\"dialog\".",
+        "components/course-page.test.tsx:108 and e2e/course-accessibility.spec.ts:16 currently expect this action to have link semantics.",
+        "components/course-page.test.tsx:221-238 covers confirmation, pending state, and error recovery. These tests were inspected, not executed in this discovery phase."
+      ],
+      "acceptanceCriteria": [
+        "Retake mastery check is a native button with an accessible name identifying the chapter and dialog semantics.",
+        "Enter and Space open confirmation without navigating or issuing a reset request.",
+        "Read lesson remains a normal navigation link.",
+        "Cancel and Escape preserve progress and restore focus to the trigger; only explicit confirmation sends the reset request.",
+        "Component assertions and host browser verification cover the changed semantics and preserved safeguards."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "The wording is fixed, but the control still presents conflicting action and navigation behavior. Consistent semantics are important for a consequential learner action."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Reassessment and reviewing instruction serve different learning purposes. Correct controls reinforce intentional reassessment and preserve a clear route to review without resetting evidence.",
+          "domain": "Mastery-based learning and formative-assessment UX"
+        }
+      },
+      "index": 1,
+      "score": 3.75,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Present one concise course progress summary",
+      "category": "Progress comprehension",
+      "rationale": "Use the mastered chapter count as the single visible progress metric beside the existing progress bar and Continue action. Preserve percentage information through the accessible progressbar value. This removes duplication while retaining the concrete meaning of progress.",
+      "evidence": [
+        "components/course-page.tsx:82-86 displays Progress, a percentage, and a bar.",
+        "components/course-page.tsx:92 separately displays the mastered chapter count.",
+        "components/course-page.tsx:84 already supplies percentage and mastered-count semantics through aria-valuenow and aria-valuetext.",
+        "Requirement 5 explicitly asks to avoid unnecessary duplication between percentage and chapter count."
+      ],
+      "acceptanceCriteria": [
+        "One visible mastered-count summary appears near the progress bar and named Continue action; the separate visible percentage is removed.",
+        "The progressbar retains its Course mastery name, correct numeric value, and meaningful mastered-count value text.",
+        "Empty, partially mastered, and completed courses show accurate progress without invalid values.",
+        "Component tests verify progress states; host browser verification checks mobile and desktop grouping and readability."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 1,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "This is an explicitly requested outcome still absent from the implementation. A single summary makes room for the learning action without losing information needed to understand progress."
+        },
+        "subjectMatterExpert": {
+          "score": 2,
+          "rationale": "A chapter count communicates what the progress measure represents. Removing the duplicate percentage helps interpretation, although the current presentation does not materially misstate assessment results.",
+          "domain": "Mastery-based learning and formative-assessment UX"
+        }
+      },
+      "index": 2,
+      "score": 15,
+      "mustDoScore": 5
+    },
+    {
+      "title": "Distinguish the primary current chapter from other open chapters",
+      "category": "Learning orientation",
+      "rationale": "Reserve the current-step marker for the chapter selected by the summary Continue action. Identify other open chapters as available without implying that multiple chapters are the single current step. Preserve the existing choice of the first open chapter and all navigation access.",
+      "evidence": [
+        "components/course-page.tsx:56 selects the first open chapter for the summary Continue action.",
+        "components/course-page.tsx:117-123 labels every open chapter Continue and gives every open chapter aria-current=\"step\".",
+        "components/course-page.test.tsx:125-128 explicitly includes multiple open chapters after a retake.",
+        "app/api/chapters/[id]/revisit/route.ts:26 opens the retaken chapter without closing other open chapters."
+      ],
+      "acceptanceCriteria": [
+        "With multiple open chapters, exactly the summary-selected chapter has aria-current=\"step\" and a visible current-chapter designation.",
+        "Other open chapters have a textual available status and retain their lesson links.",
+        "The first-open selection policy, chapter order, progression rules, and reset behavior remain unchanged.",
+        "Component tests and host keyboard verification cover a retake fixture with multiple open chapters."
+      ],
+      "impact": 2,
+      "confidence": 4,
+      "effort": 1,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 2,
+          "rationale": "This resolves conflicting orientation cues in a supported retake state. The prominent summary action already supplies a usable path, so the improvement is useful but deferrable."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Availability and recommended sequence are different concepts in mastery-based learning. Distinguishing them helps learners interpret a reopened assessment chapter without implying a changed progression policy.",
+          "domain": "Mastery-based learning and formative-assessment UX"
+        }
+      },
+      "index": 3,
+      "score": 4,
+      "mustDoScore": 5
+    },
+    {
+      "title": "Disclose detailed prerequisite lists on demand",
+      "category": "Locked-chapter scanning",
+      "rationale": "Keep each locked chapter's accurate unlock summary visible while putting its detailed prerequisite inventory behind a keyboard-accessible disclosure. This extends the completed guidance work by controlling its length, without changing the rule or hiding locked chapter titles.",
+      "evidence": [
+        "components/course-page.tsx:20-28 renders an unlock sentence, a Required prerequisites heading, and every prerequisite status inline.",
+        "components/course-page.tsx:125 repeats this full guidance block for every locked chapter.",
+        "components/course-page.test.tsx:271-299 covers ordered prerequisite lists, mastered statuses, and missing references.",
+        "No browser evidence establishes excessive page height; increased scanning cost for prerequisite-heavy courses is a source-grounded hypothesis."
+      ],
+      "acceptanceCriteria": [
+        "Every locked chapter retains a visible accurate unlock summary and Locked status.",
+        "A chapter-specific disclosure reveals the complete prerequisite list in learning order with mastery statuses.",
+        "Missing prerequisite warnings remain visible so unavailable requirements are not concealed.",
+        "All locked titles remain visible in the original outline order; disclosure changes issue no reset or generation requests.",
+        "Component tests and host browser verification cover keyboard expansion, long prerequisite lists, and mobile layout."
+      ],
+      "impact": 2,
+      "confidence": 3,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 2,
+          "rationale": "Detailed guidance can lengthen the outline, but its prevalence and learner impact are unmeasured. Progressive disclosure is a useful follow-up after addressing mastered-row repetition."
+        },
+        "subjectMatterExpert": {
+          "score": 2,
+          "rationale": "Prerequisite transparency is already implemented. On-demand detail can reduce competing information while preserving educational context, provided the actual unlock condition stays visible.",
+          "domain": "Mastery-based learning and formative-assessment UX"
+        }
+      },
+      "index": 4,
+      "score": 1.5,
+      "mustDoScore": 4
+    }
+  ]
+}
+
+[2026-10-19T14:33:57.747Z] 20261019140545445-7b45bf6c — Candidate selected
+{
+  "iteration": 4,
+  "candidate": {
+    "title": "Compact mastered chapters into a single row with secondary actions",
+    "category": "Chapter outline usability",
+    "rationale": "Keep every chapter visible in learning order, but place its title, Mastered status, Read lesson link, and secondary retake action in one responsive row. This directly addresses the remaining repetition requirement without adding collapse state. Reduced scanning effort is a hypothesis; no learner measurements or browser results were collected during discovery.",
+    "evidence": [
+      "components/course-page.tsx:108-134 renders every chapter in the ordered outline.",
+      "components/course-page.tsx:115-128 gives each mastered chapter a full-row retake link followed by a separate padded Read lesson action row.",
+      "The supplied history completed naming, continuation, and unlock guidance; it does not report reducing mastered-row repetition."
+    ],
+    "acceptanceCriteria": [
+      "Each mastered chapter uses one responsive row containing its title, textual Mastered status, reading link, and visually secondary retake action.",
+      "All chapters remain visible in their original order; open and locked chapters retain their actions and guidance.",
+      "Reading performs navigation without a reset request; retaking retains explicit confirmation, safe cancellation, and focus restoration.",
+      "Component tests cover mixed and entirely mastered outlines. Host browser verification covers keyboard operation, long titles, and mobile and desktop layouts."
+    ],
+    "impact": 4,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 2,
+    "mustDo": {
+      "productManager": {
+        "score": 3,
+        "rationale": "Repeated two-row controls remain a concrete unmet requirement and grow with course completion. Compact rows improve outline scanning while preserving discoverability; the existing Continue action reduces urgency."
+      },
+      "subjectMatterExpert": {
+        "score": 3,
+        "rationale": "Keeping the learning sequence visible while lowering the prominence of completed assessment actions supports orientation and intentional lesson review. This is an educational usability judgment, not demonstrated learning efficacy.",
+        "domain": "Mastery-based learning and formative-assessment UX"
+      }
+    }
+  },
+  "mustDoScore": 6,
+  "score": 5,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T14:33:57.767Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 4,
+  "phase": "implement"
+}
+
+[2026-10-19T14:35:26.298Z] 20261019140545445-7b45bf6c — Implementation completed; verification required
+{
+  "summary": "Implemented compact responsive mastered rows with title, Mastered status, Read lesson link, and secondary retake button. All chapters retain their order. Evidence: components/course-page.test.tsx passes 21 tests covering mixed/completed outlines, reading without reset, confirmation, cancellation, and focus restoration. Lint, typecheck, and diff checks pass. Full suite: 179 passed; 33 Ralph tests blocked by git EPERM. Build blocked by Turbopack port-binding permissions. Host browser verification remains pending for keyboard operation and mobile/desktop layouts.",
+  "decisions": [
+    {
+      "decision": "Keep every chapter visible in one responsive row.",
+      "reason": "Reduces repeated layout and padding while preserving learning order and discoverability."
+    },
+    {
+      "decision": "Emphasize reading and use a secondary retake button.",
+      "reason": "Distinguishes navigation from the reset confirmation action."
+    },
+    {
+      "decision": "Preserve the existing reset dialog and chapter progression behavior.",
+      "reason": "Maintains safe cancellation, focus restoration, and existing learning rules."
+    },
+    {
+      "decision": "Allow controls to wrap and retain visible focus and 44px control heights.",
+      "reason": "Supports narrow screens and keyboard/touch access; actual browser verification remains pending."
+    }
+  ]
+}
+
+[2026-10-19T14:35:26.320Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 4,
+  "phase": "verify"
+}
+
+[2026-10-19T14:35:29.840Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 4,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/4-verify-1792420526321-62-lint.log"
+}
+
+[2026-10-19T14:35:31.582Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 4,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/4-verify-1792420529844-63-typecheck.log"
+}
+
+[2026-10-19T14:35:51.090Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 4,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/4-verify-1792420531587-64-test.log"
+}
+
+[2026-10-19T14:35:56.440Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 4,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/4-verify-1792420551094-65-build.log"
+}
+
+[2026-10-19T14:35:56.445Z] 20261019140545445-7b45bf6c — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T14:35:56.465Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 4,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T14:38:01.417Z] 20261019140545445-7b45bf6c — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019140545445-7b45bf6c/iteration-4.spec.ts",
+  "summary": "Created iteration-4.spec.ts with six browser tests. ESLint and TypeScript checks pass. Browser tests were not run; host execution is pending.",
+  "decisions": [
+    {
+      "decision": "Cover mixed and fully mastered outlines at mobile and desktop widths.",
+      "reason": "Verify chapter order, compact actions, secondary retake styling, long titles, and enlarged text."
+    },
+    {
+      "decision": "Test keyboard navigation, confirmation, cancellation, and focus restoration.",
+      "reason": "Ensure the new retake buttons preserve reset safeguards."
+    },
+    {
+      "decision": "Reuse the deterministic fixture for real grading and reload persistence checks.",
+      "reason": "Verify reading and cancelling preserve mastery without paid generation. Successful reset is outside this increment’s coverage."
+    }
+  ]
+}
+
+[2026-10-19T14:38:04.989Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 4,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/4-browser-prepare-1792420681418-70-lint.log"
+}
+
+[2026-10-19T14:38:07.215Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 4,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/4-browser-prepare-1792420684993-71-typecheck.log"
+}
+
+[2026-10-19T14:38:07.239Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 4,
+  "phase": "browser-run"
+}
+
+[2026-10-19T14:38:24.569Z] 20261019140545445-7b45bf6c — Host Playwright verification
+{
+  "status": "passed",
+  "passed": 6,
+  "reason": "All 6 browser tests passed",
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019140545445-7b45bf6c/iteration-4.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/4-browser-run-1792420687278-72-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/4-browser-run-1792420687278-72-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/4-browser-run-1792420687278-72-playwright/artifacts"
+}
+
+[2026-10-19T14:38:24.590Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 4,
+  "phase": "review"
+}
+
+[2026-10-19T14:39:29.809Z] 20261019140545445-7b45bf6c — Independent review decision
+{
+  "summary": "Selected increment passes review. No concrete unresolved defects found. Host verification supersedes the implementation report’s pending checks.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Mastered chapters share one responsive row with title, textual status, reading link, and secondary retake button.",
+    "Component and browser tests preserve chapter order, visibility, open actions, and locked guidance.",
+    "Browser tests verify reading preserves saved mastery; cancellation and Escape restore focus. Component tests verify reset requires explicit confirmation.",
+    "Host logs confirm 21 component tests, 212 total tests, lint, typecheck, and production build passed. Independent diff check passed.",
+    "Independent component-test rerun was blocked by sandbox temporary-directory creation; host results were inspected."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-4.spec.ts, results.json, embedded screenshots, and artifacts/.last-run.json: six passed, zero failures, skips, or flaky results.",
+    "Mixed and fully mastered outlines tested at 320px and 1440px, including long titles and enlarged text.",
+    "Real fixture tests at 375px and 1440px verify keyboard reading, safe cancellation, focus containment/restoration, and unchanged saved mastery after reload."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T14:39:29.828Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 4,
+  "phase": "commit"
+}
+
+[2026-10-19T14:39:29.831Z] 20261019140545445-7b45bf6c — Verified iteration approved for commit
+{
+  "iteration": 4,
+  "candidate": "Compact mastered chapters into a single row with secondary actions",
+  "summary": "Implemented compact responsive mastered rows with title, Mastered status, Read lesson link, and secondary retake button. All chapters retain their order. Evidence: components/course-page.test.tsx passes 21 tests covering mixed/completed outlines, reading without reset, confirmation, cancellation, and focus restoration. Lint, typecheck, and diff checks pass. Full suite: 179 passed; 33 Ralph tests blocked by git EPERM. Build blocked by Turbopack port-binding permissions. Host browser verification remains pending for keyboard operation and mobile/desktop layouts.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Compact mastered chapters into a single row with secondary actions\n\nRalph-Run: 20261019140545445-7b45bf6c\nRalph-Iteration: 4"
+}
+
+[2026-10-19T14:39:29.869Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 5,
+  "phase": "discover"
+}
+
+[2026-10-19T14:40:55.921Z] 20261019140545445-7b45bf6c — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Disclose the full consequences of retaking a mastery check",
+      "category": "Learner safety",
+      "rationale": "Extend the existing confirmation to explain that saved answers and related review items are cleared. This is a small disclosure change that supports an informed choice between reading and retaking. The deletion behavior is confirmed in source; learner misunderstanding is a hypothesis.",
+      "evidence": [
+        "components/revisit-dialog.tsx:56 describes clearing the mastery result and quiz questions, but does not explicitly mention saved answers or related review items.",
+        "app/api/chapters/[id]/revisit/route.ts:17–23 deletes related review items, answers, and questions.",
+        "The supplied goal requires learners to choose safely between reading and retaking."
+      ],
+      "acceptanceCriteria": [
+        "The confirmation explicitly describes clearing saved answers and review items associated with the chapter’s quiz questions without claiming all attempt history is deleted.",
+        "Keep mastered remains initially focused; cancellation and Escape make no reset request and restore trigger focus.",
+        "Read lesson remains a separate navigation action with no reset request.",
+        "Component tests verify the disclosure and safeguards; host browser verification checks keyboard operation and mobile/desktop readability using intercepted requests."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 1,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "An irreversible consequence is insufficiently disclosed at the decision point. Clear wording is important for learner trust, although no observed misunderstanding was supplied."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Answers and review items support reflection and targeted practice. Learners should understand their removal before choosing a new assessment attempt.",
+          "domain": "Mastery-based learning and formative assessment"
+        }
+      },
+      "index": 0,
+      "score": 15,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Consolidate course progress into one concise summary",
+      "category": "Progress comprehension",
+      "rationale": "Use the chapter mastery count as the single visible progress summary alongside the existing bar and named Continue action. Preserve percentage semantics for assistive technology. This directly addresses the remaining explicit requirement; improved comprehension is expected rather than measured.",
+      "evidence": [
+        "components/course-page.tsx:81–85 renders Progress, a percentage, and a progress bar.",
+        "components/course-page.tsx:89–95 separately repeats progress as a chapter mastery count beside Continue.",
+        "The supplied requirement explicitly asks to avoid unnecessary duplication between percentage and chapter count."
+      ],
+      "acceptanceCriteria": [
+        "One visible summary states the number of chapters mastered out of the total; remove the separate visible percentage and generic Progress label.",
+        "The progress bar retains an accessible name, correct numeric percentage, and chapter-count value text.",
+        "The named Continue action remains adjacent to the summary, with the outline order unchanged.",
+        "Verify empty, partial, and completed courses in component tests and through host browser checks at mobile and desktop widths."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 1,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "This is an explicit unmet requirement and reduces competing information near the main learning action."
+        },
+        "subjectMatterExpert": {
+          "score": 2,
+          "rationale": "A chapter count communicates the unit of advancement clearly. The existing information is accurate, so consolidation is useful but does not unblock learning.",
+          "domain": "Mastery-based learning and formative assessment"
+        }
+      },
+      "index": 1,
+      "score": 15,
+      "mustDoScore": 5
+    },
+    {
+      "title": "Identify exactly one current chapter when several chapters are open",
+      "category": "Navigation accessibility",
+      "rationale": "Align the outline’s current-step designation with the chapter selected by the summary Continue action. Other open chapters should remain clearly available. This corrects ambiguous navigation semantics without changing progression or selecting a different continuation policy.",
+      "evidence": [
+        "components/course-page.tsx:56 selects the first open chapter for the summary Continue action.",
+        "components/course-page.tsx:128–134 labels every open chapter Continue and assigns each aria-current=\"step\".",
+        "components/course-page.test.tsx:125–157 explicitly includes multiple open chapters after a retake.",
+        "app/api/chapters/[id]/revisit/route.ts:26 reopens a chapter without closing other open chapters."
+      ],
+      "acceptanceCriteria": [
+        "A multiple-open fixture has exactly one outline link marked aria-current=\"step\", matching the summary Continue destination.",
+        "The selected row has a visible current-chapter label; other open rows have a distinct available status and remain navigable.",
+        "Single-open and no-open courses produce one and zero current-step markers respectively.",
+        "Preserve chapter order and verify keyboard navigation and text-based status identification through host browser checks."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 2,
+          "rationale": "The summary already provides a clear destination, but contradictory outline cues weaken that guidance in the supported retake case."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Availability and recommended sequence are different concepts. Distinguishing them helps learners interpret their learning path accurately, including through assistive technology.",
+          "domain": "Mastery-based learning and formative assessment"
+        }
+      },
+      "index": 2,
+      "score": 7.5,
+      "mustDoScore": 5
+    },
+    {
+      "title": "Link unlock guidance to accessible prerequisite lessons",
+      "category": "Prerequisite navigation",
+      "rationale": "Let learners navigate directly from an unmet prerequisite explanation to its available lesson. Keep mastered prerequisites as reading links and locked prerequisites noninteractive. This makes the existing explanation actionable without changing any unlock rule.",
+      "evidence": [
+        "components/course-page.tsx:20–28 names the preceding chapter and declared prerequisites as plain text.",
+        "components/course-page.tsx:118 already supplies a safe reading route for mastered chapters.",
+        "lib/gating.ts:10–12 checks declared prerequisite mastery; app/api/chapters/[id]/attempts/route.ts:61–64 applies sequential unlocking.",
+        "The supplied goal asks learners to understand availability and locate where to continue."
+      ],
+      "acceptanceCriteria": [
+        "Named preceding chapters and prerequisites that are open or mastered link to their existing lesson routes, with duplicate destinations avoided within a row.",
+        "Links to mastered prerequisites clearly indicate reading and never invoke reset.",
+        "Locked and missing prerequisites remain noninteractive, with their status explained.",
+        "Tests verify destinations, absence of reset calls, and unchanged outline order; host browser checks verify descriptive names and keyboard activation."
+      ],
+      "impact": 2,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 2,
+          "rationale": "Direct navigation removes a second search through the outline, but the summary Continue action already handles the common continuation need."
+        },
+        "subjectMatterExpert": {
+          "score": 2,
+          "rationale": "Connecting prerequisite explanations to study material supports remediation. Its educational benefit is plausible and has not been measured here.",
+          "domain": "Mastery-based learning and formative assessment"
+        }
+      },
+      "index": 3,
+      "score": 4,
+      "mustDoScore": 4
+    },
+    {
+      "title": "Make detailed locked-chapter requirements expandable",
+      "category": "Outline scanning",
+      "rationale": "Keep each locked chapter’s sequential unlock sentence visible while placing its detailed prerequisite checklist behind an accessible disclosure. This limits outline growth in prerequisite-heavy courses without hiding chapter titles, order, or the basic unlock rule.",
+      "evidence": [
+        "components/course-page.tsx:23–28 expands every prerequisite checklist inline.",
+        "components/course-page.tsx:136 renders that guidance for every locked chapter.",
+        "Completed increment four compacted mastered rows, but the supplied goal also requires current and locked chapters to remain easy to locate.",
+        "No browser evidence establishes excessive page length; the scanning concern is inferred from repeated rendering."
+      ],
+      "acceptanceCriteria": [
+        "Each locked chapter retains a visible title, Locked status, and accurate sequential unlock sentence.",
+        "A keyboard-operable disclosure reveals all declared prerequisites, mastery statuses, and missing-reference warnings; its label communicates that additional requirements exist.",
+        "All chapter rows retain their original order, and current-chapter navigation remains visible.",
+        "Verify prerequisite-heavy fixtures in component tests and host mobile/desktop browser checks, including keyboard expansion and readable long titles."
+      ],
+      "impact": 2,
+      "confidence": 3,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 2,
+          "rationale": "This can reduce scanning in longer outlines, but the severity depends on prerequisite density and has not been established by observed usage."
+        },
+        "subjectMatterExpert": {
+          "score": 2,
+          "rationale": "Progressive disclosure can reduce competing information while preserving learning dependencies, provided additional requirements remain discoverable.",
+          "domain": "Mastery-based learning and formative assessment"
+        }
+      },
+      "index": 4,
+      "score": 1.5,
+      "mustDoScore": 4
+    }
+  ]
+}
+
+[2026-10-19T14:40:55.921Z] 20261019140545445-7b45bf6c — Candidate selected
+{
+  "iteration": 5,
+  "candidate": {
+    "title": "Disclose the full consequences of retaking a mastery check",
+    "category": "Learner safety",
+    "rationale": "Extend the existing confirmation to explain that saved answers and related review items are cleared. This is a small disclosure change that supports an informed choice between reading and retaking. The deletion behavior is confirmed in source; learner misunderstanding is a hypothesis.",
+    "evidence": [
+      "components/revisit-dialog.tsx:56 describes clearing the mastery result and quiz questions, but does not explicitly mention saved answers or related review items.",
+      "app/api/chapters/[id]/revisit/route.ts:17–23 deletes related review items, answers, and questions.",
+      "The supplied goal requires learners to choose safely between reading and retaking."
+    ],
+    "acceptanceCriteria": [
+      "The confirmation explicitly describes clearing saved answers and review items associated with the chapter’s quiz questions without claiming all attempt history is deleted.",
+      "Keep mastered remains initially focused; cancellation and Escape make no reset request and restore trigger focus.",
+      "Read lesson remains a separate navigation action with no reset request.",
+      "Component tests verify the disclosure and safeguards; host browser verification checks keyboard operation and mobile/desktop readability using intercepted requests."
+    ],
+    "impact": 3,
+    "confidence": 5,
+    "effort": 1,
+    "risk": 1,
+    "mustDo": {
+      "productManager": {
+        "score": 3,
+        "rationale": "An irreversible consequence is insufficiently disclosed at the decision point. Clear wording is important for learner trust, although no observed misunderstanding was supplied."
+      },
+      "subjectMatterExpert": {
+        "score": 3,
+        "rationale": "Answers and review items support reflection and targeted practice. Learners should understand their removal before choosing a new assessment attempt.",
+        "domain": "Mastery-based learning and formative assessment"
+      }
+    }
+  },
+  "mustDoScore": 6,
+  "score": 15,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T14:40:55.941Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 5,
+  "phase": "implement"
+}
+
+[2026-10-19T14:42:02.271Z] 20261019140545445-7b45bf6c — Implementation completed; verification required
+{
+  "summary": "Implemented the retake disclosure in components/revisit-dialog.tsx. components/course-page.test.tsx passes all 22 tests, covering visible/accessibly described consequences, safe focus, cancel/Escape handling, focus restoration, and reading without reset. Lint, typecheck, and diff checks pass. Full suite: 180 passed; 33 Ralph tests blocked by spawnSync git EPERM. Build blocked by Turbopack port-binding permission denial. Host browser verification remains pending for native keyboard behavior and mobile/desktop readability; no browser or server was launched.",
+  "decisions": [
+    {
+      "decision": "Explicitly disclose clearing saved answers and review items associated with this chapter’s quiz questions.",
+      "reason": "Matches the reset route’s deletion scope without claiming all attempt history is deleted."
+    },
+    {
+      "decision": "Place the disclosure in the existing visible, accessible dialog description.",
+      "reason": "Makes the consequences available at the confirmation point while preserving the established controls and layout."
+    },
+    {
+      "decision": "Add a focused disclosure test and retain existing safeguard tests.",
+      "reason": "Verifies the changed copy and continued cancellation, focus, and reading behavior using mocked requests."
+    }
+  ]
+}
+
+[2026-10-19T14:42:02.296Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 5,
+  "phase": "verify"
+}
+
+[2026-10-19T14:42:06.363Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 5,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/5-verify-1792420922297-86-lint.log"
+}
+
+[2026-10-19T14:42:08.125Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 5,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/5-verify-1792420926372-87-typecheck.log"
+}
+
+[2026-10-19T14:42:28.997Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 5,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/5-verify-1792420928129-88-test.log"
+}
+
+[2026-10-19T14:42:34.882Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 5,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/5-verify-1792420949001-89-build.log"
+}
+
+[2026-10-19T14:42:34.887Z] 20261019140545445-7b45bf6c — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T14:42:34.906Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 5,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T14:43:23.335Z] 20261019140545445-7b45bf6c — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019140545445-7b45bf6c/iteration-5.spec.ts",
+  "summary": "Created iteration-5.spec.ts. Playwright discovery found two tests; browser execution remains pending with the host.",
+  "decisions": [
+    {
+      "decision": "Cover disclosure readability at 320px and 1440px, including enlarged text.",
+      "reason": "Verify visible wording and accessible description on mobile and desktop."
+    },
+    {
+      "decision": "Verify initial safe focus, focus containment, Escape, cancellation, and trigger focus restoration.",
+      "reason": "Ensure learners can safely dismiss the retake flow using the keyboard."
+    },
+    {
+      "decision": "Use real fixture grading and persistence checks after reading and reloading; intercept unexpected requests.",
+      "reason": "Verify saved mastery and answers remain intact while preventing reset or paid generation. Successful reset behavior is outside this increment’s coverage."
+    }
+  ]
+}
+
+[2026-10-19T14:43:26.912Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 5,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/5-browser-prepare-1792421003336-94-lint.log"
+}
+
+[2026-10-19T14:43:29.129Z] 20261019140545445-7b45bf6c — Check passed
+{
+  "iteration": 5,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/5-browser-prepare-1792421006916-95-typecheck.log"
+}
+
+[2026-10-19T14:43:29.153Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 5,
+  "phase": "browser-run"
+}
+
+[2026-10-19T14:43:35.059Z] 20261019140545445-7b45bf6c — Host Playwright verification
+{
+  "status": "passed",
+  "passed": 2,
+  "reason": "All 2 browser tests passed",
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019140545445-7b45bf6c/iteration-5.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/5-browser-run-1792421009190-96-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/5-browser-run-1792421009190-96-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019140545445-7b45bf6c/5-browser-run-1792421009190-96-playwright/artifacts"
+}
+
+[2026-10-19T14:43:35.079Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 5,
+  "phase": "review"
+}
+
+[2026-10-19T14:44:31.788Z] 20261019140545445-7b45bf6c — Independent review decision
+{
+  "summary": "Selected increment passes review. No unresolved defects found.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Disclosure explicitly names saved answers and review items associated with the chapter’s quiz questions, matching the reset route without claiming attempt history is deleted.",
+    "Component tests and host browser tests verify initial Keep mastered focus, cancellation, Escape, restored trigger focus, and zero reset requests.",
+    "Read lesson remains separate navigation; browser tests verify persisted mastery, answers, and attempts remain unchanged after reading and reloading.",
+    "Host verification passed lint, typecheck, all 213 tests (including 22 course-page tests), and build. Review-time git diff --check passed."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-5.spec.ts, results.json, and the artifacts directory; screenshots are embedded in the report.",
+    "Both host Playwright tests passed with no failures or skips at 320px and 1440px.",
+    "Inspected all four screenshots showing normal and enlarged text. Tests cover accessible disclosure, keyboard containment, safe dismissal, reading, persistence, and intercepted mutation requests."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T14:44:31.811Z] 20261019140545445-7b45bf6c — Phase started
+{
+  "iteration": 5,
+  "phase": "commit"
+}
+
+[2026-10-19T14:44:31.815Z] 20261019140545445-7b45bf6c — Verified iteration approved for commit
+{
+  "iteration": 5,
+  "candidate": "Disclose the full consequences of retaking a mastery check",
+  "summary": "Implemented the retake disclosure in components/revisit-dialog.tsx. components/course-page.test.tsx passes all 22 tests, covering visible/accessibly described consequences, safe focus, cancel/Escape handling, focus restoration, and reading without reset. Lint, typecheck, and diff checks pass. Full suite: 180 passed; 33 Ralph tests blocked by spawnSync git EPERM. Build blocked by Turbopack port-binding permission denial. Host browser verification remains pending for native keyboard behavior and mobile/desktop readability; no browser or server was launched.",
+  "decision": "Stop after this commit: iteration limit reached",
+  "commitMessage": "ralph: Disclose the full consequences of retaking a mastery check\n\nRalph-Run: 20261019140545445-7b45bf6c\nRalph-Iteration: 5"
+}

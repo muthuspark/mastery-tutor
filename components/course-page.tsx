@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { RevisitDialog } from "@/components/revisit-dialog";
 
-type Chapter = { id: string; idx: number; title: string; status: "locked" | "open" | "passed" };
+type Chapter = { id: string; idx: number; title: string; prerequisites: number[]; status: "locked" | "open" | "passed" };
 type CourseResponse = { course: { topic: string }; chapters: Chapter[]; progress: { passed: number; total: number } };
 
 export function CoursePage() {
@@ -31,8 +31,7 @@ export function CoursePage() {
   const passed = data.chapters.filter((chapter) => chapter.status === "passed").length;
   const completed = total > 0 && passed === total;
   const percent = total > 0 ? Math.round((passed / total) * 100) : 0;
-  function openRevisitDialog(chapter: Chapter, event: React.MouseEvent<HTMLAnchorElement>) {
-    event.preventDefault();
+  function openRevisitDialog(chapter: Chapter) {
     setRevisitError("");
     setRevisitChapter(chapter);
   }
@@ -65,7 +64,9 @@ export function CoursePage() {
         </div>
       </header>
       <div className="flex flex-wrap items-center justify-between gap-4 py-5">
-        <p className="text-lg text-[var(--muted)]">{passed} of {total} chapters mastered</p>
+        <div className="min-w-0 flex-1 basis-72">
+          <p className="text-lg text-[var(--muted)]">{passed} of {total} chapters mastered</p>
+        </div>
         <a className="button-secondary ui shrink-0" href={`/api/courses/${params.id}/export`}>Export notes</a>
       </div>
       {total === 0 ? (
@@ -79,24 +80,31 @@ export function CoursePage() {
           {data.chapters.map((chapter) => {
             const isOpen = chapter.status === "open";
             const isPassed = chapter.status === "passed";
+            if (isPassed) return (
+              <li key={chapter.id}>
+                <div className="chapter-row chapter-row--mastered">
+                  <span className="ui text-xs font-bold" aria-hidden="true">✓</span>
+                  <span className="chapter-title text-xl">{chapter.title}</span>
+                  <span className="chapter-row-actions ui text-xs">
+                    <span className="text-[var(--success)]">Mastered</span>
+                    <Link className="chapter-read" href={`/course/${params.id}/ch/${chapter.idx}`} aria-label={`Read lesson → ${chapter.title}`}>Read lesson →</Link>
+                    <button type="button" className="text-button chapter-retake" aria-label={`Retake → ${chapter.title}`} aria-haspopup="dialog" onClick={() => openRevisitDialog(chapter)}>Retake →</button>
+                  </span>
+                </div>
+              </li>
+            );
             const content = <>
-              <span className="ui text-xs font-bold" aria-hidden="true">{isPassed ? "✓" : String(chapter.idx + 1).padStart(2, "0")}</span>
+              <span className="ui text-xs font-bold" aria-hidden="true">{String(chapter.idx + 1).padStart(2, "0")}</span>
               <span className="chapter-title text-xl">{chapter.title}</span>
               <span className="chapter-row-actions ui text-xs">
-                {isPassed ? <span className="text-[var(--success)]">Mastered</span> : null}
-                <span className="font-bold">{isOpen ? "Continue →" : isPassed ? "Revisit →" : "Locked"}</span>
+                <span className="font-bold">{isOpen ? "Continue →" : "Locked"}</span>
               </span>
             </>;
             return (
               <li key={chapter.id}>
                 {chapter.status === "locked" ? <div className="chapter-row text-[var(--muted)]">{content}</div> : (
-                  <Link className={`chapter-row chapter-link no-underline hover:bg-[var(--paper-deep)] ${isOpen ? "text-[var(--accent)]" : ""}`} href={`/course/${params.id}/ch/${chapter.idx}`} aria-current={isOpen ? "step" : undefined} aria-haspopup={isPassed ? "dialog" : undefined} onClick={isPassed ? (event) => openRevisitDialog(chapter, event) : undefined}>{content}</Link>
+                  <Link className={`chapter-row chapter-link no-underline hover:bg-[var(--paper-deep)] ${isOpen ? "text-[var(--accent)]" : ""}`} href={`/course/${params.id}/ch/${chapter.idx}`} aria-current={isOpen ? "step" : undefined}>{content}</Link>
                 )}
-                {isPassed ? (
-                  <div className="ui flex flex-wrap items-center justify-between gap-3 pb-5 text-sm">
-                    <Link className="button-secondary shrink-0" href={`/course/${params.id}/ch/${chapter.idx}`} aria-label={`Read lesson → ${chapter.title}`}>Read lesson →</Link>
-                  </div>
-                ) : null}
               </li>
             );
           })}
