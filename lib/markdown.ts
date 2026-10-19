@@ -45,7 +45,7 @@ export async function renderMarkdown(markdown: string) {
     .use(remarkRehype)
     .use(rehypeMermaid)
     .use(rehypeKatex)
-    .use(rehypeShiki, { themes: { light: "github-light" } })
+    .use(rehypeShiki, { themes: { light: "github-light" }, langs: ["ts", "js", "tsx", "jsx", "json", "bash", "python"] })
     .use(rehypeStringify)
     .process(markdown);
 

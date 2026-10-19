@@ -26,8 +26,8 @@ async function fetchReadyJson<T>(url: string): Promise<T> {
   return response.json();
 }
 
-const retryReadyContent = (failureCount: number, error: Error) => error instanceof QuizLoadError && error.retryable && failureCount < 45;
-const retryReadyContentDelay = () => 2_000;
+const retryReadyContent = (failureCount: number, error: Error) => error instanceof QuizLoadError && error.retryable && failureCount < 4;
+const retryReadyContentDelay = () => 100;
 
 export function QuizPage() {
   const params = useParams<{ id: string; idx: string }>(); const queryClient = useQueryClient();

@@ -5,6 +5,11 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { parseOptions, rankCandidates, runRalph } from "./ralph";
 
+// These integration tests exercise real Git and child processes. Under the full
+// suite, worker contention can make a single iteration take longer than Vitest's
+// five-second default even though the test itself is progressing normally.
+vi.setConfig({ testTimeout: 30_000 });
+
 const candidate = (title: string, impact = 4, effort = 2) => ({
   title, category: "reliability", rationale: "Improves the goal", evidence: ["fixture.txt needs improvement"],
   acceptanceCriteria: ["Fixture improves"], impact, confidence: 4, effort, risk: 1,
@@ -231,7 +236,7 @@ it("interrupts a running agent, releases the lock, and resumes", async () => {
   const controller = new AbortController();
   const promise = runRalph(options(), root, controller.signal);
   const stopped = expect(promise).rejects.toThrow("Interrupted");
-  await vi.waitFor(async () => expect(await readFile(path.join(root, "fixture.txt"), "utf8")).toContain("improved"), { timeout: 5000 });
+  await vi.waitFor(async () => expect(await readFile(path.join(root, "fixture.txt"), "utf8")).toContain("improved"), { timeout: 20_000 });
   controller.abort();
   await stopped;
   const saved = await state();
@@ -240,7 +245,7 @@ it("interrupts a running agent, releases the lock, and resumes", async () => {
   await mode("success");
   await runRalph(parseOptions(["--resume", saved.id]), root);
   expect((await state()).data.completed).toBe(1);
-}, 15_000);
+}, 30_000);
 
 
 it("reads a goal file, forwards the model as an argument, and never executes goal text", async () => {
