@@ -237,3 +237,75 @@ it("submits only on explicit retake confirmation and preserves pending and error
   await waitFor(() => expect(push).toHaveBeenCalledWith("/course/course/ch/0"));
   expect(fetch).toHaveBeenCalledTimes(3);
 });
+
+async function renderUnlockCourse(prerequisites: number[]) {
+  const chapters = [
+    { id: "foundation", idx: 0, title: "Foundations", status: "passed", prerequisites: [] },
+    { id: "practice", idx: 1, title: "Practice", status: "open", prerequisites: [] },
+    { id: "bridge", idx: 2, title: "Bridge", status: "passed", prerequisites: [] },
+    { id: "advanced", idx: 3, title: "Advanced applications", status: "locked", prerequisites },
+  ];
+  const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+    course: { topic: "Unlock guidance" }, chapters, progress: { passed: 2, total: 4 },
+  }) });
+  vi.stubGlobal("fetch", fetch);
+  render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
+  await screen.findByRole("heading", { name: "Unlock guidance" });
+  const row = screen.getByText("Advanced applications").closest("li")!;
+  return { row, fetch };
+}
+
+it("explains sequential unlocking even with no declared prerequisites, without requiring every earlier chapter", async () => {
+  const { row, fetch } = await renderUnlockCourse([]);
+  expect(within(row).getByText("Unlocks when you pass the mastery check for “Bridge”.")).toBeInTheDocument();
+  expect(within(row).queryByText("Required prerequisites:")).not.toBeInTheDocument();
+  expect(row).not.toHaveTextContent("Foundations");
+  expect(row).not.toHaveTextContent("Practice");
+  expect(within(row).queryByRole("link")).not.toBeInTheDocument();
+  expect(within(row).queryByRole("button")).not.toBeInTheDocument();
+  fireEvent.click(within(row).getByText("Locked"));
+  expect(push).not.toHaveBeenCalled();
+  expect(fetch.mock.calls).toEqual([["/api/courses/course"]]);
+});
+
+it("lists actual prerequisites in learning order with passed and open states, preserving the chapter outline", async () => {
+  const { row } = await renderUnlockCourse([2, 0, 1]);
+  expect(within(row).getByText("Unlocks when you pass the mastery check for “Bridge” with all listed prerequisites mastered.")).toBeInTheDocument();
+  expect(within(row).getAllByRole("listitem").map(item => item.textContent)).toEqual([
+    "Foundations: Mastered", "Practice: Not yet mastered", "Bridge: Mastered",
+  ]);
+  const outline = row.parentElement!;
+  expect(Array.from(outline.children).map(item => item.querySelector(".chapter-title")?.textContent)).toEqual([
+    "Foundations", "Practice", "Bridge", "Advanced applications",
+  ]);
+  expect(screen.getByRole("link", { name: "Continue: Practice →" })).toHaveAttribute("href", "/course/course/ch/1");
+  expect(within(row).queryByRole("link")).not.toBeInTheDocument();
+});
+
+it("does not promise immediate access just because all declared prerequisites are mastered", async () => {
+  const { row } = await renderUnlockCourse([0]);
+  expect(row).toHaveTextContent("Unlocks when you pass the mastery check for “Bridge” with all listed prerequisites mastered.");
+  expect(within(row).getByRole("listitem")).toHaveTextContent("Foundations: Mastered");
+  expect(within(row).getByText("Locked")).toBeInTheDocument();
+  expect(within(row).queryByRole("link")).not.toBeInTheDocument();
+});
+
+it("flags missing prerequisite references without inventing chapter titles or silently dropping the requirement", async () => {
+  const { row } = await renderUnlockCourse([99, 0]);
+  expect(within(row).getByRole("listitem")).toHaveTextContent("Foundations: Mastered");
+  expect(row).toHaveTextContent("A listed prerequisite is unavailable in this course. This chapter cannot unlock until all listed prerequisites are mastered.");
+  expect(row).not.toHaveTextContent("Chapter 100");
+  expect(row).not.toHaveTextContent("undefined");
+  expect(within(row).queryByRole("link")).not.toBeInTheDocument();
+});
+
+it("does not invent a previous chapter when its indexed reference is missing", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+    course: { topic: "Incomplete outline" },
+    chapters: [{ id: "locked", idx: 4, title: "Only chapter", status: "locked", prerequisites: [] }],
+    progress: { passed: 0, total: 1 },
+  }) }));
+  render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
+  expect(await screen.findByText("Chapters unlock in sequence after the previous chapter’s mastery check is passed.")).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Only chapter/ })).not.toBeInTheDocument();
+});

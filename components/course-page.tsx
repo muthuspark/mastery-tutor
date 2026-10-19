@@ -6,8 +6,30 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { RevisitDialog } from "@/components/revisit-dialog";
 
-type Chapter = { id: string; idx: number; title: string; status: "locked" | "open" | "passed" };
+type Chapter = { id: string; idx: number; title: string; prerequisites: number[]; status: "locked" | "open" | "passed" };
 type CourseResponse = { course: { topic: string }; chapters: Chapter[]; progress: { passed: number; total: number } };
+
+function UnlockGuidance({ chapter, chapters }: { chapter: Chapter; chapters: Chapter[] }) {
+  const previous = chapters.find((item) => item.idx === chapter.idx - 1);
+  const prerequisiteIndexes = new Set(chapter.prerequisites ?? []);
+  const prerequisites = chapters.filter((item) => prerequisiteIndexes.has(item.idx)).sort((a, b) => a.idx - b.idx);
+  const hasMissingPrerequisite = prerequisites.length < prerequisiteIndexes.size;
+
+  return (
+    <div className="ui max-w-prose pb-5 text-sm leading-relaxed text-[var(--muted)] [overflow-wrap:anywhere]">
+      <p>{previous
+        ? `Unlocks when you pass the mastery check for “${previous.title}”${prerequisiteIndexes.size ? " with all listed prerequisites mastered" : ""}.`
+        : "Chapters unlock in sequence after the previous chapter’s mastery check is passed."}</p>
+      {prerequisiteIndexes.size > 0 ? <>
+        <p className="mt-2 font-bold">Required prerequisites:</p>
+        {prerequisites.length > 0 ? <ul className="mt-1 list-disc space-y-1 pl-5">
+          {prerequisites.map((item) => <li key={item.id}>{item.title}: {item.status === "passed" ? "Mastered" : "Not yet mastered"}</li>)}
+        </ul> : null}
+        {hasMissingPrerequisite ? <p className="mt-2">A listed prerequisite is unavailable in this course. This chapter cannot unlock until all listed prerequisites are mastered.</p> : null}
+      </> : null}
+    </div>
+  );
+}
 
 export function CoursePage() {
   const params = useParams<{ id: string }>();
@@ -100,6 +122,7 @@ export function CoursePage() {
                 {chapter.status === "locked" ? <div className="chapter-row text-[var(--muted)]">{content}</div> : (
                   <Link className={`chapter-row chapter-link no-underline hover:bg-[var(--paper-deep)] ${isOpen ? "text-[var(--accent)]" : ""}`} href={`/course/${params.id}/ch/${chapter.idx}`} aria-current={isOpen ? "step" : undefined} aria-haspopup={isPassed ? "dialog" : undefined} onClick={isPassed ? (event) => openRevisitDialog(chapter, event) : undefined}>{content}</Link>
                 )}
+                {chapter.status === "locked" ? <UnlockGuidance chapter={chapter} chapters={data.chapters} /> : null}
                 {isPassed ? (
                   <div className="ui flex flex-wrap items-center justify-between gap-3 pb-5 text-sm">
                     <Link className="button-secondary shrink-0" href={`/course/${params.id}/ch/${chapter.idx}`} aria-label={`Read lesson → ${chapter.title}`}>Read lesson →</Link>
