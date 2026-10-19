@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, expect, it, vi } from "vitest";
 import { QuizPage } from "./quiz-page";
@@ -26,6 +26,30 @@ const next = () => fireEvent.click(screen.getByRole("button", { name: "Next ques
 const previous = () => fireEvent.click(screen.getByRole("button", { name: "Previous question" }));
 const answer = (number: number) => fireEvent.click(screen.getByRole("radio", { name: `A. Answer ${number}` }));
 const submitAnswers = () => fireEvent.click(screen.getByRole("button", { name: "Submit answers" }));
+
+it("names each native answer group from its current prompt and focuses explicit navigation", async () => {
+  await mount();
+  expect(screen.getByRole("heading", { name: "Question 1" })).not.toHaveFocus();
+  const group = screen.getByRole("radiogroup", { name: "Question 1" });
+  expect(within(group).getAllByRole("radio").map(radio => radio.getAttribute("type"))).toEqual(["radio", "radio"]);
+  const selected = within(group).getByRole("radio", { name: "B. Other 1" });
+  selected.focus();
+  fireEvent.click(selected);
+  expect(selected).toHaveFocus();
+  expect(selected).toBeChecked();
+  next();
+  expect(screen.getByRole("heading", { name: "Question 2" })).toHaveFocus();
+  expect(screen.getByRole("radiogroup", { name: "Question 2" })).toContainElement(screen.getByRole("radio", { name: "A. Answer 2" }));
+  previous();
+  expect(screen.getByRole("heading", { name: "Question 1" })).toHaveFocus();
+  expect(screen.getByRole("radio", { name: "B. Other 1" })).toBeChecked();
+});
+
+it.each([true, false])("focuses the result heading after grading (passed: %s)", async (passed) => {
+  await mount(vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ...result, passed }) }));
+  answer(1); next(); answer(2); next(); answer(3); submitAnswers();
+  expect(await screen.findByRole("heading", { name: passed ? "Chapter complete" : "Keep going" })).toHaveFocus();
+});
 
 it("preserves and lets learners revise answers while moving backward and forward", async () => {
   await mount();
@@ -77,6 +101,7 @@ it("locks navigation and answers during submission, then preserves answers after
   expect(submit).toHaveBeenCalledTimes(1);
   await act(async () => resolve({ ok: false, json: async () => ({ error: { message: "Try submitting again." } }) }));
   expect(await screen.findByRole("alert")).toHaveTextContent("Try submitting again.");
+  expect(screen.getByRole("alert")).toHaveFocus();
   expect(screen.getByRole("button", { name: "Submit answers" })).toBeEnabled();
   expect(screen.getByRole("button", { name: "Previous question" })).toBeEnabled();
   expect(back).toHaveAttribute("aria-disabled", "false");
@@ -186,6 +211,7 @@ it.each([
   ];
   const submit = await mount(undefined, quizQuestions);
   expect(screen.getByRole("heading", { name: text }).textContent).toBe(text);
+  expect(screen.getByRole("radiogroup", { name: text })).toHaveAccessibleName(text);
   const radio = screen.getByRole<HTMLInputElement>("radio", { name: `A. ${text}` });
   expect(radio.labels).toHaveLength(1);
   const label = radio.labels![0];

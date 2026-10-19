@@ -2613,3 +2613,418 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Give chapter adaptation actions honest pending, success, and failure states\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 6"
 }
+
+[2026-10-19T01:33:31.483Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 7,
+  "phase": "discover"
+}
+
+[2026-10-19T01:34:27.445Z] 20261019005423535-521173d2 — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Make quiz question transitions accessible and predictable",
+      "category": "Assessment accessibility",
+      "rationale": "Give each answer group an accessible question name and move focus to the new prompt after explicit question navigation or grading. This extends the existing assessment UI without changing questions, scoring, or answer preservation. Learner impact is inferred from source; no browser or assistive-technology results were measured.",
+      "evidence": [
+        "components/quiz-page.tsx:105 renders radios inside unnamed divs, with no fieldset/legend or labelled radiogroup connecting options to the prompt.",
+        "components/quiz-page.tsx:29-30 manages focus only for errors; ordinary question changes and the results transition have no equivalent focus handling.",
+        "components/quiz-page.test.tsx verifies answer preservation and focused skipped-answer errors, but does not verify focus after ordinary navigation or grading."
+      ],
+      "acceptanceCriteria": [
+        "The radio group exposes the current prompt as its accessible name while retaining complete option labels and native keyboard selection.",
+        "Next and Previous move focus to the new prompt; successful grading moves focus to the result heading.",
+        "Skipped-question errors retain their existing focused explanation, and saved selections survive navigation.",
+        "Component checks and host browser verification complete a balanced ten-question fixture with real grading, keyboard navigation, and no horizontal overflow at 375, 768, and 1440 pixels.",
+        "Lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "Assessment is a core learner task. Unannounced content changes and unnamed answer groups create significant access friction during every question, particularly for keyboard and screen-reader users."
+        },
+        "subjectMatterExpert": {
+          "score": 4,
+          "rationale": "Learners must reliably associate answers with the current question. Interface disorientation can interfere with demonstrating knowledge, making this a significant assessment-access issue without implying a measured scoring effect.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 0,
+      "score": 5,
+      "mustDoScore": 8
+    },
+    {
+      "title": "Give learning-agent lookup failures an accurate, recoverable form state",
+      "category": "Form error consistency",
+      "rationale": "Distinguish a failed availability request from a successful response reporting no installed agents. Add an explicit retry using the established pending and error conventions, preserving the learner's topic.",
+      "evidence": [
+        "components/new-course-form.tsx:26-35 converts every agent lookup failure into an empty availability list.",
+        "components/new-course-form.tsx:79 consequently tells learners to install a CLI even when the request failed.",
+        "components/new-course-form.tsx:81 disables Begin when availability is empty, with no lookup retry control.",
+        "components/course-page.tsx:20-29 already demonstrates explicit pending recovery controls for a failed resource."
+      ],
+      "acceptanceCriteria": [
+        "Network and HTTP lookup failures display an accurate error and an explicit retry action.",
+        "A successful empty response retains the installation guidance.",
+        "Retry has a disabled pending control and status announcement, preserves the topic, and restores Begin when an agent becomes available.",
+        "Retrying availability never submits a course-creation request.",
+        "Component tests cover failure, pending retry, successful recovery, and true empty availability; host checks verify layout at 375, 768, and 1440 pixels.",
+        "Lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "A transient request failure disables course creation and gives misleading repair instructions. An accurate recovery state is urgent for learners encountering this condition, although its frequency is unknown."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "This prevents an avoidable interruption before study begins and reduces irrelevant setup work. It affects access to learning rather than the correctness of instruction or assessment.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 1,
+      "score": 10,
+      "mustDoScore": 7
+    },
+    {
+      "title": "Standardize touch and focus treatment for secondary learning actions",
+      "category": "Shared control consistency",
+      "rationale": "Introduce a reusable text-action treatment with adequate interactive area and visible focus, then apply it to chapter adjustments and the results review link. Preserve their restrained appearance and existing behavior.",
+      "evidence": [
+        "app/globals.css defines .text-button with 0.78rem text and zero padding, without a minimum interactive height.",
+        "components/chapter-page.tsx renders Too easy, Too hard, and Regenerate chapter using that compact text-button treatment.",
+        "components/quiz-page.tsx:104 renders Review chapter as a text-xs link without an explicit focus style or minimum height.",
+        "components/course-list.tsx explicitly adds min-h-11 to its retry text button, demonstrating inconsistent treatment of similar text actions."
+      ],
+      "acceptanceCriteria": [
+        "A shared text-action convention provides at least a 44-pixel interactive height and a visible keyboard focus indicator.",
+        "Chapter adjustment actions and Review chapter use the convention without overlapping targets or horizontal overflow.",
+        "Disabled adjustment actions retain clear pending treatment and cannot dispatch additional requests.",
+        "Review chapter retains its existing destination and learning-evidence behavior.",
+        "Host verification covers touch-target geometry and keyboard focus at 375, 768, and 1440 pixels; quiz-flow checks use prepared fixtures and isolate generation outside the tested flow.",
+        "Lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Review and difficulty feedback are useful learning actions whose compact controls receive inconsistent treatment. Shared target sizing improves mobile access; mis-tap rates have not been measured."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Learners should be able to request explanation adjustments and revisit instruction reliably. These controls support self-regulation and corrective study, making their accessibility important.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 4,
+      "score": 6,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Keep quiz recovery controls stable during manual retries",
+      "category": "Loading and error consistency",
+      "rationale": "Apply the chapter recovery convention to QnA failures: retain the recovery panel and return link while showing a disabled pending retry. Preserve existing bounded preparation retries and resource-selection behavior.",
+      "evidence": [
+        "components/quiz-page.tsx:66-67 replaces the entire recovery panel with a loading paragraph when an errored query refetches.",
+        "components/quiz-page.tsx:80-85 renders a retry button without a retained pending state.",
+        "components/quiz-page-loading.test.tsx explicitly expects Try again to disappear during recovery.",
+        "components/reading-page-state.tsx provides the retained disabled retry pattern used by chapter recovery."
+      ],
+      "acceptanceCriteria": [
+        "Manual retry retains the reading container, recovery heading, return link, and a disabled Trying again control.",
+        "Pending recovery uses a status announcement; a subsequent failure restores an actionable error.",
+        "Only the failed resource is refetched, and unavailable or locked chapters do not gain retry actions.",
+        "Existing preparation retry limits remain unchanged.",
+        "Tests cover delayed recovery success and failure; host checks scope announcements to main content and verify all three viewport sizes.",
+        "Lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Removing the clicked control and escape route creates an inconsistent recovery experience at the assessment entry point. Stable feedback makes a failed request easier to recover from."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Reliable recovery helps learners resume practice without losing task context. Existing recovery works eventually, so this is important rather than a proven block to learning.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 2,
+      "score": 3.75,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Make the course-generation dialog behave as an accessible modal",
+      "category": "Loading-state accessibility",
+      "rationale": "Give the existing generation overlay explicit focus entry, background isolation, and failure recovery focus. Use the application's established dialog behavior while preserving course creation and its current visual design.",
+      "evidence": [
+        "components/new-course-form.tsx:92 declares aria-modal on an ordinary div without focus management or background isolation.",
+        "components/new-course-form.tsx:65 mounts the overlay while the page and global navigation remain rendered.",
+        "components/new-course-form.tsx:55-59 removes the overlay on failure without explicitly restoring focus.",
+        "components/revisit-dialog.tsx implements explicit dialog focus and keyboard handling, establishing an existing interaction convention."
+      ],
+      "acceptanceCriteria": [
+        "Opening generation moves focus into the dialog and prevents keyboard access to background controls.",
+        "The dialog has an accessible name and description, with a concise announced pending state.",
+        "Failure returns focus to a meaningful form recovery target and preserves the entered topic.",
+        "No new cancellation or generation behavior is introduced.",
+        "Delayed and failed creation requests are tested without starting paid generation; host verification covers keyboard containment and responsive layout.",
+        "Lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 3,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "The blocking loading surface should behave consistently for all input methods. Background navigation and lost focus can make course creation confusing, though actual abandonment has not been measured."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Accessible orientation during a long wait supports entry into the learning task. This removes unnecessary interface demands without claiming improved learning effectiveness.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 3,
+      "score": 2.5,
+      "mustDoScore": 6
+    }
+  ]
+}
+
+[2026-10-19T01:34:27.446Z] 20261019005423535-521173d2 — Candidate selected
+{
+  "iteration": 7,
+  "candidate": {
+    "title": "Make quiz question transitions accessible and predictable",
+    "category": "Assessment accessibility",
+    "rationale": "Give each answer group an accessible question name and move focus to the new prompt after explicit question navigation or grading. This extends the existing assessment UI without changing questions, scoring, or answer preservation. Learner impact is inferred from source; no browser or assistive-technology results were measured.",
+    "evidence": [
+      "components/quiz-page.tsx:105 renders radios inside unnamed divs, with no fieldset/legend or labelled radiogroup connecting options to the prompt.",
+      "components/quiz-page.tsx:29-30 manages focus only for errors; ordinary question changes and the results transition have no equivalent focus handling.",
+      "components/quiz-page.test.tsx verifies answer preservation and focused skipped-answer errors, but does not verify focus after ordinary navigation or grading."
+    ],
+    "acceptanceCriteria": [
+      "The radio group exposes the current prompt as its accessible name while retaining complete option labels and native keyboard selection.",
+      "Next and Previous move focus to the new prompt; successful grading moves focus to the result heading.",
+      "Skipped-question errors retain their existing focused explanation, and saved selections survive navigation.",
+      "Component checks and host browser verification complete a balanced ten-question fixture with real grading, keyboard navigation, and no horizontal overflow at 375, 768, and 1440 pixels.",
+      "Lint, typecheck, and relevant tests pass."
+    ],
+    "impact": 4,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 2,
+    "mustDo": {
+      "productManager": {
+        "score": 4,
+        "rationale": "Assessment is a core learner task. Unannounced content changes and unnamed answer groups create significant access friction during every question, particularly for keyboard and screen-reader users."
+      },
+      "subjectMatterExpert": {
+        "score": 4,
+        "rationale": "Learners must reliably associate answers with the current question. Interface disorientation can interfere with demonstrating knowledge, making this a significant assessment-access issue without implying a measured scoring effect.",
+        "domain": "Learning science, mastery learning, assessment, and tutoring"
+      }
+    }
+  },
+  "mustDoScore": 8,
+  "score": 5,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T01:34:27.467Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 7,
+  "phase": "implement"
+}
+
+[2026-10-19T01:35:31.561Z] 20261019005423535-521173d2 — Implementation completed; verification required
+{
+  "summary": "Implemented named quiz answer groups and focus transitions for Next, Previous, and grading. Preserved selections and focused error recovery. Lint, typecheck, and 75 component tests pass. Host browser verification remains pending. Evidence: .ralph/20261019005423535-521173d2/iteration-7-implementation-evidence.md.",
+  "decisions": [
+    {
+      "decision": "Name native radio groups from the visible prompt.",
+      "reason": "Associate answers with their question while preserving option labels and keyboard behavior."
+    },
+    {
+      "decision": "Focus prompts after explicit navigation and result headings after grading.",
+      "reason": "Orient learners after assessment content changes."
+    },
+    {
+      "decision": "Give errors focus priority and avoid initial-load focus changes.",
+      "reason": "Preserve recovery guidance and prevent unsolicited focus movement."
+    },
+    {
+      "decision": "Leave real keyboard, grading, and viewport checks to the host browser phase.",
+      "reason": "Browser execution is prohibited in this implementation phase."
+    }
+  ]
+}
+
+[2026-10-19T01:35:31.584Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 7,
+  "phase": "verify"
+}
+
+[2026-10-19T01:35:34.810Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 7,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/7-verify-1792373731585-166-lint.log"
+}
+
+[2026-10-19T01:35:36.538Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 7,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/7-verify-1792373734815-167-typecheck.log"
+}
+
+[2026-10-19T01:35:56.133Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 7,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/7-verify-1792373736543-168-test.log"
+}
+
+[2026-10-19T01:36:01.414Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 7,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/7-verify-1792373756138-169-build.log"
+}
+
+[2026-10-19T01:36:01.420Z] 20261019005423535-521173d2 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T01:36:01.438Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 7,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T01:37:10.972Z] 20261019005423535-521173d2 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-7.spec.ts",
+  "summary": "Created iteration-7.spec.ts with six browser cases. Spec lint and TypeScript checks pass. Browser execution remains pending with the host.",
+  "decisions": [
+    {
+      "decision": "Test passing and failed ten-question quizzes at 375, 768, and 1440 pixels.",
+      "reason": "Covers named radio groups, native keyboard selection, navigation focus, skipped-answer recovery, preserved selections, result focus, and overflow."
+    },
+    {
+      "decision": "Verify real grading and persisted answers after course reload.",
+      "reason": "Confirms saved assessment evidence and course status using self-cleaning, balanced fixtures."
+    },
+    {
+      "decision": "Block subsequent quiz generation after submission.",
+      "reason": "Prevents paid generation from result-link prefetches while leaving initial quiz delivery and grading unmocked."
+    }
+  ]
+}
+
+[2026-10-19T01:37:14.276Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 7,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/7-browser-prepare-1792373830972-174-lint.log"
+}
+
+[2026-10-19T01:37:16.466Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 7,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/7-browser-prepare-1792373834280-175-typecheck.log"
+}
+
+[2026-10-19T01:37:16.489Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 7,
+  "phase": "browser-run"
+}
+
+[2026-10-19T01:37:51.915Z] 20261019005423535-521173d2 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 6,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-7.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/7-browser-run-1792373836527-176-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/7-browser-run-1792373836527-176-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/7-browser-run-1792373836527-176-playwright/artifacts"
+}
+
+[2026-10-19T01:37:51.934Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 7,
+  "phase": "review"
+}
+
+[2026-10-19T01:38:32.223Z] 20261019005423535-521173d2 — Independent review decision
+{
+  "summary": "Selected increment passes review. No unresolved defects found. Host browser verification is complete, superseding the implementation report’s pending status.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Named radio groups retain complete option labels and native inputs; component and browser tests verify accessible names and keyboard selection.",
+    "Next and Previous focus the current prompt; passing and failed grading focus the result heading.",
+    "Skipped-answer explanations retain focus priority, and selections survive navigation and recovery.",
+    "Host tests complete balanced ten-question fixtures with real grading and no horizontal overflow at 375, 768, and 1440 pixels.",
+    "Host logs confirm lint, typecheck, all 183 tests, and build passed. Review-time git diff --check passed."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-7.spec.ts and results.json: six passed, zero skipped, retries, flaky results, or unexpected failures.",
+    "Inspected all six trace archives: no recorded action errors.",
+    "Inspected mobile recovery and result screenshots; content and controls remain within the viewport.",
+    "Browser tests verify persisted grading evidence after reload, isolate subsequent quiz generation, and clean up test-owned fixtures."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T01:38:32.242Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 7,
+  "phase": "commit"
+}
+
+[2026-10-19T01:38:32.246Z] 20261019005423535-521173d2 — Verified iteration approved for commit
+{
+  "iteration": 7,
+  "candidate": "Make quiz question transitions accessible and predictable",
+  "summary": "Implemented named quiz answer groups and focus transitions for Next, Previous, and grading. Preserved selections and focused error recovery. Lint, typecheck, and 75 component tests pass. Host browser verification remains pending. Evidence: .ralph/20261019005423535-521173d2/iteration-7-implementation-evidence.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Make quiz question transitions accessible and predictable\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 7"
+}
