@@ -2196,3 +2196,420 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Consolidate page containers and document intentional layout variants\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 5"
 }
+
+[2026-10-19T01:28:23.139Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 6,
+  "phase": "discover"
+}
+
+[2026-10-19T01:29:14.885Z] 20261019005423535-521173d2 — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Give chapter adaptation actions honest pending, success, and failure states",
+      "category": "Action feedback and error recovery",
+      "rationale": "Make Too easy, Too hard, and Regenerate chapter follow the existing accessible status conventions. HTTP failures currently resolve as successful mutations, while difficulty feedback has no visible acknowledgement. Learner confusion is a plausible consequence, not a measured result.",
+      "evidence": [
+        "components/chapter-page.tsx:58–59 returns fetch responses without checking response.ok and invalidates lesson queries on success.",
+        "components/chapter-page.tsx:79 renders difficulty controls without pending, success, or failure feedback; regeneration only changes its label.",
+        "components/profile-form.tsx:24–31 and 46–48 already demonstrate checked responses and visible save feedback."
+      ],
+      "acceptanceCriteria": [
+        "Both HTTP errors and network failures produce an actionable, locally scoped alert without replacing the existing lesson.",
+        "Pending actions prevent duplicate submissions and announce progress; successful actions receive explicit acknowledgement.",
+        "Failed requests do not run success-only invalidation or automatically retry generation.",
+        "Host checks at 375, 768, and 1440 pixels cover keyboard operation and controlled failure/success responses without dispatching paid generation.",
+        "Lint, typecheck, and focused component tests pass; existing assessment and learner-evidence behavior remains intact."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "Silent failures undermine a prominent learner support action and encourage repeated requests. Clear outcomes are an urgent functional UI correction."
+        },
+        "subjectMatterExpert": {
+          "score": 4,
+          "rationale": "Difficulty feedback is the learner's direct request for instructional adjustment. Leaving its outcome ambiguous can prolong a mismatch between instruction and learner needs; the educational effect has not been measured.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 0,
+      "score": 5,
+      "mustDoScore": 8
+    },
+    {
+      "title": "Distinguish agent-discovery failures from an empty installation state",
+      "category": "Onboarding error recovery",
+      "rationale": "Add a recoverable request-failure state to agent discovery using the existing form controls and status styling. Keep installation guidance for successful discovery that finds no agents.",
+      "evidence": [
+        "components/new-course-form.tsx:26–34 converts every discovery failure into an empty availableAgents array.",
+        "components/new-course-form.tsx:79 consequently tells learners to install a CLI even when discovery failed.",
+        "components/new-course-form.tsx:81 disables Begin when the array is empty, with no discovery retry control."
+      ],
+      "acceptanceCriteria": [
+        "A failed discovery request displays an accurate error and a keyboard-accessible Try again control.",
+        "Retry announces pending progress and prevents duplicate discovery requests.",
+        "A successful empty response retains installation guidance; a successful populated response restores agent selection and Begin.",
+        "Topic input survives failure and recovery; discovery recovery never submits a course.",
+        "Host checks cover failure, empty, and recovered states at three viewport sizes; lint, typecheck, and focused tests pass."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "A transient request failure disables course creation and gives misleading remediation. Local recovery is urgent for this entry-flow failure condition."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "The condition prevents starting instruction, but it does not corrupt learning evidence or assessment. Accurate recovery guidance supports access to tutoring.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 2,
+      "score": 10,
+      "mustDoScore": 7
+    },
+    {
+      "title": "Make the course-generation overlay keyboard accessible",
+      "category": "Accessible loading states",
+      "rationale": "Apply the revisit dialog's focus-management conventions to the generation overlay. Scope this increment to modal interaction and recovery, preserving its established layout and generation behavior.",
+      "evidence": [
+        "components/new-course-form.tsx:92 declares a div as aria-modal without focus entry, containment, background inertness, or focus restoration.",
+        "components/new-course-form.tsx:65–81 leaves the underlying page mounted while disabling the submitting controls.",
+        "components/revisit-dialog.tsx:18–46 already implements modal opening, initial focus, restoration, and keyboard containment.",
+        "The supplied iteration-5 browser specification checks overlay geometry but does not assert modal keyboard containment."
+      ],
+      "acceptanceCriteria": [
+        "Opening generation moves focus into the labelled dialog; Tab and Shift+Tab cannot reach background navigation or studies.",
+        "Loading information is available to assistive technology without repetitive decorative announcements.",
+        "A controlled creation failure closes the overlay, restores usable focus, preserves the topic, and exposes the error.",
+        "Host browser checks verify keyboard behavior and overflow at 375, 768, and 1440 pixels using intercepted creation requests.",
+        "Lint, typecheck, and focused accessibility tests pass."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "Course creation is a core entry flow. A visually modal screen that permits background keyboard interaction creates a significant accessibility gap."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Accessible entry into instruction is important, especially for learners relying on keyboard or assistive technology. This addresses access rather than assessment correctness.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 1,
+      "score": 5,
+      "mustDoScore": 7
+    },
+    {
+      "title": "Standardize pending retries on the studies list and profile form",
+      "category": "Consistent recovery states",
+      "rationale": "Bring the remaining home and settings retry controls into the convention already implemented for course and chapter recovery. Preserve each section's container and content.",
+      "evidence": [
+        "components/course-list.tsx:9 and 18 do not use isFetching to disable or relabel the retry control.",
+        "components/profile-form.tsx:35–36 shows an enabled Try again button throughout error recovery.",
+        "components/course-page.tsx:23–25 uses pending status text and a disabled retry button.",
+        "components/reading-page-state.tsx provides the corresponding pending recovery convention for lessons."
+      ],
+      "acceptanceCriteria": [
+        "Studies and profile retries show consistent Trying again progress and disable their trigger while fetching.",
+        "Pending recovery uses status semantics; a completed failed retry exposes the relevant alert and enables another attempt.",
+        "Successful empty studies remain distinguishable from loading and failure; profile recovery displays the fetched form.",
+        "Host checks scope announcements to the relevant section or main content and verify stable geometry at three viewport sizes.",
+        "Recovery performs reads only; lint, typecheck, and focused tests pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "These remaining recovery controls give no clear acknowledgement of a retry. Consistent feedback matters for returning to studies and configuring personalization."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Clear recovery supports continuity of study and access to learner-context settings. The expected reduction in uncertainty is a hypothesis, not measured educational improvement.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 3,
+      "score": 7.5,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Give secondary learning actions consistent accessible target sizes",
+      "category": "Shared controls and mobile usability",
+      "rationale": "Introduce a reusable target-size convention for compact text actions and apply it to lesson feedback and assessment review navigation. Preserve their visual hierarchy while making activation more reliable.",
+      "evidence": [
+        "app/globals.css:54 defines text-button with zero padding, a 0.78rem font, and no minimum target size.",
+        "components/chapter-page.tsx:79 uses that class for Too easy, Too hard, and Regenerate chapter.",
+        "components/quiz-page.tsx renders Review chapter as a text-xs link without target padding.",
+        "components/course-list.tsx:18 adds a local min-h-11 override, while header links already use a 2.75rem minimum height."
+      ],
+      "acceptanceCriteria": [
+        "Named compact learning actions use a shared target convention providing at least 44 by 44 CSS pixels without overlapping adjacent targets.",
+        "Focus indicators remain visible, and pending or disabled text actions have a consistent appearance.",
+        "Controls wrap within the documented reading container at 375, 768, and 1440 pixels without horizontal overflow.",
+        "Host verification reaches Review chapter through a real prepared ten-question quiz, isolating regeneration if testing a failed attempt.",
+        "Lint, typecheck, and focused control tests pass."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Important support actions have substantially smaller targets than established navigation controls. Standardizing them addresses mobile usability rather than decorative inconsistency."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Reviewing instruction after assessment and requesting difficulty adjustments are useful learning behaviors. Easier activation supports those behaviors, although current mis-tap frequency is unknown.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 4,
+      "score": 6,
+      "mustDoScore": 6
+    }
+  ]
+}
+
+[2026-10-19T01:29:14.885Z] 20261019005423535-521173d2 — Candidate selected
+{
+  "iteration": 6,
+  "candidate": {
+    "title": "Give chapter adaptation actions honest pending, success, and failure states",
+    "category": "Action feedback and error recovery",
+    "rationale": "Make Too easy, Too hard, and Regenerate chapter follow the existing accessible status conventions. HTTP failures currently resolve as successful mutations, while difficulty feedback has no visible acknowledgement. Learner confusion is a plausible consequence, not a measured result.",
+    "evidence": [
+      "components/chapter-page.tsx:58–59 returns fetch responses without checking response.ok and invalidates lesson queries on success.",
+      "components/chapter-page.tsx:79 renders difficulty controls without pending, success, or failure feedback; regeneration only changes its label.",
+      "components/profile-form.tsx:24–31 and 46–48 already demonstrate checked responses and visible save feedback."
+    ],
+    "acceptanceCriteria": [
+      "Both HTTP errors and network failures produce an actionable, locally scoped alert without replacing the existing lesson.",
+      "Pending actions prevent duplicate submissions and announce progress; successful actions receive explicit acknowledgement.",
+      "Failed requests do not run success-only invalidation or automatically retry generation.",
+      "Host checks at 375, 768, and 1440 pixels cover keyboard operation and controlled failure/success responses without dispatching paid generation.",
+      "Lint, typecheck, and focused component tests pass; existing assessment and learner-evidence behavior remains intact."
+    ],
+    "impact": 4,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 2,
+    "mustDo": {
+      "productManager": {
+        "score": 4,
+        "rationale": "Silent failures undermine a prominent learner support action and encourage repeated requests. Clear outcomes are an urgent functional UI correction."
+      },
+      "subjectMatterExpert": {
+        "score": 4,
+        "rationale": "Difficulty feedback is the learner's direct request for instructional adjustment. Leaving its outcome ambiguous can prolong a mismatch between instruction and learner needs; the educational effect has not been measured.",
+        "domain": "Learning science, mastery learning, assessment, and tutoring"
+      }
+    }
+  },
+  "mustDoScore": 8,
+  "score": 5,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T01:29:14.905Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 6,
+  "phase": "implement"
+}
+
+[2026-10-19T01:30:53.450Z] 20261019005423535-521173d2 — Implementation completed; verification required
+{
+  "summary": "Implemented accessible pending, success, and failure feedback for all three chapter adjustments. Failures preserve the lesson and never invalidate or automatically retry. Lint, typecheck, and 72 component tests pass. Evidence: .ralph/20261019005423535-521173d2/iteration-6-implementation-evidence.md. Host browser checks at 375, 768, and 1440 pixels remain pending.",
+  "decisions": [
+    {
+      "decision": "Show feedback beside the adjustment controls.",
+      "reason": "Keep failures actionable while preserving lesson access."
+    },
+    {
+      "decision": "Disable all adjustment controls during a request.",
+      "reason": "Prevent duplicate and conflicting submissions."
+    },
+    {
+      "decision": "Check HTTP responses, disable mutation retries, and invalidate only on success.",
+      "reason": "Handle HTTP and network failures honestly without automatically restarting generation."
+    },
+    {
+      "decision": "Distinguish accepted regeneration from completed regeneration.",
+      "reason": "HTTP 202 means preparation remains underway."
+    },
+    {
+      "decision": "Preserve API, assessment, prefetch, and learner-evidence behavior.",
+      "reason": "Keep changes within the selected increment."
+    },
+    {
+      "decision": "Defer browser execution to the host.",
+      "reason": "This phase prohibits launching a browser or server."
+    }
+  ]
+}
+
+[2026-10-19T01:30:53.473Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 6,
+  "phase": "verify"
+}
+
+[2026-10-19T01:30:56.733Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 6,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/6-verify-1792373453473-142-lint.log"
+}
+
+[2026-10-19T01:30:58.454Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 6,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/6-verify-1792373456738-143-typecheck.log"
+}
+
+[2026-10-19T01:31:18.081Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 6,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/6-verify-1792373458459-144-test.log"
+}
+
+[2026-10-19T01:31:24.998Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 6,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/6-verify-1792373478086-145-build.log"
+}
+
+[2026-10-19T01:31:25.003Z] 20261019005423535-521173d2 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T01:31:25.021Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 6,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T01:32:24.213Z] 20261019005423535-521173d2 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-6.spec.ts",
+  "summary": "Prepared iteration-6.spec.ts. TypeScript, targeted ESLint, and diff checks pass. Browser tests have not run; the host will execute them.",
+  "decisions": [
+    {
+      "decision": "Cover all three chapter actions at 375, 768, and 1440 pixels.",
+      "reason": "Verify keyboard operation, pending controls, HTTP/network recovery, success messages, and overflow."
+    },
+    {
+      "decision": "Intercept adjustment requests, including accepted regeneration.",
+      "reason": "Verify visible feedback without dispatching paid generation; backend adaptation persistence is outside this coverage."
+    },
+    {
+      "decision": "Keep prepared quiz delivery and grading real, then verify saved evidence after adjustments and reload.",
+      "reason": "Confirm assessment functionality and learner-evidence preservation using self-cleaning test-owned fixtures."
+    }
+  ]
+}
+
+[2026-10-19T01:32:27.553Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 6,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/6-browser-prepare-1792373544213-150-lint.log"
+}
+
+[2026-10-19T01:32:29.300Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 6,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/6-browser-prepare-1792373547558-151-typecheck.log"
+}
+
+[2026-10-19T01:32:29.323Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 6,
+  "phase": "browser-run"
+}
+
+[2026-10-19T01:32:49.686Z] 20261019005423535-521173d2 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 3,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-6.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/6-browser-run-1792373549358-152-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/6-browser-run-1792373549358-152-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/6-browser-run-1792373549358-152-playwright/artifacts"
+}
+
+[2026-10-19T01:32:49.705Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 6,
+  "phase": "review"
+}
+
+[2026-10-19T01:33:31.426Z] 20261019005423535-521173d2 — Independent review decision
+{
+  "summary": "Selected increment passes review. No concrete unresolved defects found.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "HTTP and network failures for all three actions show scoped recovery alerts and preserve the lesson.",
+    "Pending actions disable all adjustment controls; successful responses receive explicit acknowledgement, including distinct HTTP 202 wording.",
+    "Failed mutations neither invalidate chapter queries nor retry automatically.",
+    "Lint and typecheck passed during review. Implementation evidence records 72 passing component tests; review rerun was blocked before collection by sandbox temporary-directory restrictions.",
+    "Host tests verify real ten-question grading and unchanged persisted learning evidence after controlled adjustments."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-6.spec.ts, host results.json, trace artifacts, and recovery screenshots at 375, 768, and 1440 pixels.",
+    "Host report: 3 passed, 0 failed, 0 flaky.",
+    "Tests cover keyboard activation, duplicate prevention, HTTP/network recovery, success, container geometry, and horizontal overflow. Adjustment POSTs are intercepted to prevent paid generation."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T01:33:31.445Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 6,
+  "phase": "commit"
+}
+
+[2026-10-19T01:33:31.448Z] 20261019005423535-521173d2 — Verified iteration approved for commit
+{
+  "iteration": 6,
+  "candidate": "Give chapter adaptation actions honest pending, success, and failure states",
+  "summary": "Implemented accessible pending, success, and failure feedback for all three chapter adjustments. Failures preserve the lesson and never invalidate or automatically retry. Lint, typecheck, and 72 component tests pass. Evidence: .ralph/20261019005423535-521173d2/iteration-6-implementation-evidence.md. Host browser checks at 375, 768, and 1440 pixels remain pending.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Give chapter adaptation actions honest pending, success, and failure states\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 6"
+}
