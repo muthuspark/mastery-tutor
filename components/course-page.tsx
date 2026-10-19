@@ -9,28 +9,6 @@ import { RevisitDialog } from "@/components/revisit-dialog";
 type Chapter = { id: string; idx: number; title: string; prerequisites: number[]; status: "locked" | "open" | "passed" };
 type CourseResponse = { course: { topic: string }; chapters: Chapter[]; progress: { passed: number; total: number } };
 
-function UnlockGuidance({ chapter, chapters }: { chapter: Chapter; chapters: Chapter[] }) {
-  const previous = chapters.find((item) => item.idx === chapter.idx - 1);
-  const prerequisiteIndexes = new Set(chapter.prerequisites ?? []);
-  const prerequisites = chapters.filter((item) => prerequisiteIndexes.has(item.idx)).sort((a, b) => a.idx - b.idx);
-  const hasMissingPrerequisite = prerequisites.length < prerequisiteIndexes.size;
-
-  return (
-    <div className="ui max-w-prose pb-5 text-sm leading-relaxed text-[var(--muted)] [overflow-wrap:anywhere]">
-      <p>{previous
-        ? `Unlocks when you pass the mastery check for “${previous.title}”${prerequisiteIndexes.size ? " with all listed prerequisites mastered" : ""}.`
-        : "Chapters unlock in sequence after the previous chapter’s mastery check is passed."}</p>
-      {prerequisiteIndexes.size > 0 ? <>
-        <p className="mt-2 font-bold">Required prerequisites:</p>
-        {prerequisites.length > 0 ? <ul className="mt-1 list-disc space-y-1 pl-5">
-          {prerequisites.map((item) => <li key={item.id}>{item.title}: {item.status === "passed" ? "Mastered" : "Not yet mastered"}</li>)}
-        </ul> : null}
-        {hasMissingPrerequisite ? <p className="mt-2">A listed prerequisite is unavailable in this course. This chapter cannot unlock until all listed prerequisites are mastered.</p> : null}
-      </> : null}
-    </div>
-  );
-}
-
 export function CoursePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -53,7 +31,6 @@ export function CoursePage() {
   const passed = data.chapters.filter((chapter) => chapter.status === "passed").length;
   const completed = total > 0 && passed === total;
   const percent = total > 0 ? Math.round((passed / total) * 100) : 0;
-  const currentChapter = data.chapters.find((chapter) => chapter.status === "open");
   function openRevisitDialog(chapter: Chapter) {
     setRevisitError("");
     setRevisitChapter(chapter);
@@ -89,11 +66,6 @@ export function CoursePage() {
       <div className="flex flex-wrap items-center justify-between gap-4 py-5">
         <div className="min-w-0 flex-1 basis-72">
           <p className="text-lg text-[var(--muted)]">{passed} of {total} chapters mastered</p>
-          {currentChapter ? (
-            <Link className="button-primary ui mt-3 max-w-full text-left no-underline [overflow-wrap:anywhere]" href={`/course/${params.id}/ch/${currentChapter.idx}`}>
-              Continue: {currentChapter.title} →
-            </Link>
-          ) : null}
         </div>
         <a className="button-secondary ui shrink-0" href={`/api/courses/${params.id}/export`}>Export notes</a>
       </div>
@@ -116,7 +88,7 @@ export function CoursePage() {
                   <span className="chapter-row-actions ui text-xs">
                     <span className="text-[var(--success)]">Mastered</span>
                     <Link className="chapter-read" href={`/course/${params.id}/ch/${chapter.idx}`} aria-label={`Read lesson → ${chapter.title}`}>Read lesson →</Link>
-                    <button type="button" className="text-button chapter-retake" aria-label={`Retake mastery check → ${chapter.title}`} aria-haspopup="dialog" onClick={() => openRevisitDialog(chapter)}>Retake mastery check →</button>
+                    <button type="button" className="text-button chapter-retake" aria-label={`Retake → ${chapter.title}`} aria-haspopup="dialog" onClick={() => openRevisitDialog(chapter)}>Retake →</button>
                   </span>
                 </div>
               </li>
@@ -133,7 +105,6 @@ export function CoursePage() {
                 {chapter.status === "locked" ? <div className="chapter-row text-[var(--muted)]">{content}</div> : (
                   <Link className={`chapter-row chapter-link no-underline hover:bg-[var(--paper-deep)] ${isOpen ? "text-[var(--accent)]" : ""}`} href={`/course/${params.id}/ch/${chapter.idx}`} aria-current={isOpen ? "step" : undefined}>{content}</Link>
                 )}
-                {chapter.status === "locked" ? <UnlockGuidance chapter={chapter} chapters={data.chapters} /> : null}
               </li>
             );
           })}
