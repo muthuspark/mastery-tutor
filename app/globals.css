@@ -56,9 +56,10 @@ h1, h2, h3 { text-wrap: balance; }
 .course-title, .chapter-title, .revisit-dialog__title { overflow-wrap: anywhere; }
 /* Assessment content wraps without clipping or changing the complete radio label. */
 .assessment-text { overflow-wrap: anywhere; }
-.assessment-prompt { font-size: 2.25rem; line-height: 1.15; }
+.assessment-heading, .assessment-prompt { font-size: 2.25rem; line-height: 1.15; }
+.assessment-body { max-width: 72ch; font-size: 1.125rem; line-height: 1.65; overflow-wrap: anywhere; }
 .assessment-option > input { flex: 0 0 auto; margin-top: 0.3em; }
-@media (min-width: 768px) { .assessment-prompt { font-size: 3rem; } }
+@media (min-width: 768px) { .assessment-heading, .assessment-prompt { font-size: 3rem; } }
 .chapter-row { display: grid; grid-template-columns: 2rem minmax(0, 1fr) auto; align-items: center; gap: 0.75rem 1.25rem; padding-block: 1.25rem; }
 .chapter-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
 .chapter-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }

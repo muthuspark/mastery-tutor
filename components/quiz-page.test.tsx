@@ -195,7 +195,7 @@ it.each([
   expect(submitted.textContent).toBe(`Your answer: ${response}`);
   const review = submitted.parentElement!;
   expect(review).toContainElement(screen.getByText(graded.feedback));
-  expect(review).toContainElement(screen.getByText(`Model answer: ${modelAnswer}`));
+  expect(within(review).getByText("Model answer:").closest("p")?.textContent).toBe(`Model answer: ${modelAnswer}`);
   expect(review.querySelector("img, script, strong")).toBeNull();
 });
 
@@ -230,4 +230,30 @@ it.each([
     { questionId: "q1", response: text },
     { questionId: "q2", response: "Answer 2" },
   ] });
+});
+
+
+it.each([true, false])("keeps long corrective feedback labeled and complete on results (passed: %s)", async (passed) => {
+  const response = "A learner explanation.\n" + "x".repeat(300);
+  const feedback = "Compare each step with the initial condition. ".repeat(30) + "\nCheck the units.";
+  const modelAnswer = "Separate the variables before integrating.\n" + "y".repeat(300);
+  await mount(vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+    score: passed ? 0.9 : 0.2, passed, complete: passed,
+    remediation: "Work through the initial condition again.\nThen check your result.",
+    answers: [{ prompt: "Explain the method", response, feedback, modelAnswer, score: 0, missedConcept: "Initial conditions" }],
+  }) }));
+  answer(1); next(); answer(2); next(); answer(3); submitAnswers();
+  const heading = await screen.findByRole("heading", { name: passed ? "Chapter complete" : "Keep going", level: 1 });
+  expect(heading).toHaveFocus();
+  expect(screen.getByText(passed ? "90%" : "20%")).toBeVisible();
+  const review = screen.getByRole("heading", { name: "1. Explain the method", level: 2 }).parentElement!;
+  for (const [label, content] of [["Your answer:", response], ["Feedback:", feedback], ["Model answer:", modelAnswer]]) {
+    const paragraph = within(review).getByText(label).closest("p")!;
+    expect(paragraph.textContent).toBe(`${label} ${content}`);
+    expect(paragraph).toBeVisible();
+  }
+  expect(screen.getByRole("region", { name: "Concepts to revisit" })).toHaveTextContent("Initial conditions");
+  expect(screen.getByRole("link", { name: passed ? "View completed course" : "Try again" })).toHaveAttribute("href", passed ? "/course/course" : "/course/course/ch/0/quiz");
+  expect(screen.getByRole("link", { name: "Review chapter" })).toHaveAttribute("href", "/course/course/ch/0");
+  if (!passed) expect(screen.getByRole("region", { name: "Before trying again" })).toHaveTextContent("Then check your result.");
 });

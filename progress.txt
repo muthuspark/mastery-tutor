@@ -3941,3 +3941,412 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Make course-generation loading accessible as a true modal\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 9"
 }
+
+[2026-10-19T01:50:37.233Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 10,
+  "phase": "discover"
+}
+
+[2026-10-19T01:51:40.340Z] 20261019005423535-521173d2 — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Make assessment results as readable as the questions",
+      "category": "Assessment typography and hierarchy",
+      "rationale": "Use responsive result headings and shared reading typography for corrective feedback. The source establishes inconsistent sizing; improved comprehension is a hypothesis, with no browser or learner measurements performed.",
+      "evidence": [
+        "components/quiz-page.tsx:104 uses fixed text-6xl and text-7xl result typography, while assessment prompts use responsive sizing.",
+        "components/quiz-page.tsx:115–118 renders answer comparisons and model answers at text-sm despite their instructional importance.",
+        "app/globals.css:59–61 already establishes responsive assessment heading conventions."
+      ],
+      "acceptanceCriteria": [
+        "Result headings use a reusable responsive convention consistent with assessment prompts.",
+        "Learner answers, feedback, and model answers use readable shared body sizing, explicit labels, and consistent spacing.",
+        "Host verification covers passing and failing real ten-question fixture attempts at 375, 768, and 1440px, including long feedback and no horizontal overflow.",
+        "Preserve score calculation, remediation, result focus, and navigation; lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 4,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Corrective feedback is a core learner task; its current visual priority is substantially below the score. Important, although no observed abandonment or comprehension failures are available."
+        },
+        "subjectMatterExpert": {
+          "score": 4,
+          "rationale": "Learning from errors depends on reading and comparing responses with corrections. Making this instructional content comfortably readable deserves priority over emphasizing the percentage.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 0,
+      "score": 4,
+      "mustDoScore": 7
+    },
+    {
+      "title": "Make assessment submission status truthful and stable",
+      "category": "Assessment loading states",
+      "rationale": "Replace timer-driven claims about internal grading stages with a stable, accurate submission status. This is a small loading-state correction grounded in the actual MCQ grading path.",
+      "evidence": [
+        "components/quiz-page.tsx:46 cycles through Codex reading responses, rubric comparison, and saving regardless of actual request progress.",
+        "components/quiz-page.tsx:47 advances those messages on a timer rather than server events.",
+        "app/api/chapters/[id]/attempts/route.ts only requests an agent for non-MCQ questions.",
+        "lib/quiz.ts:16–24 grades MCQs by matching the selected option to the stored answer."
+      ],
+      "acceptanceCriteria": [
+        "MCQ submission uses accurate status copy without claiming AI review or unobserved backend stages.",
+        "The pending status remains accessible and stable for a delayed request; no timed claims of progress or completion appear.",
+        "Inputs and submission controls stay disabled until the response, with existing answer preservation and error recovery intact.",
+        "Host verifies delayed submission, failure recovery, and real ten-question grading using prepared fixtures while isolating unrelated generation.",
+        "Lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 1,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Status messages should accurately describe the product's behavior. Unsupported agent-specific claims undermine trust, although no measured trust impact is available."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Learners should understand what assessment feedback represents. Suggesting individualized AI rubric review during deterministic MCQ grading misrepresents the basis of that feedback.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 4,
+      "score": 15,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Give answer rows clear selected, focused, and disabled states",
+      "category": "Assessment control consistency",
+      "rationale": "Extend the existing answer-row presentation with consistent state treatments while retaining native radios. This addresses selection visibility without repeating the completed question-navigation work.",
+      "evidence": [
+        "components/quiz-page.tsx:120 gives answer labels hover styling but no row-level checked, keyboard-focus, or disabled treatment.",
+        "app/globals.css:60 styles radio geometry only; the shared focus rule outlines the input rather than the complete answer row."
+      ],
+      "acceptanceCriteria": [
+        "Selected rows have a persistent border or marker treatment distinguishable without relying solely on color.",
+        "Keyboard focus is visible around the answer row and remains distinguishable from selection.",
+        "Submitting rows clearly appear unavailable and lose misleading interactive hover treatment.",
+        "Host verifies pointer and keyboard selection, Previous/Next persistence, and real fixture grading at all three viewport sizes; existing wrapping and radio semantics remain intact.",
+        "Lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 4,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Learners should be able to confirm their choice immediately, especially across multiline options. The current native radio provides a baseline, so this is important rather than a demonstrated blocker."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Clear selection reduces incidental interface demands and helps ensure submitted responses reflect intended choices. No evidence establishes an actual response-error rate.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 1,
+      "score": 4,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Standardize touch targets for lesson support and review actions",
+      "category": "Accessible shared controls",
+      "rationale": "Introduce a reusable compact-action convention with adequate hit areas and visible focus. Apply the first slice to chapter adjustment buttons and the assessment review link.",
+      "evidence": [
+        "app/globals.css:54 defines text-button with zero padding and 0.78rem text.",
+        "components/chapter-page.tsx renders Too easy, Too hard, and Regenerate chapter using text-button without minimum target dimensions.",
+        "components/quiz-page.tsx:119 renders Review chapter as a text-xs link without target padding.",
+        "app/globals.css already gives site-brand and home-settings 2.75rem minimum heights, establishing a local precedent."
+      ],
+      "acceptanceCriteria": [
+        "The three chapter adjustment controls and Review chapter use a reusable action style with at least 44px target height and width.",
+        "Targets remain separated, wrap on narrow screens, and have visible keyboard focus.",
+        "Existing adjustment pending, success, failure, and duplicate-request protections remain unchanged.",
+        "Host verifies target bounds and keyboard activation at 375, 768, and 1440px, including review navigation after a failed real fixture attempt with regeneration isolated.",
+        "Lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "These actions provide recovery and instructional support on mobile. Small hit areas are directly evident, although missed taps have not been measured."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Difficulty feedback and returning to a lesson support remediation. Their accessibility should match the primary assessment action.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 2,
+      "score": 3.75,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Give inline study-list and profile retries consistent pending feedback",
+      "category": "Inline recovery states",
+      "rationale": "Apply one reusable inline recovery pattern to the home study list and profile loading section. Keep each section stable while a manual retry is pending.",
+      "evidence": [
+        "components/course-list.tsx:9–18 does not use isFetching; its error branch retains the error and enabled Try again button during refetch.",
+        "components/profile-form.tsx:35–36 similarly retains its load-error presentation and enabled retry during recovery.",
+        "components/course-page.tsx already demonstrates disabled pending retries with status announcements, providing the established convention."
+      ],
+      "acceptanceCriteria": [
+        "Both sections replace stale failure announcements with a pending status during manual recovery.",
+        "Retry buttons remain mounted, are disabled while fetching, and announce Trying again… consistently.",
+        "Repeated activation cannot initiate overlapping recovery requests; a failed retry restores an actionable error.",
+        "Recovery does not submit profile changes or create courses, and surrounding content remains usable.",
+        "Host verifies delayed failure, repeated failure, and successful recovery at the three viewport sizes; lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "The study list is the route back into existing learning. Ambiguous recovery can leave learners unsure whether to wait or act again, though the underlying retry already works."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Reliable access to existing studies supports continuity; profile recovery supports future personalization. This improves access rather than changing educational evidence or mastery decisions.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 3,
+      "score": 3.75,
+      "mustDoScore": 6
+    }
+  ]
+}
+
+[2026-10-19T01:51:40.341Z] 20261019005423535-521173d2 — Candidate selected
+{
+  "iteration": 10,
+  "candidate": {
+    "title": "Make assessment results as readable as the questions",
+    "category": "Assessment typography and hierarchy",
+    "rationale": "Use responsive result headings and shared reading typography for corrective feedback. The source establishes inconsistent sizing; improved comprehension is a hypothesis, with no browser or learner measurements performed.",
+    "evidence": [
+      "components/quiz-page.tsx:104 uses fixed text-6xl and text-7xl result typography, while assessment prompts use responsive sizing.",
+      "components/quiz-page.tsx:115–118 renders answer comparisons and model answers at text-sm despite their instructional importance.",
+      "app/globals.css:59–61 already establishes responsive assessment heading conventions."
+    ],
+    "acceptanceCriteria": [
+      "Result headings use a reusable responsive convention consistent with assessment prompts.",
+      "Learner answers, feedback, and model answers use readable shared body sizing, explicit labels, and consistent spacing.",
+      "Host verification covers passing and failing real ten-question fixture attempts at 375, 768, and 1440px, including long feedback and no horizontal overflow.",
+      "Preserve score calculation, remediation, result focus, and navigation; lint, typecheck, and relevant tests pass."
+    ],
+    "impact": 4,
+    "confidence": 4,
+    "effort": 2,
+    "risk": 2,
+    "mustDo": {
+      "productManager": {
+        "score": 3,
+        "rationale": "Corrective feedback is a core learner task; its current visual priority is substantially below the score. Important, although no observed abandonment or comprehension failures are available."
+      },
+      "subjectMatterExpert": {
+        "score": 4,
+        "rationale": "Learning from errors depends on reading and comparing responses with corrections. Making this instructional content comfortably readable deserves priority over emphasizing the percentage.",
+        "domain": "Learning science, mastery learning, assessment, and tutoring"
+      }
+    }
+  },
+  "mustDoScore": 7,
+  "score": 4,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T01:51:40.363Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 10,
+  "phase": "implement"
+}
+
+[2026-10-19T01:53:01.887Z] 20261019005423535-521173d2 — Implementation completed; verification required
+{
+  "summary": "Implemented responsive result headings and readable, labeled feedback. Lint, typecheck, diff checks, and 86 component tests pass. Host browser verification remains pending. Evidence: .ralph/20261019005423535-521173d2/iteration-10-implementation-evidence.md.",
+  "decisions": [
+    {
+      "decision": "Reuse the responsive assessment heading scale.",
+      "reason": "Keeps result titles and scores consistent with question prompts."
+    },
+    {
+      "decision": "Use shared 18px reading typography and explicit comparison labels.",
+      "reason": "Makes learner answers, feedback, and model answers easier to read and compare."
+    },
+    {
+      "decision": "Use level-two headings for reviewed questions.",
+      "reason": "Supports scanning and assistive heading navigation."
+    },
+    {
+      "decision": "Preserve assessment logic and reading-container geometry.",
+      "reason": "Limits the change to the selected presentation increment."
+    },
+    {
+      "decision": "Leave viewport and real ten-question verification to the host.",
+      "reason": "Browser execution is prohibited in this phase."
+    }
+  ]
+}
+
+[2026-10-19T01:53:01.910Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 10,
+  "phase": "verify"
+}
+
+[2026-10-19T01:53:05.330Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 10,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/10-verify-1792374781910-247-lint.log"
+}
+
+[2026-10-19T01:53:07.125Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 10,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/10-verify-1792374785334-248-typecheck.log"
+}
+
+[2026-10-19T01:53:26.810Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 10,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/10-verify-1792374787130-249-test.log"
+}
+
+[2026-10-19T01:53:32.434Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 10,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/10-verify-1792374806815-250-build.log"
+}
+
+[2026-10-19T01:53:32.439Z] 20261019005423535-521173d2 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T01:53:32.458Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 10,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T01:54:48.079Z] 20261019005423535-521173d2 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-10.spec.ts",
+  "summary": "Created iteration-10.spec.ts. Scoped ESLint and typecheck pass. Browser tests await host execution.",
+  "decisions": [
+    {
+      "decision": "Cover passing and failing ten-question attempts at 375, 768, and 1440px.",
+      "reason": "Verify responsive headings, readable labeled comparisons, spacing, focus, and overflow with long prose, URLs, and tokens."
+    },
+    {
+      "decision": "Keep quiz delivery, grading, and persistence real.",
+      "reason": "Verify saved answers and course status after reload; isolate subsequent regeneration to prevent paid jobs."
+    },
+    {
+      "decision": "Use self-cleaning fixtures and attach screenshots.",
+      "reason": "Protect learner data and provide host-generated visual evidence."
+    }
+  ]
+}
+
+[2026-10-19T01:54:51.496Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 10,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/10-browser-prepare-1792374888080-255-lint.log"
+}
+
+[2026-10-19T01:54:53.264Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 10,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/10-browser-prepare-1792374891501-256-typecheck.log"
+}
+
+[2026-10-19T01:54:53.288Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 10,
+  "phase": "browser-run"
+}
+
+[2026-10-19T01:55:24.480Z] 20261019005423535-521173d2 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 6,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-10.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/10-browser-run-1792374893328-257-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/10-browser-run-1792374893328-257-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/10-browser-run-1792374893328-257-playwright/artifacts"
+}
+
+[2026-10-19T01:55:24.500Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 10,
+  "phase": "review"
+}
+
+[2026-10-19T01:55:57.791Z] 20261019005423535-521173d2 — Independent review decision
+{
+  "summary": "Reviewed the full diff, component tests, host verification logs, browser spec, screenshots, and trace artifacts. No unresolved defects found in the selected increment.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Result titles and scores share the assessment prompt’s responsive 36px/48px convention.",
+    "Answer comparisons use shared 18px typography, explicit labels, consistent spacing, and wrapping.",
+    "Host verification logs show lint, typecheck, all 194 tests, and production build passing; review diff check also passed.",
+    "Presentation changes preserve grading, remediation, result focus, navigation, and data structures."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Host report records six passing tests with zero skips, retries, or failures.",
+    "Real ten-question passing and failing attempts ran at 375, 768, and 1440px.",
+    "Tests verify long feedback, computed typography, spacing, containment, no horizontal overflow, result focus, navigation, persisted answers, and course status.",
+    "Inspected attached mobile result and desktop feedback screenshots; all six trace archives are present."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T01:55:57.810Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 10,
+  "phase": "commit"
+}
+
+[2026-10-19T01:55:57.814Z] 20261019005423535-521173d2 — Verified iteration approved for commit
+{
+  "iteration": 10,
+  "candidate": "Make assessment results as readable as the questions",
+  "summary": "Implemented responsive result headings and readable, labeled feedback. Lint, typecheck, diff checks, and 86 component tests pass. Host browser verification remains pending. Evidence: .ralph/20261019005423535-521173d2/iteration-10-implementation-evidence.md.",
+  "decision": "Stop after this commit: iteration limit reached",
+  "commitMessage": "ralph: Make assessment results as readable as the questions\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 10"
+}
