@@ -15,12 +15,16 @@ export function CoursePage() {
   const [revisitChapter, setRevisitChapter] = useState<Chapter | null>(null);
   const [isRevisiting, setIsRevisiting] = useState(false);
   const [revisitError, setRevisitError] = useState("");
-  const { data, isLoading, isError, refetch, isFetching } = useQuery<CourseResponse>({ queryKey: ["course", params.id], queryFn: () => fetch(`/api/courses/${params.id}`).then((response) => { if (!response.ok) throw new Error("Could not load course"); return response.json(); }) });
-  if (isLoading) return <main className="reading-shell ui text-sm text-[var(--muted)]" role="status">Loading course…</main>;
+  const { data, isLoading, isError, refetch, isFetching, isFetched } = useQuery<CourseResponse>({ queryKey: ["course", params.id], queryFn: () => fetch(`/api/courses/${params.id}`).then((response) => { if (!response.ok) throw new Error("Could not load course"); return response.json(); }) });
+  if (isLoading && !isFetched) return <main className="page-shell"><p className="ui text-sm text-[var(--muted)]" role="status">Loading course…</p></main>;
   if (isError || !data) return (
-    <main className="reading-shell">
-      <p className="ui text-sm text-[var(--accent-dark)]" role="alert">Could not load this course.</p>
-      <button className="button-secondary mt-4" disabled={isFetching} onClick={() => void refetch()}>{isFetching ? "Trying again…" : "Try again"}</button>
+    <main className="page-shell">
+      <h1 className="display text-4xl leading-none">Course unavailable</h1>
+      <p className="ui mt-5 text-sm text-[var(--muted)]" role={isFetching ? "status" : "alert"}>{isFetching ? "Loading course…" : "Could not load this course."}</p>
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+        <button type="button" className="button-primary ui" disabled={isFetching} onClick={() => void refetch()}>{isFetching ? "Trying again…" : "Try again"}</button>
+        <Link href="/" className="button-secondary ui">Back to learning</Link>
+      </div>
     </main>
   );
   const total = data.chapters.length;
@@ -64,7 +68,13 @@ export function CoursePage() {
         <p className="text-lg text-[var(--muted)]">{passed} of {total} chapters mastered</p>
         <a className="button-secondary ui shrink-0" href={`/api/courses/${params.id}/export`}>Export notes</a>
       </div>
-      {total === 0 ? <p className="border-t border-[var(--line)] pt-6 text-lg text-[var(--muted)]">This course has no chapters yet.</p> : (
+      {total === 0 ? (
+        <section className="border-t border-[var(--line)] pt-6" aria-labelledby="empty-course-heading">
+          <h2 id="empty-course-heading" className="display text-3xl leading-tight">No chapters available</h2>
+          <p className="mt-3 text-lg text-[var(--muted)]">This course has no chapters yet.</p>
+          <Link href="/" className="button-secondary ui mt-6">Back to learning</Link>
+        </section>
+      ) : (
         <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
           {data.chapters.map((chapter) => {
             const isOpen = chapter.status === "open";
