@@ -1779,3 +1779,420 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Give course loading, failure, and empty states consistent overview geometry\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 4"
 }
+
+[2026-10-19T01:22:38.711Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 5,
+  "phase": "discover"
+}
+
+[2026-10-19T01:23:46.756Z] 20261019005423535-521173d2 — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Consolidate page containers and document intentional layout variants",
+      "category": "Layout primitives",
+      "rationale": "Establish shared width, gutter, and vertical-spacing tokens for existing wide and reading layouts, including the generation overlay. Preserve current geometry and document exceptions. This directly addresses the requested reusable foundation; reduced future layout drift is an expected benefit, not a measured outcome. All five page routes and shared UI components were inspected. No files were edited or checks run during discovery.",
+      "evidence": [
+        "app/globals.css:29-30 independently defines wide and reading container formulas.",
+        "app/globals.css:70 repeats the wide container formula for the global header; generation-overlay__inner separately repeats it.",
+        "app/globals.css contains separate mobile overrides for the header, page shells, and generation overlay.",
+        "app/layout.tsx mounts a wide global header while settings, chapter, and quiz pages intentionally use centered reading shells.",
+        "e2e/header.spec.ts checks header stability but does not establish a documented contract for every container variant."
+      ],
+      "acceptanceCriteria": [
+        "Wide, reading, and overlay containers consume shared responsive gutter and maximum-width tokens without duplicated numeric width formulas.",
+        "Preserve existing 76rem wide and 48rem reading maxima, with 1rem mobile and 1.5rem desktop side gutters.",
+        "Document the stable wide global header, centered reading layouts, home vertical-spacing exception, and dialog geometry.",
+        "Host browser verification compares container bounds and alignment across home, course, settings, chapter, quiz, and results at 375, 768, and 1440 pixels, with no horizontal page overflow.",
+        "Use prepared self-cleaning fixtures for real quiz delivery and grading; lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Reusable layout conventions are an explicit unmet requirement spanning every route. They make alignment predictable and prevent repeated local fixes, although current geometry does not demonstrate blocked learning."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Stable reading and assessment geometry supports orientation throughout study and practice. Explicit reading variants preserve focused line lengths while keeping navigation predictable; educational gains remain unmeasured.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 0,
+      "score": 10,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Keep quiz recovery controls visible throughout pending retries",
+      "category": "Loading and error states",
+      "rationale": "Bring quiz recovery into line with the completed chapter and course recovery conventions. Preserve the failure context and return navigation while disabling the pending retry control. Scope this increment to quiz recovery presentation and focus continuity.",
+      "evidence": [
+        "components/quiz-page.tsx:66-67 replaces the complete recovery interface with a loading paragraph during an error refetch.",
+        "components/quiz-page.tsx:80-85 renders retry and return controls only outside that loading branch.",
+        "components/quiz-page-loading.test.tsx explicitly expects Try again to disappear during recovery.",
+        "components/reading-page-state.tsx:21-26 already supports visible disabled recovery controls, unlike the quiz implementation."
+      ],
+      "acceptanceCriteria": [
+        "After a manual retry, retain the reading container, heading, disabled retry button, and appropriate Back to chapter or Back to course link.",
+        "Announce pending recovery as status and terminal failure as an alert scoped to main content.",
+        "Repeated activation cannot initiate duplicate recovery requests; keyboard navigation retains a predictable recovery path.",
+        "Preserve bounded generation retries, locked/missing chapter behavior, and read-only recovery semantics.",
+        "Host checks cover delayed retry, repeated failure, and successful recovery at 375, 768, and 1440 pixels; real prepared MCQ delivery and grading remain unmocked.",
+        "Lint, typecheck, and relevant tests pass, replacing the test expectation that requires the retry control to disappear."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Recovery currently removes the learner's controls and context during a potentially slow request. Matching the established recovery convention improves an important assessment access path; failure frequency is unknown."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Assessment access is part of the study, practice, and correction cycle. Keeping recovery and instructional return paths available supports continuity without changing grading or mastery requirements.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 1,
+      "score": 7.5,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Apply a readable responsive hierarchy to assessment results",
+      "category": "Results typography and spacing",
+      "rationale": "Scope this increment to the result screen, which was outside the completed question-and-option readability work. Introduce reusable result heading, score, and feedback styles so corrective information has a coherent hierarchy at mobile and desktop sizes.",
+      "evidence": [
+        "components/quiz-page.tsx:89 uses fixed text-6xl headings and text-7xl scores at every viewport, with mt-16 spacing.",
+        "components/quiz-page.tsx:100-103 mixes text-xl prompts with text-sm learner answers, feedback, and model answers.",
+        "app/globals.css:47-49 already provides a responsive assessment prompt convention, but the results branch does not use an equivalent convention.",
+        "components/quiz-page.tsx:104 presents Review chapter as a text-xs link beneath the large primary action."
+      ],
+      "acceptanceCriteria": [
+        "Result headings and scores use named responsive styles; mobile heading scale follows the established assessment hierarchy.",
+        "Learner answers, feedback, model answers, and remediation use a consistent readable text and spacing convention with preserved content and line breaks.",
+        "Long prompts, concepts, and feedback remain within the reading container without truncation or horizontal page overflow.",
+        "Review chapter remains clearly visible and keyboard accessible on passed and failed results.",
+        "Host verification reaches passed and failed results through real ten-question delivery and grading at 375, 768, and 1440 pixels, isolating out-of-scope regeneration and accounting for review-link prefetch.",
+        "Scores, grading, mastery gates, saved answers, and navigation behavior remain unchanged; lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Results guide the learner's next action, so their hierarchy deserves the same responsive treatment as questions. Source inspection establishes inconsistent sizing; actual readability problems and overflow have not been measured."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Corrective feedback and model answers are central to reviewing mistakes. A consistent readable presentation supports that task without implying that a prominent score alone establishes durable mastery.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 4,
+      "score": 6,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Give lesson difficulty and regeneration actions explicit request states",
+      "category": "Action feedback and recovery",
+      "rationale": "Add consistent pending, success, and failure presentation to the existing lesson adjustment controls. Check HTTP success before treating a request as successful and prevent overlapping adjustments. This addresses action-state correctness rather than the already completed chapter loading states.",
+      "evidence": [
+        "components/chapter-page.tsx:58-59 returns raw fetch responses from both mutations without checking response.ok, so HTTP failures can invoke onSuccess.",
+        "components/chapter-page.tsx:79 exposes Too easy and Too hard without pending disabling or outcome messages; regeneration has a pending label but no failure message.",
+        "app/api/chapters/[id]/route.ts:89-99 can return 400, 403, or 404 for difficulty feedback.",
+        "components/profile-form.tsx:23-31 and :46-48 already checks HTTP failures and presents explicit save outcomes."
+      ],
+      "acceptanceCriteria": [
+        "Difficulty and regeneration requests reject non-success HTTP responses and network failures, displaying a local accessible error using shared semantic styles.",
+        "While an adjustment request is pending, prevent overlapping difficulty or regeneration submissions and announce the action in progress.",
+        "Success copy accurately distinguishes an accepted adjustment request from completed content generation.",
+        "Failures preserve the currently displayed lesson and do not trigger success-only invalidation or automatic mutation retries.",
+        "Component tests cover delayed success, HTTP failure, and network failure; host browser checks isolate generation requests so tests cannot start paid jobs.",
+        "Lint, typecheck, and relevant tests pass; saved attempts and learner progress remain unchanged."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Learners currently receive no reliable indication that a requested lesson adjustment failed. This undermines a useful tutoring control, but the original lesson and assessment remain accessible."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Difficulty feedback expresses a learner's need for adjusted instruction. Silently treating failed requests as successful obscures whether that need was addressed. Clear state feedback is important, without implying that regeneration itself improves learning.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 2,
+      "score": 5,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Standardize shared button sizing and interaction states",
+      "category": "Common controls",
+      "rationale": "Define a common default control size and an explicit compact variant, then apply them to paired actions and lesson text controls. Preserve the Paper & Ink palette and existing action hierarchy. Improved touch usability is a hypothesis until browser verification.",
+      "evidence": [
+        "app/globals.css:32 and :39 give primary and secondary buttons different font sizes and vertical padding, producing inconsistent paired controls.",
+        "app/globals.css:42 gives text-button zero padding and no minimum target height.",
+        "components/chapter-page.tsx:79 uses those text buttons for difficulty and regeneration actions.",
+        "app/globals.css:36 and :41 style disabled filled/outlined buttons, but text-button has no corresponding disabled rule.",
+        "components/course-list.tsx locally adds min-h-11 to its retry control, while course-begin separately defines a 2.75rem minimum height."
+      ],
+      "acceptanceCriteria": [
+        "Primary and secondary controls share an explicit default font-size, line-height, and minimum height; intentional compact controls use a reusable variant.",
+        "Lesson text actions have a practical touch target of at least 44px height while allowing wrapping on narrow screens.",
+        "Disabled controls have consistent visual feedback and do not retain active hover movement or misleading interactive styling.",
+        "Paired quiz, recovery, and revisit controls align consistently while preserving visible focus and keyboard behavior.",
+        "Host checks at 375, 768, and 1440 pixels verify control bounds, wrapping, focus, and no overflow; quiz checks use real prepared MCQ fixtures.",
+        "Lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Inconsistent dimensions and very small lesson actions affect recurring learner interactions, particularly on mobile. Shared sizing addresses usability and the stated consistency requirement, rather than changing decoration."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Reliable practice navigation and difficulty controls help learners act on instructional needs. Consistent, usable targets reduce interaction friction, though no learning improvement or observed misclick rate is established.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 3,
+      "score": 5,
+      "mustDoScore": 6
+    }
+  ]
+}
+
+[2026-10-19T01:23:46.756Z] 20261019005423535-521173d2 — Candidate selected
+{
+  "iteration": 5,
+  "candidate": {
+    "title": "Consolidate page containers and document intentional layout variants",
+    "category": "Layout primitives",
+    "rationale": "Establish shared width, gutter, and vertical-spacing tokens for existing wide and reading layouts, including the generation overlay. Preserve current geometry and document exceptions. This directly addresses the requested reusable foundation; reduced future layout drift is an expected benefit, not a measured outcome. All five page routes and shared UI components were inspected. No files were edited or checks run during discovery.",
+    "evidence": [
+      "app/globals.css:29-30 independently defines wide and reading container formulas.",
+      "app/globals.css:70 repeats the wide container formula for the global header; generation-overlay__inner separately repeats it.",
+      "app/globals.css contains separate mobile overrides for the header, page shells, and generation overlay.",
+      "app/layout.tsx mounts a wide global header while settings, chapter, and quiz pages intentionally use centered reading shells.",
+      "e2e/header.spec.ts checks header stability but does not establish a documented contract for every container variant."
+    ],
+    "acceptanceCriteria": [
+      "Wide, reading, and overlay containers consume shared responsive gutter and maximum-width tokens without duplicated numeric width formulas.",
+      "Preserve existing 76rem wide and 48rem reading maxima, with 1rem mobile and 1.5rem desktop side gutters.",
+      "Document the stable wide global header, centered reading layouts, home vertical-spacing exception, and dialog geometry.",
+      "Host browser verification compares container bounds and alignment across home, course, settings, chapter, quiz, and results at 375, 768, and 1440 pixels, with no horizontal page overflow.",
+      "Use prepared self-cleaning fixtures for real quiz delivery and grading; lint, typecheck, and relevant tests pass."
+    ],
+    "impact": 4,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 1,
+    "mustDo": {
+      "productManager": {
+        "score": 3,
+        "rationale": "Reusable layout conventions are an explicit unmet requirement spanning every route. They make alignment predictable and prevent repeated local fixes, although current geometry does not demonstrate blocked learning."
+      },
+      "subjectMatterExpert": {
+        "score": 3,
+        "rationale": "Stable reading and assessment geometry supports orientation throughout study and practice. Explicit reading variants preserve focused line lengths while keeping navigation predictable; educational gains remain unmeasured.",
+        "domain": "Learning science, mastery learning, assessment, and tutoring"
+      }
+    }
+  },
+  "mustDoScore": 6,
+  "score": 10,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T01:23:46.775Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 5,
+  "phase": "implement"
+}
+
+[2026-10-19T01:25:40.918Z] 20261019005423535-521173d2 — Implementation completed; verification required
+{
+  "summary": "Consolidated shared container and spacing tokens while preserving existing geometry. Documented layout variants and exceptions. Lint, typecheck, diff checks, and 64 tests pass. Host browser and real quiz-flow verification remain pending. Evidence: .ralph/20261019005423535-521173d2/iteration-5-implementation-evidence.md.",
+  "decisions": [
+    {
+      "decision": "Retain existing shell classes and geometry.",
+      "reason": "Establish reusable conventions without changing route behavior."
+    },
+    {
+      "decision": "Centralize widths, gutters, and page spacing in CSS tokens.",
+      "reason": "Remove duplicated responsive rules and reduce layout drift."
+    },
+    {
+      "decision": "Document the wide header and home, generation, and dialog exceptions.",
+      "reason": "Make intentional differences explicit."
+    },
+    {
+      "decision": "Add three container contract tests; defer browser verification to the host.",
+      "reason": "Guard shared CSS ownership while respecting the execution-phase constraints."
+    }
+  ]
+}
+
+[2026-10-19T01:25:40.944Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 5,
+  "phase": "verify"
+}
+
+[2026-10-19T01:25:44.120Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 5,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/5-verify-1792373140944-118-lint.log"
+}
+
+[2026-10-19T01:25:46.013Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 5,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/5-verify-1792373144125-119-typecheck.log"
+}
+
+[2026-10-19T01:26:05.262Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 5,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/5-verify-1792373146018-120-test.log"
+}
+
+[2026-10-19T01:26:10.977Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 5,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/5-verify-1792373165267-121-build.log"
+}
+
+[2026-10-19T01:26:10.983Z] 20261019005423535-521173d2 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T01:26:11.001Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 5,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T01:27:15.798Z] 20261019005423535-521173d2 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-5.spec.ts",
+  "summary": "Created iteration-5.spec.ts with six browser tests. Targeted ESLint, TypeScript, and diff checks passed. Browser tests await the host run.",
+  "decisions": [
+    {
+      "decision": "Check route geometry at 375, 768, and 1440 pixels.",
+      "reason": "Verifies wide and reading bounds, gutters, spacing, header alignment, and page overflow."
+    },
+    {
+      "decision": "Use prepared fixtures with real quiz delivery and grading, then reload.",
+      "reason": "Verifies results layout and persisted mastery; fixtures clean up test-owned data."
+    },
+    {
+      "decision": "Intercept course creation and cancel the revisit dialog.",
+      "reason": "Verifies overlay and dialog geometry without paid generation or progress resets."
+    }
+  ]
+}
+
+[2026-10-19T01:27:19.003Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 5,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/5-browser-prepare-1792373235799-126-lint.log"
+}
+
+[2026-10-19T01:27:21.242Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 5,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/5-browser-prepare-1792373239008-127-typecheck.log"
+}
+
+[2026-10-19T01:27:21.264Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 5,
+  "phase": "browser-run"
+}
+
+[2026-10-19T01:27:41.831Z] 20261019005423535-521173d2 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 6,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-5.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/5-browser-run-1792373241302-128-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/5-browser-run-1792373241302-128-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/5-browser-run-1792373241302-128-playwright/artifacts"
+}
+
+[2026-10-19T01:27:41.851Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 5,
+  "phase": "review"
+}
+
+[2026-10-19T01:28:23.083Z] 20261019005423535-521173d2 — Independent review decision
+{
+  "summary": "Selected increment passes review. No unresolved defects found.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Shared CSS rule centralizes wide, reading, header, and overlay geometry; preserves 76rem/48rem maxima and 1rem/1.5rem responsive gutters.",
+    "DESIGN.md documents layout variants and header, home spacing, generation overlay, and revisit dialog exceptions.",
+    "Host verification log records 169 passing tests and a successful build. Review reran lint, typecheck, and diff checks successfully; local Vitest execution was blocked by unavailable sandbox temporary directories."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-5.spec.ts, results.json, screenshot attachments, and six valid trace archives. Host recorded six passes without failures, skips, or retries.",
+    "Tests verify bounds, alignment, spacing, and horizontal overflow across home, settings, course, chapter, quiz, and results at 375, 768, and 1440px.",
+    "Prepared self-cleaning fixtures exercise real ten-question delivery, grading, persisted answers, and completed-course reloads. Overlay generation is isolated; revisit cancellation preserves saved evidence."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T01:28:23.102Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 5,
+  "phase": "commit"
+}
+
+[2026-10-19T01:28:23.106Z] 20261019005423535-521173d2 — Verified iteration approved for commit
+{
+  "iteration": 5,
+  "candidate": "Consolidate page containers and document intentional layout variants",
+  "summary": "Consolidated shared container and spacing tokens while preserving existing geometry. Documented layout variants and exceptions. Lint, typecheck, diff checks, and 64 tests pass. Host browser and real quiz-flow verification remain pending. Evidence: .ralph/20261019005423535-521173d2/iteration-5-implementation-evidence.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Consolidate page containers and document intentional layout variants\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 5"
+}
