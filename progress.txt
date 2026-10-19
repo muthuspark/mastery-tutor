@@ -3028,3 +3028,412 @@
   "decision": "Generate five new candidates after this commit",
   "commitMessage": "ralph: Make quiz question transitions accessible and predictable\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 7"
 }
+
+[2026-10-19T01:38:32.283Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 8,
+  "phase": "discover"
+}
+
+[2026-10-19T01:39:30.680Z] 20261019005423535-521173d2 — Five candidates generated and ranked
+{
+  "formula": "mustDo.productManager.score + mustDo.subjectMatterExpert.score",
+  "tieBreaker": "impact * confidence / (effort * risk), higher impact, lower effort, proposal order",
+  "ranked": [
+    {
+      "title": "Recover agent discovery failures without blocking course creation",
+      "category": "Forms and error recovery",
+      "rationale": "Distinguish failed agent discovery from a successful empty response and provide an inline retry. A transient request failure currently disables Begin and gives installation advice. Learner abandonment is a hypothesis; the blocked form follows directly from the source.",
+      "evidence": [
+        "components/new-course-form.tsx:26-35 converts every discovery failure into an empty availableAgents array.",
+        "components/new-course-form.tsx:79-81 displays installation advice and disables Begin for that array, with no discovery retry.",
+        "components/new-course-form.test.tsx:11-28 covers available and absent agents, but not failed discovery."
+      ],
+      "acceptanceCriteria": [
+        "Network and HTTP discovery failures show an accurate inline alert and a shared-style retry button; successful empty discovery retains installation guidance.",
+        "Retry preserves the topic, announces pending status, prevents duplicate requests, and enables Begin after successful discovery.",
+        "Retry only discovers agents and never creates a course automatically.",
+        "Add component coverage for failure, repeated failure, empty success, and recovery; host browser checks at 375, 768, and 1440 pixels confirm usable controls and no overflow.",
+        "Lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 4,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "A recoverable service failure blocks the primary onboarding action and directs learners toward an unrelated remedy. Local recovery is urgent."
+        },
+        "subjectMatterExpert": {
+          "score": 4,
+          "rationale": "Affected learners cannot enter the lesson and assessment cycle despite potentially having a functioning tutor installed. Accurate recovery restores access without changing educational behavior.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 0,
+      "score": 10,
+      "mustDoScore": 8
+    },
+    {
+      "title": "Give the course-generation dialog consistent keyboard and announcement behavior",
+      "category": "Accessible loading states",
+      "rationale": "Bring the generation overlay's modal behavior into line with the existing revisit dialog. Its current modal declaration lacks focus management and background isolation. Assistive-technology confusion is a source-supported risk, not a measured outcome.",
+      "evidence": [
+        "components/new-course-form.tsx:89-102 renders a div with dialog and aria-modal attributes, without initial focus, focus containment, or background inertness.",
+        "components/new-course-form.tsx:37-42 changes stage text on a timer; the changing detail has no live status semantics.",
+        "components/revisit-dialog.tsx implements showModal, initial focus, focus restoration, and keyboard containment."
+      ],
+      "acceptanceCriteria": [
+        "On submission, focus moves to a named generation dialog and keyboard navigation remains within it; background controls are inert.",
+        "On creation failure, focus returns to an enabled recovery point and the preserved topic and error are discoverable.",
+        "Stage changes are announced politely without claiming server-confirmed progress or introducing cancellation semantics.",
+        "Component checks cover lifecycle behavior; host browser checks keyboard containment, failure recovery, and scrolling at 375, 768, and 1440 pixels using an isolated creation response.",
+        "Lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 4,
+      "confidence": 4,
+      "effort": 3,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 4,
+          "rationale": "The primary creation flow presents a modal experience whose keyboard behavior does not match its declaration, creating a significant access risk."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Learners need an understandable transition into their course. Predictable focus and announcements support access and reduce uncertainty, although no assessment content is wrong.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 1,
+      "score": 2.6666666666666665,
+      "mustDoScore": 7
+    },
+    {
+      "title": "Standardize usable touch targets for lesson adjustment controls",
+      "category": "Common controls and mobile accessibility",
+      "rationale": "Give the existing text-button pattern a reusable touch-target variant and apply it to the three lesson adjustments. Preserve their completed pending and feedback behavior; this increment addresses control geometry only.",
+      "evidence": [
+        "app/globals.css:54 defines text-button with zero padding and no minimum target dimensions.",
+        "components/chapter-page.tsx renders Too easy, Too hard, and Regenerate chapter as text buttons without target-size overrides.",
+        "components/course-list.tsx:18 already applies min-h-11 to its text-button retry, demonstrating inconsistent treatment of the same control pattern.",
+        "app/globals.css:83-87 gives global navigation controls a 2.75rem minimum height."
+      ],
+      "acceptanceCriteria": [
+        "Introduce a reusable text-action target convention and give each lesson adjustment at least a 44-by-44 CSS-pixel clickable area.",
+        "Controls wrap without overlapping targets or horizontal overflow at 375, 768, and 1440 pixels.",
+        "Retain visible focus, exact accessible names, disabled pending behavior, and existing success and failure announcements.",
+        "Host checks measure target bounds and keyboard access; interaction verification isolates adjustment responses so no paid generation starts.",
+        "Lint, typecheck, and existing adjustment tests pass."
+      ],
+      "impact": 3,
+      "confidence": 4,
+      "effort": 1,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Small lesson controls make important actions harder to use on mobile and differ from established navigation and retry sizing."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Difficulty feedback helps learners request suitable explanations. Reliable targeting supports that tutoring interaction; improved learning outcomes have not been measured.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 4,
+      "score": 12,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Bring assessment result headings into the responsive reading typography",
+      "category": "Responsive typography",
+      "rationale": "Apply a reusable responsive result-heading convention so outcome text stays readable within the reading container. This is distinct from the completed question-prompt work. Mobile overflow remains a hypothesis requiring host measurement.",
+      "evidence": [
+        "components/quiz-page.tsx:104 uses unconditional text-6xl for the result heading and text-7xl for the score.",
+        "app/globals.css:58-61 gives assessment prompts responsive sizes and wrapping, but the result heading does not use those safeguards.",
+        "app/globals.css:35-41 leaves a 343-pixel content width at a 375-pixel viewport."
+      ],
+      "acceptanceCriteria": [
+        "Passed and failed result headings use a shared responsive typography rule and wrap within the existing reading container.",
+        "Outcome, percentage, feedback, and continuation actions remain fully visible without clipping or horizontal page overflow at 375, 768, and 1440 pixels.",
+        "Preserve result-heading focus, score semantics, remediation, and all navigation destinations.",
+        "Host verification reaches passed and failed results through prepared real quiz fixtures with unmocked grading and isolated regeneration; validate fixture balance before navigation.",
+        "Lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 3,
+      "effort": 2,
+      "risk": 1,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "The outcome screen is a key decision point. Its oversized mobile heading warrants targeted verification and correction, rather than a broader visual redesign."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Learners must read assessment outcomes and corrective feedback clearly to choose their next study action. This improves presentation without altering mastery claims.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 3,
+      "score": 4.5,
+      "mustDoScore": 6
+    },
+    {
+      "title": "Keep quiz recovery controls stable during manual retries",
+      "category": "Consistent assessment recovery",
+      "rationale": "Retain the recovery heading and return link while showing a disabled pending retry, matching chapter and course recovery. Scope this to manual recovery; existing initial loading and bounded preparation retries already work.",
+      "evidence": [
+        "components/quiz-page.tsx:81-82 replaces the recovery screen with a loading paragraph whenever a failed query is fetching.",
+        "components/quiz-page.tsx:95-100 otherwise provides the retry and chapter return controls.",
+        "components/quiz-page-loading.test.tsx:58-79 explicitly expects the retry button to disappear during recovery.",
+        "components/reading-page-state.tsx retains recovery controls and disables the pending retry."
+      ],
+      "acceptanceCriteria": [
+        "Manual recovery keeps the reading container, recovery heading, and appropriate return link mounted.",
+        "The retry button remains visible, is disabled while pending, and exposes clear pending status without duplicate requests.",
+        "Recovery refetches only the failed resource and preserves existing preparation retry limits and unavailable-state behavior.",
+        "Add delayed success and repeated-failure component coverage; host verification includes a prepared real ten-question quiz and unmocked grading, with out-of-scope regeneration isolated.",
+        "Host checks at 375, 768, and 1440 pixels, lint, typecheck, and relevant tests pass."
+      ],
+      "impact": 3,
+      "confidence": 5,
+      "effort": 2,
+      "risk": 2,
+      "mustDo": {
+        "productManager": {
+          "score": 3,
+          "rationale": "Assessment recovery removes navigation and the learner's focused control precisely when the service is unreliable. Stable recovery makes the established UI convention useful here."
+        },
+        "subjectMatterExpert": {
+          "score": 3,
+          "rationale": "Assessment is part of the mastery loop. Learners should retain a clear route back to study while waiting, without accidentally triggering replacement content.",
+          "domain": "Learning science, mastery learning, assessment, and tutoring"
+        }
+      },
+      "index": 2,
+      "score": 3.75,
+      "mustDoScore": 6
+    }
+  ]
+}
+
+[2026-10-19T01:39:30.680Z] 20261019005423535-521173d2 — Candidate selected
+{
+  "iteration": 8,
+  "candidate": {
+    "title": "Recover agent discovery failures without blocking course creation",
+    "category": "Forms and error recovery",
+    "rationale": "Distinguish failed agent discovery from a successful empty response and provide an inline retry. A transient request failure currently disables Begin and gives installation advice. Learner abandonment is a hypothesis; the blocked form follows directly from the source.",
+    "evidence": [
+      "components/new-course-form.tsx:26-35 converts every discovery failure into an empty availableAgents array.",
+      "components/new-course-form.tsx:79-81 displays installation advice and disables Begin for that array, with no discovery retry.",
+      "components/new-course-form.test.tsx:11-28 covers available and absent agents, but not failed discovery."
+    ],
+    "acceptanceCriteria": [
+      "Network and HTTP discovery failures show an accurate inline alert and a shared-style retry button; successful empty discovery retains installation guidance.",
+      "Retry preserves the topic, announces pending status, prevents duplicate requests, and enables Begin after successful discovery.",
+      "Retry only discovers agents and never creates a course automatically.",
+      "Add component coverage for failure, repeated failure, empty success, and recovery; host browser checks at 375, 768, and 1440 pixels confirm usable controls and no overflow.",
+      "Lint, typecheck, and relevant tests pass."
+    ],
+    "impact": 4,
+    "confidence": 5,
+    "effort": 2,
+    "risk": 1,
+    "mustDo": {
+      "productManager": {
+        "score": 4,
+        "rationale": "A recoverable service failure blocks the primary onboarding action and directs learners toward an unrelated remedy. Local recovery is urgent."
+      },
+      "subjectMatterExpert": {
+        "score": 4,
+        "rationale": "Affected learners cannot enter the lesson and assessment cycle despite potentially having a functioning tutor installed. Accurate recovery restores access without changing educational behavior.",
+        "domain": "Learning science, mastery learning, assessment, and tutoring"
+      }
+    }
+  },
+  "mustDoScore": 8,
+  "score": 10,
+  "reason": "Highest score among candidates whose titles have not been completed, ranked by combined role must-do scores; ties use value/cost, higher impact, lower effort, then proposal order",
+  "excludedCompletedTitles": []
+}
+
+[2026-10-19T01:39:30.700Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 8,
+  "phase": "implement"
+}
+
+[2026-10-19T01:40:53.987Z] 20261019005423535-521173d2 — Implementation completed; verification required
+{
+  "summary": "Implemented inline agent-discovery recovery with topic preservation, pending announcements, duplicate-request prevention, and no automatic course creation. Lint, typecheck, diff checks, and 79 component tests pass. Host browser verification remains pending at 375, 768, and 1440px. Evidence: .ralph/20261019005423535-521173d2/iteration-8-implementation-evidence.md.",
+  "decisions": [
+    {
+      "decision": "Separate discovery failures from successful empty results.",
+      "reason": "Installation advice is appropriate only after successful discovery."
+    },
+    {
+      "decision": "Reuse the shared secondary button for inline retry.",
+      "reason": "Preserves the topic and matches existing form conventions."
+    },
+    {
+      "decision": "Announce pending discovery and prevent overlapping requests.",
+      "reason": "Provides accessible feedback and blocks duplicate actions."
+    },
+    {
+      "decision": "Guard course submission during discovery and failure.",
+      "reason": "Retry must only discover agents; course creation requires explicit submission."
+    }
+  ]
+}
+
+[2026-10-19T01:40:54.010Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 8,
+  "phase": "verify"
+}
+
+[2026-10-19T01:40:57.330Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 8,
+  "phase": "verify",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/8-verify-1792374054010-190-lint.log"
+}
+
+[2026-10-19T01:40:59.017Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 8,
+  "phase": "verify",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/8-verify-1792374057334-191-typecheck.log"
+}
+
+[2026-10-19T01:41:18.319Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 8,
+  "phase": "verify",
+  "command": "npm run test",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/8-verify-1792374059022-192-test.log"
+}
+
+[2026-10-19T01:41:25.204Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 8,
+  "phase": "verify",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/8-verify-1792374078325-193-build.log"
+}
+
+[2026-10-19T01:41:25.209Z] 20261019005423535-521173d2 — Verification decision
+{
+  "nextPhase": "browser-prepare",
+  "failures": []
+}
+
+[2026-10-19T01:41:25.228Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 8,
+  "phase": "browser-prepare"
+}
+
+[2026-10-19T01:42:15.138Z] 20261019005423535-521173d2 — Playwright coverage prepared
+{
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-8.spec.ts",
+  "summary": "Created iteration-8.spec.ts with six browser tests. Spec lint and project typecheck pass. Browser tests have not run; host execution remains pending.",
+  "decisions": [
+    {
+      "decision": "Test recovery at 375, 768, and 1440 pixels.",
+      "reason": "Verify network/HTTP failures, repeated failure, pending controls, keyboard retry, topic preservation, recovery, and overflow."
+    },
+    {
+      "decision": "Test empty discovery after retry and reload.",
+      "reason": "Verify installation guidance appears only for successful empty results."
+    },
+    {
+      "decision": "Control discovery responses and block writes.",
+      "reason": "Exercise deterministic failures without creating courses, changing learner data, or starting paid generation."
+    }
+  ]
+}
+
+[2026-10-19T01:42:18.593Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 8,
+  "phase": "browser-prepare",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/8-browser-prepare-1792374135138-198-lint.log"
+}
+
+[2026-10-19T01:42:20.297Z] 20261019005423535-521173d2 — Check passed
+{
+  "iteration": 8,
+  "phase": "browser-prepare",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/8-browser-prepare-1792374138598-199-typecheck.log"
+}
+
+[2026-10-19T01:42:20.320Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 8,
+  "phase": "browser-run"
+}
+
+[2026-10-19T01:42:27.727Z] 20261019005423535-521173d2 — Host Playwright verification
+{
+  "status": "passed",
+  "reason": "All selected browser tests passed without skips or retries",
+  "passed": 6,
+  "baseUrl": "http://localhost:3000",
+  "spec": "e2e/ralph/20261019005423535-521173d2/iteration-8.spec.ts",
+  "report": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/8-browser-run-1792374140363-200-playwright/results.json",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/8-browser-run-1792374140363-200-playwright/runner.log",
+  "artifacts": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261019005423535-521173d2/8-browser-run-1792374140363-200-playwright/artifacts"
+}
+
+[2026-10-19T01:42:27.746Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 8,
+  "phase": "review"
+}
+
+[2026-10-19T01:43:21.142Z] 20261019005423535-521173d2 — Independent review decision
+{
+  "summary": "Selected increment passes review. No unresolved defects found.",
+  "acceptancePassed": true,
+  "acceptanceEvidence": [
+    "Network and HTTP failures display an accurate inline alert and shared secondary retry button; successful empty discovery retains installation guidance.",
+    "Component and browser tests verify topic preservation, pending status, duplicate-request prevention, and enabled Begin after recovery.",
+    "Retry issues discovery GET requests only; tests verify no automatic course creation.",
+    "Component coverage includes failure, repeated failure, empty success, and recovery.",
+    "Host logs confirm lint, typecheck, 187 tests, and build passed. Review diff check passed."
+  ],
+  "userFacing": true,
+  "browserEvidence": [
+    "Inspected iteration-8.spec.ts, host results.json, and screenshot/trace artifacts.",
+    "All six host browser tests passed at 375, 768, and 1440px, with no skips, retries, or failures.",
+    "Tests verify keyboard retry, usable controls, and no horizontal overflow. Inspected screenshots confirm consistent failure, pending, and recovered layouts.",
+    "Discovery responses were controlled and writes blocked; evidence establishes UI recovery behavior, not live CLI detection."
+  ],
+  "findings": [],
+  "nextPhase": "commit",
+  "unresolved": []
+}
+
+[2026-10-19T01:43:21.161Z] 20261019005423535-521173d2 — Phase started
+{
+  "iteration": 8,
+  "phase": "commit"
+}
+
+[2026-10-19T01:43:21.165Z] 20261019005423535-521173d2 — Verified iteration approved for commit
+{
+  "iteration": 8,
+  "candidate": "Recover agent discovery failures without blocking course creation",
+  "summary": "Implemented inline agent-discovery recovery with topic preservation, pending announcements, duplicate-request prevention, and no automatic course creation. Lint, typecheck, diff checks, and 79 component tests pass. Host browser verification remains pending at 375, 768, and 1440px. Evidence: .ralph/20261019005423535-521173d2/iteration-8-implementation-evidence.md.",
+  "decision": "Generate five new candidates after this commit",
+  "commitMessage": "ralph: Recover agent discovery failures without blocking course creation\n\nRalph-Run: 20261019005423535-521173d2\nRalph-Iteration: 8"
+}
