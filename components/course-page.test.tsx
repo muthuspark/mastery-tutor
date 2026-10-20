@@ -58,7 +58,7 @@ it("offers a local exit and retries only course reads while preserving mastered 
   }) }));
   expect(await screen.findByRole("heading", { name: "Recovered course" })).toBeInTheDocument();
   expect(screen.getByRole("main")).toHaveClass("page-shell");
-  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
+  expect(screen.getByText("1 of 1 chapters mastered")).toBeInTheDocument();
   expect(screen.getByText("You completed this course.")).toBeInTheDocument();
   expect(screen.queryByText("Could not load this course.")).not.toBeInTheDocument();
   expect(fetch.mock.calls).toEqual([["/api/courses/course"], ["/api/courses/course"]]);
@@ -76,7 +76,7 @@ it("gives an empty course a descriptive heading and focusable learning exit with
   expect(back).toHaveAttribute("href", "/");
   back.focus();
   expect(back).toHaveFocus();
-  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
+  expect(screen.getByText("0 of 0 chapters mastered")).toBeInTheDocument();
   expect(screen.queryByText("You completed this course.")).not.toBeInTheDocument();
 });
 
@@ -88,7 +88,7 @@ it("offers completed chapters a normal reading link without invoking reset", asy
   }) });
   vi.stubGlobal("fetch", fetch);
   render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
-  const read = await screen.findByRole("link", { name: "Read lesson → Separation" });
+  const read = await screen.findByRole("link", { name: "Read → Separation" });
   expect(read).toHaveAttribute("href", "/course/course/ch/0");
   expect(read).not.toHaveAttribute("aria-haspopup");
   read.focus();
@@ -103,7 +103,7 @@ it("offers completed chapters a normal reading link without invoking reset", asy
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(fetch).toHaveBeenCalledTimes(1);
   expect(fetch).toHaveBeenCalledWith("/api/courses/course");
-  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
+  expect(screen.getByText("1 of 1 chapters mastered")).toBeInTheDocument();
   expect(screen.getByText("You completed this course.")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Retake mastery check → Separation" })).toHaveAttribute("aria-haspopup", "dialog");
 });
@@ -117,7 +117,7 @@ it("keeps open and locked chapter actions unchanged", async () => {
   }) }));
   render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
   expect(await screen.findByRole("link", { name: /Separation\s*Continue →/ })).toHaveAttribute("href", "/course/course/ch/0");
-  expect(screen.queryByRole("link", { name: /Read lesson/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: /Read/ })).not.toBeInTheDocument();
   expect(screen.getByText("Locked")).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: /Integration/ })).not.toBeInTheDocument();
 });
@@ -125,7 +125,7 @@ it("keeps open and locked chapter actions unchanged", async () => {
 it.each([
   { label: "mixed statuses", statuses: ["passed", "open", "locked"], current: 1 },
   { label: "multiple open chapters after a retake", statuses: ["open", "passed", "open", "locked"], current: 0 },
-])("names the first open chapter near progress and preserves outline order: $label", async ({ statuses, current }) => {
+])("keeps continuation in the chapter outline with one progress summary: $label", async ({ statuses, current }) => {
   const chapters = statuses.map((status, idx) => ({ id: `chapter-${idx}`, idx, title: `Lesson ${idx + 1}`, status }));
   const passed = statuses.filter(status => status === "passed").length;
   const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({
@@ -134,16 +134,17 @@ it.each([
   vi.stubGlobal("fetch", fetch);
   render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
 
-  const continuation = await screen.findByRole("link", { name: `Continue: Lesson ${current + 1} →` });
-  expect(screen.getAllByRole("link", { name: /^Continue:/ })).toHaveLength(1);
+  const continuation = await screen.findByRole("link", { name: `Lesson ${current + 1} Continue →` });
+  expect(screen.queryByRole("link", { name: /^Continue:/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+  expect(screen.queryByText("A course in")).not.toBeInTheDocument();
   expect(continuation).toHaveAttribute("href", `/course/course/ch/${current}`);
   expect(continuation).not.toHaveAttribute("aria-haspopup");
-  expect(within(continuation.parentElement!).getByText(`${passed} of ${chapters.length} chapters mastered`)).toBeInTheDocument();
+  expect(screen.getAllByText(`${passed} of ${chapters.length} chapters mastered`)).toHaveLength(1);
   continuation.focus();
   expect(continuation).toHaveFocus();
 
   const outline = screen.getByRole("list");
-  expect(continuation.compareDocumentPosition(outline) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   const rows = within(outline).getAllByRole("listitem");
   expect(rows).toHaveLength(chapters.length);
   chapters.forEach((chapter, index) => {
@@ -170,10 +171,10 @@ it.each([
   render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
   await screen.findByRole("heading", { name: "No open chapters" });
   expect(screen.queryByRole("link", { name: /Continue/ })).not.toBeInTheDocument();
-  expect(screen.getByRole("progressbar", { name: "Course mastery" })).toBeInTheDocument();
+  expect(screen.getByText(`${statuses.filter(status => status === "passed").length} of ${statuses.length} chapters mastered`)).toBeInTheDocument();
 });
 
-it("keeps the full chapter title in the summary Continue link", async () => {
+it("keeps the full chapter title in the outline Continue link", async () => {
   const title = "Understanding how differential equations describe interconnected systems and their behavior over time";
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({
     course: { topic: "Long lesson titles" },
@@ -181,9 +182,9 @@ it("keeps the full chapter title in the summary Continue link", async () => {
     progress: { passed: 0, total: 1 },
   }) }));
   render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
-  const continuation = await screen.findByRole("link", { name: `Continue: ${title} →` });
+  const continuation = await screen.findByRole("link", { name: `${title} Continue →` });
   expect(continuation).toHaveAttribute("href", "/course/course/ch/3");
-  expect(continuation).toHaveTextContent(`Continue: ${title} →`);
+  expect(continuation).toHaveTextContent(`${title}Continue →`);
 });
 
 async function renderMasteredCourse() {
@@ -221,8 +222,8 @@ it.each([
     const row = rows[index];
     expect(within(row).getByText(chapter.title)).toBeVisible();
     if (chapter.status !== "passed") continue;
-    expect(within(row).getByText("Mastered")).toBeVisible();
-    const read = within(row).getByRole("link", { name: `Read lesson → ${chapter.title}` });
+    expect(within(row).getByRole("img", { name: "Completed" })).toBeVisible();
+    const read = within(row).getByRole("link", { name: `Read → ${chapter.title}` });
     const retake = within(row).getByRole("button", { name: `Retake mastery check → ${chapter.title}` });
     expect(within(row).getAllByRole("link")).toHaveLength(1);
     expect(within(row).getAllByRole("button")).toHaveLength(1);
@@ -264,7 +265,7 @@ it("safely cancels retaking with focus restored without mutation", async () => {
   expect(trigger).toHaveFocus();
   expect(fetch.mock.calls).toEqual([["/api/courses/course"]]);
   expect(push).not.toHaveBeenCalled();
-  expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
+  expect(screen.getByText("1 of 1 chapters mastered")).toBeInTheDocument();
 });
 
 it("submits only on explicit retake confirmation and preserves pending and error recovery", async () => {
@@ -327,7 +328,7 @@ it("lists actual prerequisites in learning order with passed and open states, pr
   expect(Array.from(outline.children).map(item => item.querySelector(".chapter-title")?.textContent)).toEqual([
     "Foundations", "Practice", "Bridge", "Advanced applications",
   ]);
-  expect(screen.getByRole("link", { name: "Continue: Practice →" })).toHaveAttribute("href", "/course/course/ch/1");
+  expect(screen.getByRole("link", { name: "Practice Continue →" })).toHaveAttribute("href", "/course/course/ch/1");
   expect(within(row).queryByRole("link")).not.toBeInTheDocument();
 });
 

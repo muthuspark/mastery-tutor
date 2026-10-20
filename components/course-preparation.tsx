@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import Link from "next/link";
+import { BackToLearning } from "./back-link";
 
 export type PreparationState = {
   preparationStatus?: "pending" | "generating" | "ready" | "failed";
@@ -23,6 +23,7 @@ export function CoursePreparation({ courseId, course, onRefresh }: { courseId: s
     : course.preparationStage === "repairing" ? "Refining the learning path after review."
     : "Building a focused path for your learning request.";
   return <main id="main-content" tabIndex={-1} className="page-shell">
+    <BackToLearning />
     <section className="max-w-2xl py-8" aria-labelledby="preparation-heading">
       <p className="eyebrow">Your learning path</p>
       <h1 id="preparation-heading" className="display mt-4 text-4xl leading-tight">{failed ? "Could not prepare your course" : "Preparing your course"}</h1>
@@ -31,7 +32,6 @@ export function CoursePreparation({ courseId, course, onRefresh }: { courseId: s
       {retry.isError ? <p role="alert" className="ui mt-4 text-sm text-[var(--accent-dark)]">{retry.error.message}</p> : null}
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         {failed ? <button type="button" className="button-primary ui" disabled={retry.isPending} onClick={() => retry.mutate()}>{retry.isPending ? "Trying again…" : "Try again"}</button> : null}
-        <Link href="/" className="button-secondary ui">Back to learning</Link>
       </div>
     </section>
   </main>;

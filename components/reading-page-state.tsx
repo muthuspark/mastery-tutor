@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink } from "./back-link";
 
 type ReadingPageStateProps =
   | { kind: "loading"; message: string }
@@ -23,7 +23,7 @@ export function ReadingPageState(props: ReadingPageStateProps) {
     <p role={props.pending || props.preparing ? "status" : "alert"} className="ui mt-5 text-sm text-[var(--muted)]">{props.message}</p>
     <div className="mt-8 flex flex-col gap-3 sm:flex-row">
       {props.onRetry ? <button type="button" className="button-primary ui" disabled={props.pending} onClick={props.onRetry}>{props.pending ? "Trying again…" : "Try again"}</button> : null}
-      <Link prefetch={false} href={props.backHref} className="button-secondary ui">Back to course</Link>
+      <BackLink prefetch={false} href={props.backHref}>Back to course</BackLink>
     </div>
   </section></main>;
 }

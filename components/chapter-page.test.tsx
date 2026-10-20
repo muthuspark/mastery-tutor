@@ -17,7 +17,7 @@ it.each(["passed", "open"])("loads a %s lesson and only prefetches assessments f
   vi.stubGlobal("fetch", fetch);
   render(<QueryClientProvider client={new QueryClient()}><ChapterPage /></QueryClientProvider>);
   await screen.findByText("Saved separation lesson");
-  expect(screen.getByRole("link", { name: "← Back to course" })).toHaveAttribute("href", "/course/course");
+  expect(screen.getByRole("link", { name: "Back to course" })).toHaveAttribute("href", "/course/course");
   if (status === "passed") {
     expect(fetch.mock.calls.map(([url]) => url)).toEqual(["/api/courses/course", "/api/chapters/chapter"]);
   } else {

@@ -15,7 +15,7 @@ export function CourseList() {
   return (
     <section className="studies-section" aria-labelledby="studies-title">
       <div className="studies-heading"><h2 id="studies-title" className="display text-3xl">Your studies</h2>{!isLoading && !isError ? <span className="subject-count ui shrink-0">{courses.length} {courses.length === 1 ? "subject" : "subjects"}</span> : null}</div>
-      {isLoading ? <p className="loading-state ui mt-8 text-sm text-[var(--muted)]" role="status">Loading your studies…</p> : isError ? <p className="ui mt-5 text-sm text-[var(--accent-dark)]" role="alert">Could not load your studies. <button className="text-button min-h-11 text-sm!" onClick={() => void refetch()}>Try again</button></p> : courses.length === 0 ? <p className="empty-studies"><span className="empty-studies__mark" aria-hidden="true">Your first study</span><span className="display block text-3xl">A fresh page.</span><span className="mt-3 block text-[var(--muted)]">Your learning paths will appear here. Begin with a subject you’re curious about.</span></p> : (
+      {isLoading ? <p className="loading-state ui mt-8 text-sm text-[var(--muted)]" role="status">Loading your studies…</p> : isError ? <p className="ui mt-5 text-sm text-[var(--accent-dark)]" role="alert">Could not load your studies. <button className="text-button min-h-11 text-sm!" onClick={() => void refetch()}>Try again</button></p> : courses.length === 0 ? <p className="empty-studies text-[var(--muted)]">Your studies will appear here.</p> : (
         <div className="studies-list">
           {courses.map((course) => {
             const { passed, total } = course.progress;

@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import { MermaidContent } from "@/components/mermaid-content";
 import { ReadingPageState } from "@/components/reading-page-state";
+import { BackLink } from "./back-link";
 
 type ChapterAdjustment = "easy" | "hard" | "regenerate";
 
@@ -107,7 +108,7 @@ export function ChapterPage() {
     }
   }
   const total = courseQuery.data?.chapters.length ?? 1;
-  return <><nav aria-label="Lesson navigation" className="lesson-nav page-shell"><Link href={`/course/${params.id}`} className="eyebrow inline-flex min-h-11 items-center underline-offset-4">← Back to course</Link></nav><main id="main-content" tabIndex={-1} className="reading-shell lesson-main"><header className="lesson-header mb-10"><div className="flex items-center justify-end gap-4"><span className="ui text-xs text-[var(--muted)]">{String(Number(params.idx) + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}</span></div><div className="mt-3 h-1 bg-[var(--line)]"><div className="h-1 bg-[var(--accent)]" style={{ width: `${((Number(params.idx) + 1) / total) * 100}%` }} /></div></header><MermaidContent html={chapterQuery.data.html} />{chapterQuery.data.chapter.pretest ? <p className="mt-12 border-t border-[var(--line)] pt-5 text-lg text-[var(--brown)]"><span className="font-bold text-[var(--ink)]">Before you continue.</span> {chapterQuery.data.chapter.pretest}</p> : null}<Link href={`/course/${params.id}/ch/${params.idx}/quiz`} className="button-primary ui mt-10 w-full">Check your understanding →</Link><section aria-label="Chapter adjustments" className="ui mt-6 text-center">
+  return <><main id="main-content" tabIndex={-1} className="reading-shell"><nav aria-label="Back navigation" className="mb-6"><BackLink href={`/course/${params.id}`}>Back to course</BackLink></nav><header className="lesson-header mb-10"><div className="flex items-center justify-end gap-4"><span className="ui text-xs text-[var(--muted)]">{String(Number(params.idx) + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}</span></div><div className="mt-3 h-1 bg-[var(--line)]"><div className="h-1 bg-[var(--accent)]" style={{ width: `${((Number(params.idx) + 1) / total) * 100}%` }} /></div></header><MermaidContent html={chapterQuery.data.html} />{chapterQuery.data.chapter.pretest ? <p className="mt-12 border-t border-[var(--line)] pt-5 text-lg text-[var(--brown)]"><span className="font-bold text-[var(--ink)]">Before you continue.</span> {chapterQuery.data.chapter.pretest}</p> : null}<Link href={`/course/${params.id}/ch/${params.idx}/quiz`} className="button-primary ui mt-10 w-full">Check your understanding →</Link><section aria-label="Chapter adjustments" className="ui mt-6 text-center">
     <div className="flex flex-wrap justify-center gap-5 text-xs">
       <button type="button" onClick={() => adjustment.mutate("easy")} disabled={adjustment.isPending} className="text-button disabled:cursor-wait disabled:opacity-60">Too easy</button>
       <button type="button" onClick={() => adjustment.mutate("hard")} disabled={adjustment.isPending} className="text-button disabled:cursor-wait disabled:opacity-60">Too hard</button>

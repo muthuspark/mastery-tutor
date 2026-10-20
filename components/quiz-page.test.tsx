@@ -120,7 +120,8 @@ it.each([
 ])("uses the correct passing action for $name", async ({ fields, label, href }) => {
   await mount(vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ...result, ...fields }) }));
   answer(1); next(); answer(2); next(); answer(3); submitAnswers();
-  expect(await screen.findByRole("link", { name: label })).toHaveAttribute("href", href);
+  const actions = await screen.findAllByRole("link", { name: label });
+  expect(actions.find((link) => link.classList.contains("button-primary"))).toHaveAttribute("href", href);
 });
 
 it("keeps failed attempts on the retry flow", async () => {
