@@ -98,19 +98,10 @@ export function CoursePage() {
                 </div>
               </li>
             );
-            const previousChapter = data.chapters.find((item) => item.idx === chapter.idx - 1);
-            const prerequisites = chapter.prerequisites ?? [];
-            const prerequisiteChapters = data.chapters.filter((item) => prerequisites.includes(item.idx)).sort((a, b) => a.idx - b.idx);
-            const missingPrerequisite = prerequisites.some((idx) => !data.chapters.some((item) => item.idx === idx));
             const content = <>
               <span className="ui text-xs font-bold" aria-hidden="true">{String(chapter.idx + 1).padStart(2, "0")}</span>
               <div>
                 <span className="chapter-title text-xl">{chapter.title}</span>
-                {chapter.status === "locked" ? <div className="chapter-unlock">
-                  <p>{previousChapter ? `Unlocks when you pass the mastery check for “${previousChapter.title}”${prerequisites.length > 0 ? " with all listed prerequisites mastered" : ""}.` : "Chapters unlock in sequence after the previous chapter’s mastery check is passed."}</p>
-                  {prerequisiteChapters.length > 0 ? <><p className="mt-3">Required prerequisites:</p><ul className="mt-1 space-y-1">{prerequisiteChapters.map((item) => <li key={item.id}>{item.title}: {item.status === "passed" ? "Mastered" : "Not yet mastered"}</li>)}</ul></> : null}
-                  {missingPrerequisite ? <p className="mt-3">A listed prerequisite is unavailable in this course. This chapter cannot unlock until all listed prerequisites are mastered.</p> : null}
-                </div> : null}
               </div>
               <span className="chapter-row-actions ui text-xs">
                 <span className="font-bold">{isOpen ? "Continue →" : "Locked"}</span>

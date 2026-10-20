@@ -134,7 +134,10 @@ h1, h2, h3 { text-wrap: balance; }
 .chapter-row--mastered .chapter-row-actions > span { color: var(--muted); font-weight: 600; }
 
 /* Reading and assessment share a narrow measure, serif content, and sans controls. */
-.lesson-header, .quiz-header { padding-bottom: 1.25rem; border-bottom: 1px solid var(--line); }
+.lesson-header, .quiz-header { padding-bottom: 1.25rem; }
+.quiz-header { border-bottom: 1px solid var(--line); }
+.lesson-nav { padding-block: 0.75rem 0; }
+.lesson-main { padding-top: 0.75rem; }
 .assessment-text { overflow-wrap: anywhere; }
 .assessment-heading, .assessment-prompt { font-size: 2.5rem; line-height: 1.2; }
 .assessment-body { max-width: 70ch; font-size: 1.25rem; line-height: 1.6; overflow-wrap: anywhere; }
