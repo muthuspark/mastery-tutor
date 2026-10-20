@@ -37,12 +37,25 @@ function rehypeMermaid() {
   };
 }
 
+function rehypeImages() {
+  return (tree: HastNode) => {
+    function visit(node: HastNode) {
+      if (node.tagName === "img") {
+        node.properties = { ...node.properties, loading: "lazy", decoding: "async" };
+      }
+      node.children?.forEach(visit);
+    }
+    visit(tree);
+  };
+}
+
 export async function renderMarkdown(markdown: string) {
   const file = await unified()
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkMath)
     .use(remarkRehype)
+    .use(rehypeImages)
     .use(rehypeMermaid)
     .use(rehypeKatex)
     .use(rehypeShiki, { themes: { light: "github-light" }, langs: ["ts", "js", "tsx", "jsx", "json", "bash", "python"] })

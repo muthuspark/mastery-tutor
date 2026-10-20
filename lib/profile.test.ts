@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { randomUUID } from "node:crypto";
 
 vi.mock("server-only", () => ({}));
+vi.mock("./wikipedia-images", () => ({ findWikipediaImages: vi.fn().mockResolvedValue([]) }));
 vi.mock("@/lib/db", async () => {
   const { default: Database } = await import("better-sqlite3");
   const { drizzle } = await import("drizzle-orm/better-sqlite3");

@@ -105,6 +105,8 @@ h1, h2, h3 { text-wrap: balance; }
 .course-begin:disabled:hover { background: var(--accent); }
 @media (max-width: 767px) { .site-header { padding-top: 1.25rem; } }
 .prose-editorial { color: var(--ink); overflow-wrap: anywhere; }
+.prose-editorial img { display: block; max-width: 100%; height: auto; margin: 2rem auto 0.75rem; }
+.prose-editorial p:has(> img) + p:has(> a:only-child) { margin-top: 0; font-size: 0.875rem; line-height: 1.5; }
 /* Preserve code and mathematical notation; wide displays scroll within the lesson. */
 .prose-editorial pre, .prose-editorial .katex { overflow-wrap: normal; }
 .prose-editorial .katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding-block: 0.25rem; }
