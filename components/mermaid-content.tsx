@@ -41,7 +41,7 @@ export function MermaidContent({ html }: MermaidContentProps) {
     if (!blocks?.length) return;
 
     void import("mermaid").then(async ({ default: mermaid }) => {
-      mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "base", themeVariables: { primaryColor: "#f5f3ef", primaryTextColor: "#1a1a1a", primaryBorderColor: "#8b7355", lineColor: "#c41e3a", secondaryColor: "#faf9f7", tertiaryColor: "#ffffff", fontFamily: "Georgia, serif" } });
+      mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "base", themeVariables: { primaryColor: "#faf9f5", primaryTextColor: "#141413", primaryBorderColor: "#87867f", lineColor: "#3d3d3a", secondaryColor: "#e3dacc", tertiaryColor: "#f5e3c7", fontFamily: "Arial, sans-serif" } });
       await Promise.all(Array.from(blocks).map(async (block, index) => {
         try {
           const { svg } = await mermaid.render(`mastery-tutor-diagram-${Date.now()}-${index}`, block.dataset.chart ?? "");
@@ -55,5 +55,5 @@ export function MermaidContent({ html }: MermaidContentProps) {
     return () => { cancelled = true; };
   }, [html]);
 
-  return <div ref={contentRef} className="prose prose-lg prose-editorial max-w-none prose-headings:font-[var(--display)] prose-headings:font-bold prose-headings:tracking-tight prose-a:text-[var(--accent)]" dangerouslySetInnerHTML={{ __html: html }} />;
+  return <div ref={contentRef} className="prose prose-lg prose-editorial max-w-none prose-headings:font-normal prose-headings:tracking-tight prose-a:text-[var(--accent)]" dangerouslySetInnerHTML={{ __html: html }} />;
 }

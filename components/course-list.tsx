@@ -13,19 +13,19 @@ export function CourseList() {
   } });
   const courses = data?.courses ?? [];
   return (
-    <section className="min-w-0" aria-labelledby="studies-title">
-      <div className="flex items-baseline justify-between gap-4"><h2 id="studies-title" className="display text-3xl">Your studies</h2>{!isLoading && !isError ? <span className="ui shrink-0 text-sm text-[var(--muted)]">{courses.length} {courses.length === 1 ? "subject" : "subjects"}</span> : null}</div>
-      {isLoading ? <p className="ui mt-5 text-sm text-[var(--muted)]" role="status">Loading your studies…</p> : isError ? <p className="ui mt-5 text-sm text-[var(--accent-dark)]" role="alert">Could not load your studies. <button className="text-button min-h-11 text-sm!" onClick={() => void refetch()}>Try again</button></p> : courses.length === 0 ? <p className="mt-5 text-lg text-[var(--muted)]">Your learning paths will appear here. Begin with a subject you’re curious about.</p> : (
-        <div className="mt-5 divide-y divide-[var(--line)] border-y border-[var(--line)]">
+    <section className="studies-section" aria-labelledby="studies-title">
+      <div className="studies-heading"><h2 id="studies-title" className="display text-3xl">Your studies</h2>{!isLoading && !isError ? <span className="subject-count ui shrink-0">{courses.length} {courses.length === 1 ? "subject" : "subjects"}</span> : null}</div>
+      {isLoading ? <p className="loading-state ui mt-8 text-sm text-[var(--muted)]" role="status">Loading your studies…</p> : isError ? <p className="ui mt-5 text-sm text-[var(--accent-dark)]" role="alert">Could not load your studies. <button className="text-button min-h-11 text-sm!" onClick={() => void refetch()}>Try again</button></p> : courses.length === 0 ? <p className="empty-studies"><span className="empty-studies__mark" aria-hidden="true">Your first study</span><span className="display block text-3xl">A fresh page.</span><span className="mt-3 block text-[var(--muted)]">Your learning paths will appear here. Begin with a subject you’re curious about.</span></p> : (
+        <div className="studies-list">
           {courses.map((course) => {
             const { passed, total } = course.progress;
             const percent = total > 0 ? Math.round((passed / total) * 100) : 0;
             const completed = total > 0 && passed === total;
             return (
-              <Link className="study-link group -mx-3 block px-3 py-6 no-underline transition-colors duration-200 hover:bg-[var(--paper-deep)]" href={`/course/${course.id}`} key={course.id}>
+              <Link className="study-link group" href={`/course/${course.id}`} key={course.id}>
                 <div className="flex items-baseline justify-between gap-4">
-                  <span className="min-w-0 break-words text-xl leading-snug group-hover:text-[var(--accent)] group-focus-visible:text-[var(--accent)]">{course.topic}</span>
-                  <span className="ui shrink-0 text-sm text-[var(--muted)] group-hover:text-[var(--accent)]">{completed ? "Review" : "Continue"} →</span>
+                  <span className="study-topic min-w-0">{course.topic}</span>
+                  <span className="study-action ui shrink-0 text-sm">{completed ? "Review" : "Continue"} →</span>
                 </div>
                 <div className="ui mt-3 flex justify-between gap-4 text-sm text-[var(--muted)]">
                   <span>{passed} of {total} chapters mastered</span>

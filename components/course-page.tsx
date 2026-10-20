@@ -16,9 +16,9 @@ export function CoursePage() {
   const [isRevisiting, setIsRevisiting] = useState(false);
   const [revisitError, setRevisitError] = useState("");
   const { data, isLoading, isError, refetch, isFetching, isFetched } = useQuery<CourseResponse>({ queryKey: ["course", params.id], queryFn: () => fetch(`/api/courses/${params.id}`).then((response) => { if (!response.ok) throw new Error("Could not load course"); return response.json(); }) });
-  if (isLoading && !isFetched) return <main className="page-shell"><p className="ui text-sm text-[var(--muted)]" role="status">Loading course…</p></main>;
+  if (isLoading && !isFetched) return <main id="main-content" tabIndex={-1} className="page-shell"><p className="loading-state ui text-sm text-[var(--muted)]" role="status">Loading course…</p></main>;
   if (isError || !data) return (
-    <main className="page-shell">
+    <main id="main-content" tabIndex={-1} className="page-shell">
       <h1 className="display text-4xl leading-none">Course unavailable</h1>
       <p className="ui mt-5 text-sm text-[var(--muted)]" role={isFetching ? "status" : "alert"}>{isFetching ? "Loading course…" : "Could not load this course."}</p>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -31,6 +31,7 @@ export function CoursePage() {
   const passed = data.chapters.filter((chapter) => chapter.status === "passed").length;
   const completed = total > 0 && passed === total;
   const percent = total > 0 ? Math.round((passed / total) * 100) : 0;
+  const nextChapter = data.chapters.find((chapter) => chapter.status === "open");
   function openRevisitDialog(chapter: Chapter) {
     setRevisitError("");
     setRevisitChapter(chapter);
@@ -48,8 +49,9 @@ export function CoursePage() {
     }
   }
   return (
-    <main className="page-shell">
-      <header className="border-b border-[var(--line)] pb-7">
+    <main id="main-content" tabIndex={-1} className="page-shell">
+      <nav aria-label="Back navigation" className="mb-6"><Link className="eyebrow" href="/">← All studies</Link></nav>
+      <header className="course-hero">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0 max-w-full flex-1 basis-72">
             <p className="ui text-xs uppercase tracking-[0.1em] text-[var(--muted)]">A course in</p>
@@ -63,9 +65,10 @@ export function CoursePage() {
           </div>
         </div>
       </header>
-      <div className="flex flex-wrap items-center justify-between gap-4 py-5">
+      <div className="course-toolbar">
         <div className="min-w-0 flex-1 basis-72">
           <p className="text-lg text-[var(--muted)]">{passed} of {total} chapters mastered</p>
+          {nextChapter ? <Link className="button-primary mt-4 max-w-full text-left" href={`/course/${params.id}/ch/${nextChapter.idx}`}><span className="min-w-0 [overflow-wrap:anywhere]">Continue: {nextChapter.title} →</span></Link> : null}
         </div>
         <a className="button-secondary ui shrink-0" href={`/api/courses/${params.id}/export`}>Export notes</a>
       </div>
@@ -76,7 +79,7 @@ export function CoursePage() {
           <Link href="/" className="button-secondary ui mt-6">Back to learning</Link>
         </section>
       ) : (
-        <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+        <ol className="chapter-list divide-y divide-[var(--line)]">
           {data.chapters.map((chapter) => {
             const isOpen = chapter.status === "open";
             const isPassed = chapter.status === "passed";
@@ -88,14 +91,25 @@ export function CoursePage() {
                   <span className="chapter-row-actions ui text-xs">
                     <span className="text-[var(--success)]">Mastered</span>
                     <Link className="chapter-read" href={`/course/${params.id}/ch/${chapter.idx}`} aria-label={`Read lesson → ${chapter.title}`}>Read lesson →</Link>
-                    <button type="button" className="text-button chapter-retake" aria-label={`Retake → ${chapter.title}`} aria-haspopup="dialog" onClick={() => openRevisitDialog(chapter)}>Retake →</button>
+                    <button type="button" className="text-button chapter-retake" aria-label={`Retake mastery check → ${chapter.title}`} aria-haspopup="dialog" onClick={() => openRevisitDialog(chapter)}>Retake →</button>
                   </span>
                 </div>
               </li>
             );
+            const previousChapter = data.chapters.find((item) => item.idx === chapter.idx - 1);
+            const prerequisites = chapter.prerequisites ?? [];
+            const prerequisiteChapters = data.chapters.filter((item) => prerequisites.includes(item.idx)).sort((a, b) => a.idx - b.idx);
+            const missingPrerequisite = prerequisites.some((idx) => !data.chapters.some((item) => item.idx === idx));
             const content = <>
               <span className="ui text-xs font-bold" aria-hidden="true">{String(chapter.idx + 1).padStart(2, "0")}</span>
-              <span className="chapter-title text-xl">{chapter.title}</span>
+              <div>
+                <span className="chapter-title text-xl">{chapter.title}</span>
+                {chapter.status === "locked" ? <div className="chapter-unlock">
+                  <p>{previousChapter ? `Unlocks when you pass the mastery check for “${previousChapter.title}”${prerequisites.length > 0 ? " with all listed prerequisites mastered" : ""}.` : "Chapters unlock in sequence after the previous chapter’s mastery check is passed."}</p>
+                  {prerequisiteChapters.length > 0 ? <><p className="mt-3">Required prerequisites:</p><ul className="mt-1 space-y-1">{prerequisiteChapters.map((item) => <li key={item.id}>{item.title}: {item.status === "passed" ? "Mastered" : "Not yet mastered"}</li>)}</ul></> : null}
+                  {missingPrerequisite ? <p className="mt-3">A listed prerequisite is unavailable in this course. This chapter cannot unlock until all listed prerequisites are mastered.</p> : null}
+                </div> : null}
+              </div>
               <span className="chapter-row-actions ui text-xs">
                 <span className="font-bold">{isOpen ? "Continue →" : "Locked"}</span>
               </span>

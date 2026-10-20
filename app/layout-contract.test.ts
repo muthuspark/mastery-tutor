@@ -37,7 +37,7 @@ describe("page container CSS contract", () => {
     const roots = rules.filter((rule) => rule.selectors.includes(":root"));
     expect(roots).toHaveLength(2);
     expect(roots[0].declarations).toMatchObject({
-      "--layout-max-wide": "76rem",
+      "--layout-max-wide": "80rem",
       "--layout-max-reading": "48rem",
       "--layout-gutter": "1.5rem",
       "--layout-page-space": "3.5rem",

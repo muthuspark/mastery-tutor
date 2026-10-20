@@ -149,7 +149,7 @@ it.each([
   chapters.forEach((chapter, index) => {
     expect(within(rows[index]).getByText(chapter.title)).toBeInTheDocument();
     if (chapter.status === "open") {
-      expect(within(rows[index]).getByRole("link", { name: `${chapter.title}Continue →` })).toHaveAttribute("href", `/course/course/ch/${chapter.idx}`);
+      expect(within(rows[index]).getByRole("link", { name: `${chapter.title} Continue →` })).toHaveAttribute("href", `/course/course/ch/${chapter.idx}`);
     }
   });
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
