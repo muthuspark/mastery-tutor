@@ -13,7 +13,7 @@ type RunOptions = {
   timeoutMs?: number;
 };
 
-export type CodexTask = "syllabus" | "chapter" | "quiz" | "grading";
+export type CodexTask = "syllabus" | "chapter" | "quiz" | "grading" | "review";
 
 export function modelFor(task: CodexTask, agent: "codex" | "claude" = "codex") {
   const prefix = agent === "claude" ? "CLAUDE" : "CODEX";

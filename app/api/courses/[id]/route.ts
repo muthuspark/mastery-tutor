@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { chapters, courses } from "@/lib/db/schema";
+import { coursePlanSchema, QualityError, reviewSchema, syllabusGraphIssues } from "@/lib/quality-contracts";
+import { runAgentObject } from "@/lib/agent";
+import { REVIEW_PROMPT } from "@/lib/quality";
+import { learnerProfilePrompt } from "@/lib/profile";
+import { enqueueGenerationJob, invalidateChapterGeneration } from "@/lib/generation";
 
 const syllabusUpdateSchema = z.object({
   chapters: z.array(
@@ -51,7 +56,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  const existing = db.select().from(chapters).where(eq(chapters.courseId, id)).all();
+  const existing = db.select().from(chapters).where(eq(chapters.courseId, id)).orderBy(asc(chapters.idx)).all();
   const existingIds = new Set(existing.map((chapter) => chapter.id));
   if (body.data.chapters.some((chapter) => !existingIds.has(chapter.id))) {
     return NextResponse.json(
@@ -60,14 +65,41 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  db.transaction((tx) => {
+  if (new Set(body.data.chapters.map((chapter) => chapter.id)).size !== body.data.chapters.length) return NextResponse.json({ error: { code: "invalid_input", message: "A chapter cannot be edited twice in one request." } }, { status: 400 });
+  const edits = new Map(body.data.chapters.map((chapter) => [chapter.id, chapter]));
+  const merged = existing.map((chapter) => ({ ...chapter, ...edits.get(chapter.id) }));
+  if (syllabusGraphIssues(merged).length) return NextResponse.json({ error: { code: "invalid_input", message: "Every prerequisite must identify an earlier chapter, without duplicates. Chapter titles must be distinct." } }, { status: 400 });
+  if (course.qualityPolicyVersion) {
+    if (course.preparationStatus !== "ready" || !course.generationAgent) return NextResponse.json({ error: { code: "preparing", message: "Wait for course preparation before editing." } }, { status: 409 });
+    const plan = coursePlanSchema.safeParse({ topic: course.topic, brief: course.brief, chapters: merged });
+    if (!plan.success) return NextResponse.json({ error: { code: "invalid_input", message: "The edited outline is incomplete." } }, { status: 400 });
+    try {
+      const review = reviewSchema.parse(await runAgentObject(course.generationAgent, "review", `${REVIEW_PROMPT}\n${learnerProfilePrompt()}\nLearning request: ${JSON.stringify(course.learningRequest)}\nArtifact: syllabus\nDraft: ${JSON.stringify(plan.data)}`, reviewSchema));
+      if (review.issues.some((issue) => issue.severity === "blocking")) throw new QualityError();
+    } catch (error) {
+      return NextResponse.json({ error: { code: error instanceof QualityError ? "quality_rejected" : "review_failed", message: error instanceof QualityError ? "The edited outline needs revision to fit the course goal and chapter coverage." : "Could not review these edits. Try again.", retryable: true } }, { status: error instanceof QualityError ? 422 : 502 });
+    }
+  }
+
+  const saved = db.transaction((tx) => {
+    const current = tx.select().from(courses).where(eq(courses.id, id)).get();
+    if (!current || current.startedAt || current.preparationVersion !== course.preparationVersion) return false;
     for (const chapter of body.data.chapters) {
       tx.update(chapters)
         .set({ title: chapter.title, objectives: chapter.objectives, prerequisites: chapter.prerequisites })
         .where(eq(chapters.id, chapter.id))
         .run();
     }
+    if (course.qualityPolicyVersion) {
+      tx.update(courses).set({ preparationVersion: course.preparationVersion + 1 }).where(eq(courses.id, id)).run();
+      for (const chapter of existing) {
+        const invalidated = invalidateChapterGeneration(chapter.id);
+        if (invalidated && chapter.status === "open") enqueueGenerationJob("chapter", chapter.id, invalidated.contentGenerationVersion);
+      }
+    }
+    return true;
   });
+  if (!saved) return NextResponse.json({ error: { code: "course_changed", message: "The course changed while reviewing these edits. Reload it and try again." } }, { status: 409 });
 
   return NextResponse.json({ updated: body.data.chapters.length });
 }

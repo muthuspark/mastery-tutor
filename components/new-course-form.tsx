@@ -6,10 +6,7 @@ import { useRouter } from "next/navigation";
 type Agent = "codex" | "claude";
 
 const generationStages = [
-  { title: "Finding the essential ideas", detail: "Reading the shape of your topic" },
-  { title: "Ordering the path", detail: "Putting each idea where it can do the most work" },
-  { title: "Shaping your chapters", detail: "Turning the sequence into something you can follow" },
-  { title: "Preparing your first lesson", detail: "The path is almost ready" },
+  { title: "Saving your request", detail: "Creating your saved course" },
 ];
 
 export function NewCourseForm() {
@@ -22,7 +19,7 @@ export function NewCourseForm() {
   const discoveringAgents = useRef(false);
   const [availableAgents, setAvailableAgents] = useState<Agent[]>([]);
   const [agent, setAgent] = useState<Agent | "">("");
-  const [generationStage, setGenerationStage] = useState(0);
+  const generationStage = 0;
   const topicRef = useRef<HTMLTextAreaElement>(null);
 
   const discoverAgents = useCallback(() => {
@@ -50,13 +47,7 @@ export function NewCourseForm() {
     void discoverAgents();
   }
 
-  useEffect(() => {
-    if (!isSubmitting) return;
-    const timer = window.setInterval(() => {
-      setGenerationStage((stage) => Math.min(stage + 1, generationStages.length - 1));
-    }, 6500);
-    return () => window.clearInterval(timer);
-  }, [isSubmitting]);
+
 
   async function changeAgent(nextAgent: Agent) {
     setAgent(nextAgent);
@@ -66,7 +57,7 @@ export function NewCourseForm() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSubmitting || isLoadingAgents || agentDiscoveryFailed || availableAgents.length === 0) return;
-    setIsSubmitting(true); setGenerationStage(0); setError("");
+    setIsSubmitting(true); setError("");
     try {
       const response = await fetch("/api/courses", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ topic, ...(agent ? { agent } : {}) }) });
       const body = await response.json().catch(() => null);
@@ -144,7 +135,7 @@ function GenerationOverlay({ stage, agent, returnFocusRef }: { stage: number; ag
             <h1 ref={titleRef} tabIndex={-1} id="generation-title" className="display generation-title">Building your learning path</h1>
             <p id="generation-detail" role="status" aria-atomic="true" className="generation-detail">{current.detail}.</p>
             <div className="generation-progress" aria-hidden="true"><span style={{ width: `${((stage + 1) / generationStages.length) * 100}%` }} /></div>
-            <p className="ui generation-time">This usually takes about a minute.</p>
+            <p className="ui generation-time">Writing and review will continue on your course page.</p>
           </section>
 
           <div className="generation-desk" aria-hidden="true">

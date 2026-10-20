@@ -21,7 +21,9 @@ import { GET, POST } from "@/app/api/courses/route";
 import { db } from "@/lib/db";
 import { chapters, courses, generationJobs } from "@/lib/db/schema";
 import { runAgentObject } from "@/lib/agent";
-import { syllabusSchema } from "@/lib/schemas";
+import { samplePlan } from "../test/quality-fixtures";
+import { claimGenerationJob } from "@/lib/generation";
+import { processGenerationJob } from "@/lib/generation-worker";
 
 beforeEach(() => {
   db.delete(generationJobs).run();
@@ -34,18 +36,17 @@ it.each([
   ["i am having trouble understanding differential equations, help me master it", "Differential Equations"],
   ["Help me learn distributed systems for backend engineering interviews", "Distributed Systems for Backend Interviews"],
 ])("stores the generated title for learning request: %s", async (request, title) => {
-  vi.mocked(runAgentObject).mockResolvedValueOnce(syllabusSchema.parse({
-    topic: title,
-    chapters: Array.from({ length: 6 }, (_, idx) => ({ title: `Chapter ${idx}`, objectives: ["Learn"], prerequisites: [] })),
-  }));
+  vi.mocked(runAgentObject).mockResolvedValueOnce({ ...samplePlan(), topic: title }).mockResolvedValueOnce({ issues: [] });
   const response = await POST(new Request("http://localhost/api/courses", { method: "POST", body: JSON.stringify({ topic: request }) }));
-  expect(response.status).toBe(201);
+  expect(response.status).toBe(202);
   const { courseId } = await response.json();
-  expect(runAgentObject).toHaveBeenCalledWith("codex", "syllabus", expect.stringContaining(request), syllabusSchema);
+  const job = db.select().from(generationJobs).where(eq(generationJobs.targetId, courseId)).get()!;
+  expect(await processGenerationJob(claimGenerationJob(job.id, "test")!, "test")).toBe("completed");
+  expect(runAgentObject).toHaveBeenCalledWith("codex", "syllabus", expect.stringContaining(request), expect.anything());
   expect(db.select().from(courses).where(eq(courses.id, courseId)).get()?.topic).toBe(title);
   const listed = await (await GET()).json();
   expect(listed.courses[0].topic).toBe(title);
-  expect(listed.courses[0].progress.total).toBe(6);
+  expect(listed.courses[0].progress.total).toBe(1);
 });
 
 it("returns current mastery counts for every course, including empty and reopened courses", async () => {

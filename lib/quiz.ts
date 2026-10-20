@@ -1,13 +1,15 @@
 import { and, asc, desc, eq, lte } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
-import { answers, attempts, chapters, questions, reviewItems } from "@/lib/db/schema";
+import { answers, attempts, chapters, courses, questions, reviewItems } from "@/lib/db/schema";
 import { runAgentObject, type Agent } from "@/lib/agent";
 import { QUIZ_PROMPT, GRADING_PROMPT } from "@/lib/prompts";
 import { gradeSchema, quizSchema } from "@/lib/schemas";
 import { balanceQuizOptions } from "@/lib/assessment-quality";
 import type { Quiz } from "@/lib/schemas";
 import { learnerProfilePrompt } from "@/lib/profile";
+import { courseTeachingContext } from "./course-context";
+import { generateReviewedObject } from "./quality";
 
 export function normalizeAnswer(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
@@ -42,13 +44,18 @@ export async function generateValidQuiz(
   return { ...generated, questions: balanceQuizOptions(generated.questions) };
 }
 
-export async function generateQuiz(chapterId: string, agent: Agent = "codex", generationVersion?: number) {
+export async function generateQuiz(chapterId: string, agent: Agent = "codex", generationVersion?: number, guard: () => void = () => {}) {
   const chapter = db.select().from(chapters).where(eq(chapters.id, chapterId)).get();
   if (!chapter) throw new Error("Chapter not found");
   const version = generationVersion ?? chapter.contentGenerationVersion;
   if (version !== chapter.contentGenerationVersion) throw new Error("Quiz generation is stale");
-  const prompt = `${QUIZ_PROMPT}\n${learnerProfilePrompt()}\nChapter: ${chapter.title}\nObjectives: ${chapter.objectives.join("; ")}`;
-  const generated = await generateValidQuiz(agent, prompt);
+  const course = db.select().from(courses).where(eq(courses.id, chapter.courseId)).get();
+  if (course?.qualityPolicyVersion && (!chapter.content || chapter.contentGenerationStatus !== "ready")) throw new Error("Quiz lesson is not ready or is stale");
+  const prompt = [QUIZ_PROMPT, learnerProfilePrompt(), `Chapter: ${chapter.title}`, `Objectives: ${chapter.objectives.join("; ")}`,
+    ...(course?.qualityPolicyVersion ? [courseTeachingContext(course), `Accepted lesson (JSON data): ${JSON.stringify(chapter.content)}`, "Assess the new capability through reasoning and new-case applications solvable from this lesson and supported prerequisites. Do not require material from later chapters. Do not copy sentences merely to test recognition."] : [])].join("\n");
+  const generated = course?.qualityPolicyVersion
+    ? await generateReviewedObject(agent, "quiz", prompt, quizSchema, { targetId: chapterId, normalize: (quiz) => ({ ...quiz, questions: balanceQuizOptions(quiz.questions) }) })
+    : await generateValidQuiz(agent, prompt);
   const balancedQuestions = generated.questions;
   const now = new Date();
   const rows = balancedQuestions.map((question) => ({
@@ -65,6 +72,7 @@ export async function generateQuiz(chapterId: string, agent: Agent = "codex", ge
     createdAt: now,
   }));
   db.transaction((tx) => {
+    guard();
     const current = tx.select().from(chapters).where(eq(chapters.id, chapterId)).get();
     if (!current || current.contentGenerationVersion !== version) throw new Error("Quiz generation is stale");
     tx.insert(questions).values(rows).run();

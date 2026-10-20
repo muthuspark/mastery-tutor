@@ -103,6 +103,6 @@ describe("quiz route cache validation", () => {
     expect(response.status).toBe(200);
     expect(db.select().from(questions).where(eq(questions.id, staleId)).get()).toBeUndefined();
     expect(db.select().from(questions).where(eq(questions.id, attemptedId)).get()).toBeDefined();
-    expect(generateQuiz).toHaveBeenCalledWith(chapterId, "codex", 1);
+    expect(generateQuiz).toHaveBeenCalledWith(chapterId, "codex", 1, expect.any(Function));
   });
 });

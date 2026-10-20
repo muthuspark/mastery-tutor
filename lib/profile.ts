@@ -14,8 +14,7 @@ export function saveProfile(aboutMe: string) {
   return { aboutMe };
 }
 
-export function learnerProfilePrompt() {
-  const { aboutMe } = getProfile();
+export function learnerProfilePrompt(aboutMe = getProfile().aboutMe) {
   if (!aboutMe) return "No learner background provided. Explain clearly and accessibly without assuming an age, school or college status, or educational stage.";
   return [
     "Use the learner background below to tailor vocabulary, depth, prerequisite coverage, and relevant examples to their experience and goals. Do not assume expertise in unrelated subjects or infer an educational stage.",

@@ -10,11 +10,11 @@ import { ReadingPageState } from "@/components/reading-page-state";
 type ChapterAdjustment = "easy" | "hard" | "regenerate";
 
 type CourseChapter = { id: string; idx: number; title: string; status: "locked" | "open" | "passed" };
-type CourseResponse = { course: { topic: string }; chapters: CourseChapter[] };
+type CourseResponse = { course: { topic: string; qualityPolicyVersion?: number | null }; chapters: CourseChapter[] };
 type ChapterResponse = { chapter: CourseChapter & { pretest: string | null }; html: string };
 
 class ReadyContentError extends Error {
-  constructor(message: string, readonly retryable: boolean, readonly status: number) {
+  constructor(message: string, readonly retryable: boolean, readonly status: number, readonly generationFailed = false) {
     super(message);
     this.name = "ReadyContentError";
   }
@@ -24,20 +24,21 @@ async function fetchReadyJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
   if (response.status === 202) throw new ReadyContentError("generation_pending", true, 202);
   if (!response.ok) {
-    const body = await response.json().catch(() => null) as { error?: { message?: string; retryable?: boolean } } | null;
-    throw new ReadyContentError(body?.error?.message ?? "Could not load generated content", body?.error?.retryable === true, response.status);
+    const body = await response.json().catch(() => null) as { error?: { message?: string; retryable?: boolean; code?: string } } | null;
+    throw new ReadyContentError(body?.error?.message ?? "Could not load generated content", body?.error?.retryable === true, response.status, body?.error?.code === "generation_failed");
   }
   return response.json();
 }
 
-const retryReadyContent = (failureCount: number, error: Error) => error instanceof ReadyContentError && error.retryable && failureCount < 45;
+const retryReadyContent = (failureCount: number, error: Error) => error instanceof ReadyContentError && !error.generationFailed && error.retryable && failureCount < 45;
 const retryReadyContentDelay = () => 2_000;
 
 export function ChapterPage() {
   const params = useParams<{ id: string; idx: string }>(); const queryClient = useQueryClient();
   const courseQuery = useQuery<CourseResponse>({ queryKey: ["course", params.id], queryFn: () => fetchReadyJson(`/api/courses/${params.id}`) });
   const chapter = courseQuery.data?.chapters.find((item) => item.idx === Number(params.idx));
-  const chapterQuery = useQuery<ChapterResponse>({ queryKey: ["chapter", chapter?.id], enabled: Boolean(chapter?.id), queryFn: () => fetchReadyJson(`/api/chapters/${chapter?.id}`), retry: retryReadyContent, retryDelay: retryReadyContentDelay });
+  const reviewed = Boolean(courseQuery.data?.course.qualityPolicyVersion);
+  const chapterQuery = useQuery<ChapterResponse>({ queryKey: ["chapter", chapter?.id], enabled: Boolean(chapter?.id), queryFn: () => fetchReadyJson(`/api/chapters/${chapter?.id}`), retry: (count, error) => reviewed && error instanceof ReadyContentError && error.status === 202 ? true : retryReadyContent(count, error), retryDelay: retryReadyContentDelay });
   useEffect(() => {
     // Rereading completed lessons must not generate quizzes or later lessons.
     if (!chapter || chapter.status === "passed" || !chapterQuery.data || !courseQuery.data) return;
@@ -68,10 +69,17 @@ export function ChapterPage() {
     },
     // An explicit learner action is required to retry any adjustment.
     retry: false,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chapter", chapter?.id] }),
+    onSuccess: () => reviewed ? queryClient.resetQueries({ queryKey: ["chapter", chapter?.id] }) : queryClient.invalidateQueries({ queryKey: ["chapter", chapter?.id] }),
   });
-  // Recovery only re-reads the failed resource, never resets or regenerates it.
-  const recovery = useMutation({ mutationFn: async () => { await (courseQuery.isError ? courseQuery.refetch() : chapterQuery.refetch()); } });
+  // Only an explicit recovery action restarts a terminally failed reviewed artifact.
+  const recovery = useMutation({ mutationFn: async () => {
+    if (reviewed && chapterQuery.error instanceof ReadyContentError && chapterQuery.error.generationFailed) {
+      const response = await fetch(`/api/chapters/${chapter?.id}/regenerate`, { method: "POST" });
+      if (!response.ok) throw new Error("Could not restart chapter preparation. Try again.");
+    }
+    await (courseQuery.isError ? courseQuery.refetch() : chapterQuery.refetch());
+  }, retry: false });
+  if (reviewed && chapterQuery.failureReason instanceof ReadyContentError && chapterQuery.failureReason.status === 202 && !chapterQuery.data) return <ReadingPageState kind="failure" heading="Chapter still preparing" message="Your chapter is being written and reviewed. You can return to the course while preparation continues." backHref={`/course/${params.id}`} preparing />;
   if (!recovery.isPending && (courseQuery.isLoading || chapterQuery.isLoading)) return <ReadingPageState kind="loading" message="Loading chapter…" />;
   const loadError = courseQuery.isError ? courseQuery.error : chapterQuery.error;
   const status = loadError instanceof ReadyContentError ? loadError.status : undefined;
@@ -81,7 +89,7 @@ export function ChapterPage() {
     return <ReadingPageState
       kind="failure"
       heading={recovery.isPending ? "Loading chapter" : unavailable ? "Chapter unavailable" : preparing ? "Chapter still preparing" : "Could not load chapter"}
-      message={recovery.isPending ? "Trying again…" : status === 403 ? "This chapter is locked. Complete the earlier chapters before reading it." : unavailable ? "This chapter is unavailable. Return to the course to choose a chapter." : preparing ? "Your chapter is still being prepared. Try again in a moment, or return to the course while you wait." : "Could not load this chapter. Try again, or return to the course."}
+      message={recovery.isError ? recovery.error.message : recovery.isPending ? "Trying again…" : status === 403 ? "This chapter is locked. Complete the earlier chapters before reading it." : unavailable ? "This chapter is unavailable. Return to the course to choose a chapter." : preparing ? "Your chapter is still being prepared. Try again in a moment, or return to the course while you wait." : "Could not load this chapter. Try again, or return to the course."}
       backHref={`/course/${params.id}`}
       pending={recovery.isPending}
       preparing={preparing}

@@ -5,11 +5,9 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { chapters, courses } from "@/lib/db/schema";
 import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
-import { agentForRequest, agentSchema, AGENT_COOKIE, noAgentError, runAgentObject } from "@/lib/agent";
+import { agentForRequest, agentSchema, AGENT_COOKIE, noAgentError } from "@/lib/agent";
 import { enqueueGenerationJob } from "@/lib/generation";
-import { SYLLABUS_PROMPT, topicPrompt } from "@/lib/prompts";
-import { syllabusSchema } from "@/lib/schemas";
-import { learnerProfilePrompt } from "@/lib/profile";
+import { QUALITY_POLICY_VERSION } from "@/lib/quality-contracts";
 
 const createCourseSchema = z.object({
   topic: z.string().trim().min(3).max(500),
@@ -56,34 +54,15 @@ export async function POST(request: Request) {
   try {
     const agent = await agentForRequest(request, parsed.data.agent);
     if (!agent) throw noAgentError();
-    const syllabus = await runAgentObject(
-      agent,
-      "syllabus",
-      `${SYLLABUS_PROMPT}\n${learnerProfilePrompt()}\n${topicPrompt(parsed.data.topic)}`,
-      syllabusSchema,
-    );
     const courseId = randomUUID();
     const now = new Date();
-    const chapterRows = syllabus.chapters.map((chapter, idx) => ({
-      id: randomUUID(),
-      courseId,
-      idx,
-      title: chapter.title,
-      objectives: chapter.objectives,
-      prerequisites: chapter.prerequisites,
-      status: idx === 0 ? "open" as const : "locked" as const,
-      createdAt: now,
-    }));
-
     db.transaction((tx) => {
       tx.insert(courses)
-        .values({ id: courseId, topic: syllabus.topic, level: "foundational", createdAt: now })
+        .values({ id: courseId, topic: parsed.data.topic.slice(0, 100), learningRequest: parsed.data.topic, qualityPolicyVersion: QUALITY_POLICY_VERSION, generationAgent: agent, preparationStatus: "pending", preparationStage: "planning", preparationUpdatedAt: now, createdAt: now })
         .run();
-      tx.insert(chapters).values(chapterRows).run();
+      enqueueGenerationJob("course", courseId, 1, now);
     });
-    if (chapterRows[0]) enqueueGenerationJob("chapter", chapterRows[0].id, 1, now);
-
-    const response = NextResponse.json({ courseId }, { status: 201 });
+    const response = NextResponse.json({ courseId, status: "pending" }, { status: 202 });
     response.cookies.set(AGENT_COOKIE, agent, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 31_536_000 });
     return response;
   } catch (error) {

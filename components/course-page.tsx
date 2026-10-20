@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { RevisitDialog } from "@/components/revisit-dialog";
+import { CoursePreparation, type PreparationState } from "./course-preparation";
 
 type Chapter = { id: string; idx: number; title: string; prerequisites: number[]; status: "locked" | "open" | "passed" };
-type CourseResponse = { course: { topic: string }; chapters: Chapter[]; progress: { passed: number; total: number } };
+type CourseResponse = { course: { topic: string } & PreparationState; chapters: Chapter[]; progress: { passed: number; total: number } };
 
 export function CoursePage() {
   const params = useParams<{ id: string }>();
@@ -15,7 +16,7 @@ export function CoursePage() {
   const [revisitChapter, setRevisitChapter] = useState<Chapter | null>(null);
   const [isRevisiting, setIsRevisiting] = useState(false);
   const [revisitError, setRevisitError] = useState("");
-  const { data, isLoading, isError, refetch, isFetching, isFetched } = useQuery<CourseResponse>({ queryKey: ["course", params.id], queryFn: () => fetch(`/api/courses/${params.id}`).then((response) => { if (!response.ok) throw new Error("Could not load course"); return response.json(); }) });
+  const { data, isLoading, isError, refetch, isFetching, isFetched } = useQuery<CourseResponse>({ queryKey: ["course", params.id], queryFn: () => fetch(`/api/courses/${params.id}`).then((response) => { if (!response.ok) throw new Error("Could not load course"); return response.json(); }), refetchInterval: (query) => ["pending", "generating"].includes(query.state.data?.course.preparationStatus ?? "") ? 2_000 : false });
   if (isLoading && !isFetched) return <main id="main-content" tabIndex={-1} className="page-shell"><p className="loading-state ui text-sm text-[var(--muted)]" role="status">Loading course…</p></main>;
   if (isError || !data) return (
     <main id="main-content" tabIndex={-1} className="page-shell">
@@ -27,6 +28,7 @@ export function CoursePage() {
       </div>
     </main>
   );
+  if (data.course.preparationStatus && data.course.preparationStatus !== "ready") return <CoursePreparation courseId={params.id} course={data.course} onRefresh={refetch} />;
   const total = data.chapters.length;
   const passed = data.chapters.filter((chapter) => chapter.status === "passed").length;
   const completed = total > 0 && passed === total;

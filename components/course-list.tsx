@@ -3,14 +3,14 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
-type Course = { id: string; topic: string; createdAt: string; progress: { passed: number; total: number } };
+type Course = { id: string; topic: string; createdAt: string; preparationStatus?: string; progress: { passed: number; total: number } };
 
 export function CourseList() {
   const { data, isLoading, isError, refetch } = useQuery<{ courses: Course[] }>({ queryKey: ["courses"], queryFn: async () => {
     const response = await fetch("/api/courses");
     if (!response.ok) throw new Error("Could not load your studies");
     return response.json();
-  } });
+  }, refetchInterval: (query) => query.state.data?.courses.some((course) => ["pending", "generating"].includes(course.preparationStatus ?? "")) ? 5_000 : false });
   const courses = data?.courses ?? [];
   return (
     <section className="studies-section" aria-labelledby="studies-title">
@@ -21,19 +21,20 @@ export function CourseList() {
             const { passed, total } = course.progress;
             const percent = total > 0 ? Math.round((passed / total) * 100) : 0;
             const completed = total > 0 && passed === total;
+            const preparing = course.preparationStatus && course.preparationStatus !== "ready";
             return (
               <Link className="study-link group" href={`/course/${course.id}`} key={course.id}>
                 <div className="flex items-baseline justify-between gap-4">
                   <span className="study-topic min-w-0">{course.topic}</span>
-                  <span className="study-action ui shrink-0 text-sm">{completed ? "Review" : "Continue"} →</span>
+                  <span className="study-action ui shrink-0 text-sm">{preparing ? course.preparationStatus === "failed" ? "Try again" : "View status" : completed ? "Review" : "Continue"} →</span>
                 </div>
                 <div className="ui mt-3 flex justify-between gap-4 text-sm text-[var(--muted)]">
-                  <span>{passed} of {total} chapters mastered</span>
-                  <span>{percent}%</span>
+                  <span>{preparing ? course.preparationStatus === "failed" ? "Preparation needs attention" : "Preparing your course" : `${passed} of ${total} chapters mastered`}</span>
+                  {!preparing ? <span>{percent}%</span> : null}
                 </div>
-                <div className="mt-2.5 h-1 overflow-hidden bg-[var(--line)]" role="progressbar" aria-label={`${course.topic} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-valuetext={`${passed} of ${total} chapters mastered`}>
+                {!preparing ? <div className="mt-2.5 h-1 overflow-hidden bg-[var(--line)]" role="progressbar" aria-label={`${course.topic} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-valuetext={`${passed} of ${total} chapters mastered`}>
                   <div className={`h-full ${completed ? "bg-[var(--success)]" : "bg-[var(--accent)]"}`} style={{ width: `${percent}%` }} />
-                </div>
+                </div> : null}
               </Link>
             );
           })}

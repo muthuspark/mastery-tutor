@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import { integer, real, sqliteTable, text, uniqueIndex, index } from "drizzle-orm/sqlite-core";
+import type { CourseBrief, TeachingPlan } from "../quality-contracts";
 
 const timestamps = {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
@@ -15,6 +16,15 @@ export const courses = sqliteTable("courses", {
   id: text("id").primaryKey(),
   topic: text("topic").notNull(),
   level: text("level").notNull().default("foundational"),
+  learningRequest: text("learning_request"),
+  brief: text("brief", { mode: "json" }).$type<CourseBrief | null>(),
+  qualityPolicyVersion: integer("quality_policy_version"),
+  generationAgent: text("generation_agent", { enum: ["codex", "claude"] }),
+  preparationStatus: text("preparation_status", { enum: ["pending", "generating", "ready", "failed"] }).notNull().default("ready"),
+  preparationStage: text("preparation_stage", { enum: ["planning", "reviewing", "repairing"] }),
+  preparationError: text("preparation_error"),
+  preparationUpdatedAt: integer("preparation_updated_at", { mode: "timestamp_ms" }),
+  preparationVersion: integer("preparation_version").notNull().default(1),
   startedAt: integer("started_at", { mode: "timestamp_ms" }),
   completedAt: integer("completed_at", { mode: "timestamp_ms" }),
   ...timestamps,
@@ -30,6 +40,7 @@ export const chapters = sqliteTable(
     idx: integer("idx").notNull(),
     title: text("title").notNull(),
     objectives: text("objectives", { mode: "json" }).$type<string[]>().notNull(),
+    teachingPlan: text("teaching_plan", { mode: "json" }).$type<TeachingPlan | null>(),
     prerequisites: text("prerequisites", { mode: "json" }).$type<number[]>().notNull(),
     content: text("content"),
     pretest: text("pretest"),
@@ -63,7 +74,7 @@ export const generationJobs = sqliteTable(
   "generation_jobs",
   {
     id: text("id").primaryKey(),
-    artifactType: text("artifact_type", { enum: ["chapter", "quiz"] }).notNull(),
+    artifactType: text("artifact_type", { enum: ["course", "chapter", "quiz"] }).notNull(),
     targetId: text("target_id").notNull(),
     generationVersion: integer("generation_version").notNull(),
     status: text("status", { enum: ["pending", "running", "completed", "failed"] })

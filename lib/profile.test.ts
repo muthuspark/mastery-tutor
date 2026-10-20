@@ -26,7 +26,8 @@ import { runAgentObject } from "./agent";
 import { claimGenerationJob } from "./generation";
 import { processGenerationJob } from "./generation-worker";
 import { generateQuiz, gradeAnswer } from "./quiz";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { samplePlan } from "../test/quality-fixtures";
 
 const put = (value: unknown) => PUT(new Request("http://localhost/api/profile", { method: "PUT", body: JSON.stringify(value) }));
 beforeEach(() => { db.delete(learnerProfile).run(); vi.mocked(runAgentObject).mockReset(); });
@@ -58,27 +59,32 @@ describe("learner profile", () => {
 
   it("uses the latest profile for syllabus, chapter, quiz, and feedback without changing saved content on save", async () => {
     saveProfile("Experienced engineer");
-    vi.mocked(runAgentObject).mockResolvedValueOnce({ topic: "Statistics", chapters: [{ title: "Foundations", objectives: ["Understand"], prerequisites: [] }] });
+    vi.mocked(runAgentObject).mockImplementation(async (_agent, task) => {
+      if (task === "syllabus") return { ...samplePlan(), topic: "Statistics" };
+      if (task === "review") return { issues: [] };
+      if (task === "chapter") return { content: "A lesson", summary: "Summary", pretest: "Think" };
+      if (task === "quiz") return { questions: Array.from({ length: 10 }, (_, i) => ({ type: "mcq", prompt: `Q${i}`, options: ["A", "B", "C", "D"], modelAnswer: "A", rubric: "Accuracy", conceptTag: "probability" })) };
+      return { score: 1, feedback: "Good", missedConcept: null };
+    });
     const response = await POST(new Request("http://localhost/api/courses", { method: "POST", body: JSON.stringify({ topic: "Statistics" }) }));
-    expect(response.status).toBe(201);
-    expect(vi.mocked(runAgentObject).mock.calls[0][2]).toContain("Experienced engineer");
+    expect(response.status).toBe(202);
     const { courseId } = await response.json();
+    const planning = db.select().from(generationJobs).where(and(eq(generationJobs.targetId, courseId), eq(generationJobs.artifactType, "course"))).get()!;
+    expect(await processGenerationJob(claimGenerationJob(planning.id, "profile-planner")!, "profile-planner", "codex")).toBe("completed");
+    expect(vi.mocked(runAgentObject).mock.calls.find(call => call[1] === "syllabus")![2]).toContain("Experienced engineer");
     const chapter = db.select().from(chapters).where(eq(chapters.courseId, courseId)).get()!;
     const before = db.select().from(courses).where(eq(courses.id, courseId)).get();
     saveProfile("New to probability");
     expect(db.select().from(chapters).where(eq(chapters.id, chapter.id)).get()).toEqual(chapter);
     expect(db.select().from(courses).where(eq(courses.id, courseId)).get()).toEqual(before);
-    vi.mocked(runAgentObject).mockResolvedValueOnce({ content: "A lesson", summary: "Summary", pretest: "Think" });
     const queued = db.select().from(generationJobs).where(eq(generationJobs.targetId, chapter.id)).get()!;
     const claimed = claimGenerationJob(queued.id, "profile-test-worker")!;
     expect(await processGenerationJob(claimed, "profile-test-worker", "codex")).toBe("completed");
-    expect(vi.mocked(runAgentObject).mock.calls[1][2]).toContain("New to probability");
+    expect(vi.mocked(runAgentObject).mock.calls.find(call => call[1] === "chapter")![2]).toContain("New to probability");
     saveProfile("Use practical examples");
-    vi.mocked(runAgentObject).mockResolvedValueOnce({ questions: Array.from({ length: 10 }, (_, i) => ({ type: "mcq", prompt: `Q${i}`, options: ["A", "B", "C", "D"], modelAnswer: "A", rubric: "Accuracy", conceptTag: "probability" })) });
     await generateQuiz(chapter.id, "codex");
-    expect(vi.mocked(runAgentObject).mock.calls[2][2]).toContain("Use practical examples");
-    vi.mocked(runAgentObject).mockResolvedValueOnce({ score: 1, feedback: "Good", missedConcept: null });
+    expect(vi.mocked(runAgentObject).mock.calls.find(call => call[1] === "quiz")![2]).toContain("Use practical examples");
     await gradeAnswer({ id: randomUUID(), chapterId: chapter.id, type: "short", prompt: "Explain", options: null, rubric: "Accuracy", modelAnswer: "Correct", conceptTag: "probability", generationVersion: 1, isReview: false, createdAt: new Date() }, "Correct");
-    expect(vi.mocked(runAgentObject).mock.calls[3][2]).toContain("Use practical examples");
+    expect(vi.mocked(runAgentObject).mock.calls.find(call => call[1] === "grading")![2]).toContain("Use practical examples");
   });
 });

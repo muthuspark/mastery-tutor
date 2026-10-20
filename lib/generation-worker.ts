@@ -16,6 +16,12 @@ import {
 } from "./generation";
 import { generateQuiz } from "./quiz";
 import { recordGenerationEvent } from "./generation-observability";
+import { db } from "./db";
+import { chapters, courses } from "./db/schema";
+import { eq } from "drizzle-orm";
+import { prepareCourse } from "./course-planner";
+import { QualityError } from "./quality-contracts";
+import { ownedJob, renewGenerationLease } from "./generation";
 
 const DEFAULT_POLL_INTERVAL_MS = 1_000;
 const workerRegistry = globalThis as typeof globalThis & {
@@ -23,43 +29,66 @@ const workerRegistry = globalThis as typeof globalThis & {
 };
 
 function workerError(error: unknown) {
+  if (error instanceof QualityError) return { message: error.message, retryable: false };
   if (error instanceof CodexError) {
     const classified = classifyCodexFailure(error);
     return { message: classified.message, retryable: classified.retryable };
   }
   const message = error instanceof Error ? error.message : String(error);
-  return { message, retryable: !/stale|locked|not found/i.test(message) };
+  return { message: "Could not prepare the learning material. Try again.", retryable: !/stale|locked|not found/i.test(message) };
 }
 
 export async function processGenerationJob(job: GenerationJob, workerId: string, requestedAgent?: Agent) {
   const startedAt = Date.now();
-  if (!isCurrentGeneration(job)) {
-    completeGenerationJob(job.id, workerId);
-    return "stale" as const;
-  }
-  if (!markGenerationStarted(job)) {
-    completeGenerationJob(job.id, workerId);
-    return "missing" as const;
-  }
-
-  try {
-    const agent = requestedAgent ?? await agentForRequest(new Request("http://localhost"));
-    if (!agent) throw new Error("No generation agent is available");
-    if (job.artifactType === "chapter") {
-      await generateChapterContent(job.targetId, agent, job.generationVersion);
-      enqueueGenerationJob("quiz", job.targetId, job.generationVersion);
-    } else {
-      await generateQuiz(job.targetId, agent, job.generationVersion);
+  const skipped = db.transaction(() => {
+    if (!ownedJob(job.id, workerId)) return "lost" as const;
+    if (!isCurrentGeneration(job)) {
+      completeGenerationJob(job.id, workerId);
+      return "stale" as const;
     }
-    completeGenerationJob(job.id, workerId);
+    if (!markGenerationStarted(job)) {
+      completeGenerationJob(job.id, workerId);
+      return "missing" as const;
+    }
+  });
+  if (skipped) return skipped;
+
+  const guard = () => {
+    if (!ownedJob(job.id, workerId) || !isCurrentGeneration(job)) throw new Error("Generation lease lost or artifact stale");
+  };
+  const heartbeat = setInterval(() => renewGenerationLease(job.id, workerId), 30_000);
+  heartbeat.unref();
+  try {
+    guard();
+    const chapter = job.artifactType === "course" ? undefined : db.select().from(chapters).where(eq(chapters.id, job.targetId)).get();
+    const course = db.select().from(courses).where(eq(courses.id, chapter?.courseId ?? job.targetId)).get();
+    const agent = requestedAgent ?? course?.generationAgent ?? await agentForRequest(new Request("http://localhost"));
+    if (!agent) throw new Error("No generation agent is available");
+    if (job.artifactType === "course") {
+      await prepareCourse(job.targetId, agent, job.generationVersion, guard);
+    } else if (job.artifactType === "chapter") {
+      await generateChapterContent(job.targetId, agent, job.generationVersion, guard);
+    } else {
+      await generateQuiz(job.targetId, agent, job.generationVersion, guard);
+    }
+    db.transaction(() => {
+      guard();
+      if (job.artifactType === "chapter") enqueueGenerationJob("quiz", job.targetId, job.generationVersion);
+      completeGenerationJob(job.id, workerId);
+    });
     recordGenerationEvent("job_completed", { jobId: job.id, artifactType: job.artifactType, targetId: job.targetId, generationVersion: job.generationVersion, durationMs: Date.now() - startedAt });
     return "completed" as const;
   } catch (error) {
-    const failure = workerError(error);
-    const status = failGenerationJob(job.id, workerId, failure.message, failure.retryable);
-    if (status === "pending" || status === "failed") markGenerationOutcome(job, status, failure.message);
-    recordGenerationEvent("job_failed", { jobId: job.id, artifactType: job.artifactType, targetId: job.targetId, generationVersion: job.generationVersion, status, retryable: failure.retryable, durationMs: Date.now() - startedAt });
-    return status ?? "lost";
+    return db.transaction(() => {
+      if (!ownedJob(job.id, workerId) || !isCurrentGeneration(job)) return "lost" as const;
+      const failure = workerError(error);
+      const status = failGenerationJob(job.id, workerId, failure.message, failure.retryable);
+      if (status === "pending" || status === "failed") markGenerationOutcome(job, status, failure.message);
+      recordGenerationEvent("job_failed", { jobId: job.id, artifactType: job.artifactType, targetId: job.targetId, generationVersion: job.generationVersion, status, retryable: failure.retryable, durationMs: Date.now() - startedAt });
+      return status ?? "lost";
+    });
+  } finally {
+    clearInterval(heartbeat);
   }
 }
 

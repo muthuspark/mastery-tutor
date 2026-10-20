@@ -112,6 +112,17 @@ describe("generation coordinator", () => {
     expect(claimGenerationJob(job.id, "test-worker-2", new Date(now.getTime() + 121_000))).toBeDefined();
   });
 
+  it("recovers a publication completed before the worker could acknowledge the job", () => {
+    const { chapterId, now } = fixture();
+    const job = enqueueGenerationJob("chapter", chapterId, 1, now);
+    claimGenerationJob(job.id, "crashed", now);
+    db.update(chapters).set({ content: "Accepted lesson", contentGenerationStatus: "ready" }).where(eq(chapters.id, chapterId)).run();
+    recoverExpiredGenerationJobs(new Date(now.getTime() + 121_000));
+    expect(db.select().from(generationJobs).where(eq(generationJobs.id, job.id)).get()?.status).toBe("completed");
+    expect(db.select().from(chapters).where(eq(chapters.id, chapterId)).get()?.contentGenerationStatus).toBe("ready");
+    expect(db.select().from(generationJobs).all().filter((item) => item.targetId === chapterId && item.artifactType === "quiz")).toHaveLength(1);
+  });
+
   it("starts and stops the polling worker cleanly", async () => {
     const stop = startGenerationWorker({ pollIntervalMs: 10, workerId: "lifecycle-test-worker" });
     await new Promise((resolve) => setTimeout(resolve, 25));

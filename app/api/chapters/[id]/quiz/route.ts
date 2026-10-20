@@ -2,7 +2,7 @@ import { desc, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { answers, chapters, questions } from "@/lib/db/schema";
+import { answers, chapters, courses, questions } from "@/lib/db/schema";
 import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
 import { dueReviewQuestions, latestAttempt, latestAttemptQuestionIds } from "@/lib/quiz";
 import { isBalancedQuiz } from "@/lib/assessment-quality";
@@ -24,6 +24,15 @@ export async function GET(request: Request, context: RouteContext) {
   const chapter = db.select().from(chapters).where(eq(chapters.id, id)).get();
   if (!chapter) return NextResponse.json({ error: { code: "not_found", message: "Chapter not found." } }, { status: 404 });
   if (chapter.status === "locked") return NextResponse.json({ error: { code: "locked", message: "This chapter is locked." } }, { status: 403 });
+  const reviewed = db.select().from(courses).where(eq(courses.id, chapter.courseId)).get()?.qualityPolicyVersion;
+  if (reviewed) {
+    if (chapter.quizGenerationStatus === "failed") return NextResponse.json({ error: { code: "generation_failed", message: chapter.quizGenerationError ?? "Could not prepare this quiz. Try again.", retryable: true } }, { status: 503 });
+    if (chapter.contentGenerationStatus !== "ready") return NextResponse.json({ status: "generating", retryable: true }, { status: 202 });
+    if (chapter.quizGenerationStatus !== "ready" || chapter.quizGenerationVersion !== chapter.contentGenerationVersion) {
+      enqueueGenerationJob("quiz", id, chapter.contentGenerationVersion);
+      return NextResponse.json({ status: "generating", retryable: true }, { status: 202 });
+    }
+  }
 
   try {
     let current = db.select().from(questions).where(eq(questions.chapterId, id)).orderBy(desc(questions.createdAt)).all()
@@ -46,6 +55,10 @@ export async function GET(request: Request, context: RouteContext) {
         return NextResponse.json({ status: "generating", retryable: true }, { status: 202 });
       }
       const job = enqueueGenerationJob("quiz", id, chapter.contentGenerationVersion);
+      if (reviewed) {
+        db.update(chapters).set({ quizGenerationStatus: "pending", quizGenerationError: null }).where(eq(chapters.id, id)).run();
+        return NextResponse.json({ status: "generating", retryable: true }, { status: 202 });
+      }
       const claimed = claimGenerationJob(job.id, `request-${randomUUID()}`);
       if (!claimed) return NextResponse.json({ status: "generating", retryable: true }, { status: 202 });
       await processGenerationJob(claimed, claimed.leaseOwner ?? "");

@@ -3,10 +3,10 @@ import "server-only";
 import { and, asc, eq, gte, lte, or } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db } from "./db";
-import { chapters, generationJobs } from "./db/schema";
+import { chapters, courses, generationJobs } from "./db/schema";
 import { recordGenerationEvent } from "./generation-observability";
 
-export type GenerationArtifact = "chapter" | "quiz";
+export type GenerationArtifact = "course" | "chapter" | "quiz";
 export type GenerationJobStatus = "pending" | "running" | "completed" | "failed";
 export type GenerationJob = typeof generationJobs.$inferSelect;
 
@@ -162,7 +162,7 @@ export function claimGenerationJob(jobId: string, workerId: string, at = new Dat
   });
 }
 
-function ownedJob(jobId: string, workerId: string, at: Date) {
+export function ownedJob(jobId: string, workerId: string, at = new Date()) {
   return db
     .select()
     .from(generationJobs)
@@ -175,6 +175,13 @@ function ownedJob(jobId: string, workerId: string, at: Date) {
       ),
     )
     .get();
+}
+
+export function renewGenerationLease(jobId: string, workerId: string, at = new Date()) {
+  return db.update(generationJobs)
+    .set({ leaseExpiresAt: new Date(at.getTime() + GENERATION_LEASE_MS), updatedAt: at })
+    .where(and(eq(generationJobs.id, jobId), eq(generationJobs.status, "running"), eq(generationJobs.leaseOwner, workerId), gte(generationJobs.leaseExpiresAt, at)))
+    .run().changes > 0;
 }
 
 export function completeGenerationJob(jobId: string, workerId: string, at = new Date()) {
@@ -214,16 +221,30 @@ export function failGenerationJob(
 }
 
 export function recoverExpiredGenerationJobs(at = new Date()) {
-  const recovered = db
-    .update(generationJobs)
-    .set({ status: "pending", nextRunAt: at, leaseOwner: null, leaseExpiresAt: null, updatedAt: at })
-    .where(and(eq(generationJobs.status, "running"), lte(generationJobs.leaseExpiresAt, at)))
-    .run().changes;
+  const recovered = db.transaction((tx) => {
+    const expired = tx.select().from(generationJobs).where(and(eq(generationJobs.status, "running"), lte(generationJobs.leaseExpiresAt, at))).all();
+    for (const job of expired) {
+      const artifact = generationStatusFor(job.artifactType, job.targetId);
+      if (artifact?.status === "ready" && artifact.version === job.generationVersion) {
+        tx.update(generationJobs).set({ status: "completed", leaseOwner: null, leaseExpiresAt: null, updatedAt: at }).where(eq(generationJobs.id, job.id)).run();
+        if (job.artifactType === "chapter" && !getGenerationJobForTarget("quiz", job.targetId, job.generationVersion)) enqueueGenerationJob("quiz", job.targetId, job.generationVersion, at);
+        continue;
+      }
+      const status = job.attempts >= GENERATION_MAX_ATTEMPTS ? "failed" : "pending";
+      const error = status === "failed" ? "Preparation was interrupted too many times. Try again." : null;
+      tx.update(generationJobs).set({ status, lastError: error, nextRunAt: at, leaseOwner: null, leaseExpiresAt: null, updatedAt: at }).where(eq(generationJobs.id, job.id)).run();
+      if (isCurrentGeneration(job)) markGenerationOutcome(job, status, error ?? "Preparation interrupted; retrying.", at);
+    }
+    return expired.length;
+  });
   if (recovered) recordGenerationEvent("job_recovered", { count: recovered });
   return recovered;
 }
 
 export function isCurrentGeneration(job: Pick<GenerationJob, "artifactType" | "targetId" | "generationVersion">) {
+  if (job.artifactType === "course") {
+    return db.select().from(courses).where(and(eq(courses.id, job.targetId), eq(courses.preparationVersion, job.generationVersion))).get() !== undefined;
+  }
   const chapter = db.select().from(chapters).where(eq(chapters.id, job.targetId)).get();
   if (!chapter) return false;
   const current = job.artifactType === "chapter"
@@ -237,6 +258,10 @@ export function generationStatusFor(
   artifactType: GenerationArtifact,
   chapterId: string,
 ) {
+  if (artifactType === "course") {
+    const course = db.select().from(courses).where(eq(courses.id, chapterId)).get();
+    return course ? { status: course.preparationStatus, version: course.preparationVersion, error: course.preparationError, updatedAt: course.preparationUpdatedAt } : undefined;
+  }
   const chapter = db.select().from(chapters).where(eq(chapters.id, chapterId)).get();
   if (!chapter) return undefined;
   return artifactType === "chapter"
@@ -258,6 +283,11 @@ export function markGenerationStarted(
   job: Pick<GenerationJob, "artifactType" | "targetId" | "generationVersion">,
   at = new Date(),
 ) {
+  if (job.artifactType === "course") {
+    return db.update(courses).set({ preparationStatus: "generating", preparationStage: "planning", preparationError: null, preparationUpdatedAt: at })
+      .where(and(eq(courses.id, job.targetId), eq(courses.preparationVersion, job.generationVersion), or(eq(courses.preparationStatus, "pending"), eq(courses.preparationStatus, "generating"))))
+      .run().changes > 0;
+  }
   if (job.artifactType === "chapter") {
     return db.update(chapters)
       .set({ contentGenerationStatus: "generating", contentGenerationError: null, contentGenerationUpdatedAt: at })
@@ -276,6 +306,11 @@ export function markGenerationOutcome(
   error: string,
   at = new Date(),
 ) {
+  if (job.artifactType === "course") {
+    return db.update(courses).set({ preparationStatus: status, preparationError: error, preparationUpdatedAt: at })
+      .where(and(eq(courses.id, job.targetId), eq(courses.preparationVersion, job.generationVersion)))
+      .run().changes > 0;
+  }
   if (job.artifactType === "chapter") {
     return db.update(chapters)
       .set({ contentGenerationStatus: status, contentGenerationError: error, contentGenerationUpdatedAt: at })

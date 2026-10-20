@@ -144,7 +144,7 @@ describe("course generation modal", () => {
     expect(dialog).toHaveAttribute("open");
   });
 
-  it("announces changing progress separately from hidden decoration without moving focus", async () => {
+  it("announces only the real request state without simulated review progress", async () => {
     // Track only the generation interval, leaving discovery promises on real timers.
     const interval = vi.spyOn(window, "setInterval");
     await beginGeneration();
@@ -152,9 +152,8 @@ describe("course generation modal", () => {
     const heading = within(dialog).getByRole("heading");
     const status = within(dialog).getByRole("status");
     expect(status).toHaveAttribute("aria-atomic", "true");
-    expect(status).toHaveTextContent("Reading the shape of your topic.");
-    act(() => { (interval.mock.calls.find((call) => call[1] === 6500)![0] as () => void)(); });
-    expect(status).toHaveTextContent("Putting each idea where it can do the most work.");
+    expect(status).toHaveTextContent("Creating your saved course.");
+    expect(interval.mock.calls.some((call) => call[1] === 6500)).toBe(false);
     expect(heading).toHaveFocus();
     expect(dialog.querySelector(".generation-desk")).toHaveAttribute("aria-hidden", "true");
     expect(dialog.querySelector(".generation-progress")).toHaveAttribute("aria-hidden", "true");

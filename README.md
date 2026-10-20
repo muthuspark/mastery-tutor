@@ -14,20 +14,24 @@ Start with one sentence. Optionally open Profile settings to describe your backg
 
 The course view keeps the full path visible while making only the next chapter actionable.
 
+New courses prepare in the background. The app saves your full learning request, builds a course brief and 1–24 focused chapters, and reviews the plan before making it available. The course page shows preparation, review, or repair status. You can leave and return; interrupted jobs resume after the server restarts. If preparation fails, use **Try again** on that course instead of creating a duplicate.
+
+Each new lesson and quiz also receives a separate quality review, with at most one repair per attempt. Lessons use the accepted course plan and stay within 600 words. Quizzes use the accepted lesson and its objectives. Review adds preparation time and can miss mistakes; it does not certify factual accuracy or learning outcomes. Existing courses keep their saved content, progress, and earlier generation policy.
+
 ![Reading view](docs/screenshots/chapter.png)
 
 Each chapter is short, rendered with Markdown, math, and syntax-highlighted code, followed by a single check for understanding.
 
 ![QnA view](docs/screenshots/quiz.png)
 
-Questions mix multiple choice, short answers, explanations, and scheduled review. Passing requires a score of 0.8 or higher.
+Each quiz has ten multiple-choice questions with four options each, plus up to two due review questions. Passing requires a score of 0.8 or higher.
 
 ## Why it exists
 
 Most learning tools optimize for content consumption. Mastery Tutor is organized around retrieval, feedback, prerequisite order, and deliberate progression instead:
 
 - Generate a dependency-aware syllabus from a plain-language topic.
-- Generate chapter content only when the learner opens it.
+- Prepare the first lesson after accepting the course plan, then warm newly unlocked lessons through saved generation jobs.
 - Render LaTeX formulas with KaTeX and Mermaid diagrams when they improve an explanation.
 - Mix deterministic MCQ grading with rubric-based Codex grading for free text.
 - Keep failed attempts, remediation, and missed-concept review schedules.
@@ -86,7 +90,11 @@ Learner → Next.js UI → Route handler → Codex / Claude CLI
                          SQLite / Drizzle
 ```
 
-Codex is invoked with fixed arguments, a read-only sandbox, a bounded timeout, and a generated JSON Schema. Claude runs in non-interactive JSON print mode with a bounded timeout. Every response is parsed and validated with Zod before it can be persisted. Prompts, credentials, command lines, and raw CLI output are not exposed to the browser.
+Codex is invoked with fixed arguments, a read-only sandbox, a bounded timeout, and a generated JSON Schema. Claude runs in non-interactive JSON print mode with the schema in its prompt and a bounded timeout. Every response is parsed and validated with Zod before it can be persisted. Prompts, credentials, command lines, and raw CLI output are not exposed to the browser.
+
+New-course planning, lessons, and quizzes run through the saved generation queue. A worker renews its lease every 30 seconds and checks ownership and generation versions before publication. Persistent review rejection requires explicit retry; transient CLI failures have at most three job attempts. Requests do not wait for multi-call generation. The selected agent is saved with each new course; optional `CODEX_MODEL_REVIEW` and `CLAUDE_MODEL_REVIEW` overrides follow the existing per-task model configuration.
+
+Apply migrations and restart all app processes sharing a database after this upgrade so each background worker recognizes course-preparation jobs. Keep a server process running while preparation is in progress. Profile edits affect future generated explanations without silently changing accepted course goals or saved progress.
 
 ## Project structure
 

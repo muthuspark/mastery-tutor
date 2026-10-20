@@ -1,0 +1,9 @@
+- [x] T1: Add course-quality contracts, backward-graph validation, review contracts, compatible persistence fields, and a migration; verify pure schemas and legacy migration defaults.
+- [x] T2: Implement bounded reviewed generation and durable reviewed course preparation, including owned lease renewal/publication, API creation/status/retry, and worker integration; verify with in-memory tests.
+- [x] T3: Integrate reviewed chapter and lesson-grounded quiz generation, current-version serving and explicit retry, and safe pre-study plan edits; verify context, rejection, and compatibility.
+- [x] T4: Implement real course preparation and artifact recovery UI with polling, status, retry, reload support, and legacy fallbacks; verify component behavior and desktop/mobile browser flows.
+- [x] T5: Complete Run integrated regression checks, exercise representative persona/live generation where practical, update user-facing documentation and this specification with evidence, and reconcile the completed task list
+- [x] T6: Verify contracts and publication with focused Vitest suites after each implementation task; run typecheck for interface changes.
+- [x] T7: Verify final behavior with npm run lint, npm run typecheck, npm test, and focused Playwright flows; record any pre-existing failures separately.
+- [x] T8: Verify the migration on an isolated database first and check legacy rows retain ready/default behavior; use the app migration command for the development server only when ready for live checks.
+- [x] T9: Verify representative persona cases and a new-course preparation smoke when an installed CLI is available; do not claim semantic quality from mocked output alone.

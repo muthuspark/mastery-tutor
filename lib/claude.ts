@@ -50,7 +50,7 @@ export async function runClaudeObject<T>(
 
   try {
     const result = await runner(
-      ["-p", `${prompt}\n\nReturn only a valid JSON object matching the requested structure.`, "--output-format", "json", ...(options.model ? ["--model", options.model] : [])],
+      ["-p", `${prompt}\n\nReturn only a valid JSON object matching this JSON Schema:\n${JSON.stringify(z.toJSONSchema(schema))}`, "--output-format", "json", ...(options.model ? ["--model", options.model] : [])],
       "",
       { timeoutMs },
     );
