@@ -53,7 +53,7 @@ export function CoursePage() {
     <main id="main-content" tabIndex={-1} className="page-shell">
       <BackToLearning />
       <header className="course-hero">
-        <h1 className="course-title display max-w-3xl text-5xl leading-none md:text-6xl">{data.course.topic}</h1>
+        <h1 className="display max-w-3xl text-4xl leading-none">{data.course.topic}</h1>
       </header>
       <div className="course-toolbar">
         <p className="text-lg text-[var(--muted)]">{passed} of {total} chapters mastered</p>
