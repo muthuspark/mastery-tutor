@@ -248,7 +248,7 @@ it.each([true, false])("keeps long corrective feedback labeled and complete on r
   expect(heading).toHaveFocus();
   expect(screen.getByText(passed ? "90%" : "20%")).toBeVisible();
   const review = screen.getByRole("heading", { name: "1. Explain the method", level: 2 }).parentElement!;
-  for (const [label, content] of [["Your answer:", response], ["Feedback:", feedback], ["Model answer:", modelAnswer]]) {
+  for (const [label, content] of [["Your answer:", response], ["Explanation:", feedback], ["Model answer:", modelAnswer]]) {
     const paragraph = within(review).getByText(label).closest("p")!;
     expect(paragraph.textContent).toBe(`${label} ${content}`);
     expect(paragraph).toBeVisible();

@@ -51,6 +51,23 @@ function submit(responses: { questionId: string; response: string }[]) {
 }
 
 describe("attempt grading agent requirements", () => {
+  it("returns and persists the worked explanation for a wrong answer without changing its score", async () => {
+    const explanation = "Total return includes both the change in value and cash income.\n\nThe gain in value is 1,050 - 1,000 = 50. Add the distribution: 50 + 20 = 70. Divide by the starting value: 70 / 1,000 = 0.07, or 7%.\n\nThe 2% choice counts only the distribution and leaves out the price gain. Always include both sources of return.";
+    db.update(questions).set({
+      prompt: "A holding starts at 1,000, ends at 1,050, and distributes 20. What is the total return?",
+      options: ["7%", "2%", "5%", "70%"], modelAnswer: "7%", rubric: explanation,
+    }).where(eq(questions.id, questionId)).run();
+
+    const response = await submit([{ questionId, response: "2%" }]);
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    const feedback = `The expected answer is: 7%.\n\n${explanation}`;
+    expect(body).toMatchObject({ score: 0, passed: false, answers: [{ score: 0, response: "2%", modelAnswer: "7%", feedback }] });
+    expect(db.select().from(answers).all()).toMatchObject([{ attemptId: body.attemptId, score: 0, feedback }]);
+    expect(agentForRequest).not.toHaveBeenCalled();
+    expect(runAgentObject).not.toHaveBeenCalled();
+  });
+
   it.each([
     { response: "2", score: 1 },
     { response: "0", score: 0 },

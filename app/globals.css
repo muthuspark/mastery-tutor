@@ -27,6 +27,8 @@
   --action: var(--color-clay);
   --brown: var(--color-slate-medium);
   --success: var(--color-slate-medium);
+  --answer-correct: oklch(40% 0.10 150);
+  --answer-incorrect: oklch(43% 0.15 25);
   --sans: Arial, Helvetica, sans-serif;
   --serif: var(--font-editorial), Georgia, serif;
   --display: var(--serif);
@@ -139,10 +141,12 @@ h1, h2, h3 { text-wrap: balance; }
 
 /* Reading and assessment share a narrow measure, serif content, and sans controls. */
 .lesson-header, .quiz-header { padding-bottom: 1.25rem; }
-.quiz-header { border-bottom: 1px solid var(--line); }
+.lesson-title { margin-bottom: 2.5rem; font-size: 3rem; line-height: 1.15; overflow-wrap: anywhere; }
 .lesson-nav { padding-block: 0.75rem 0; }
 .lesson-main { padding-top: 0.75rem; }
 .assessment-text { overflow-wrap: anywhere; }
+.answer-review--correct .answer-response, .answer-review--correct .answer-feedback { color: var(--answer-correct); }
+.answer-review--incorrect .answer-response, .answer-review--incorrect .answer-feedback { color: var(--answer-incorrect); }
 .assessment-heading, .assessment-prompt { font-size: 2.5rem; line-height: 1.2; }
 .assessment-body { max-width: 70ch; font-size: 1.25rem; line-height: 1.6; overflow-wrap: anywhere; }
 .assessment-option { border: 1px solid var(--line); border-radius: 24px; background: var(--surface); padding: 1.25rem 1.5rem; font-size: 1.25rem; line-height: 1.5; }
@@ -252,6 +256,7 @@ h1, h2, h3 { text-wrap: balance; }
   .assessment-option { padding: 1rem 1.25rem; }
   .profile-form, .result-summary, .page-state { padding: 1.5rem; }
   .prose-editorial h1 { font-size: 2.5rem; }
+  .lesson-title { margin-bottom: 2rem; font-size: 2.25rem; }
   .prose-editorial h2 { font-size: 1.75rem; }
   .prose-editorial blockquote { padding: 1.25rem; font-size: 1.25rem; }
   .generation-layout { gap: 2.5rem; padding-block: 3rem; }

@@ -113,7 +113,12 @@ export function latestAttemptQuestionIds(attemptId: string) {
 export async function gradeAnswer(question: typeof questions.$inferSelect, response: string, agent: Agent = "codex") {
   if (question.type === "mcq") {
     const result = gradeMcq(response, question.modelAnswer, question.options);
-    return { ...result, missedConcept: result.score === 0 ? question.conceptTag : null };
+    const explanation = question.rubric.trim();
+    return {
+      ...result,
+      feedback: result.score === 0 && explanation ? `${result.feedback}\n\n${explanation}` : result.feedback,
+      missedConcept: result.score === 0 ? question.conceptTag : null,
+    };
   }
   return runAgentObject(
     agent,

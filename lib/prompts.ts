@@ -21,7 +21,9 @@ Use a fenced Mermaid block only when a relationship, sequence, or architecture i
 
 export const QUIZ_PROMPT = `
 Create exactly 10 different objective questions from the chapter objectives, not by copying chapter sentences.
-Every question must be multiple choice with exactly four concise, distinct options and exactly one correct answer. Make the three distractors plausible, topic-relevant misconceptions; do not use obviously unrelated or silly options. Include application and new-case questions, not only definition recall. Return only the requested structured object.
+Every question must be multiple choice with exactly four concise, distinct options and exactly one correct answer. Make the three distractors plausible, topic-relevant misconceptions; do not use obviously unrelated or silly options. Include application and new-case questions, not only definition recall.
+The rubric is also the explanation shown to learners after an incorrect answer. Write it directly to the learner in clear plain text, using short paragraphs and about 80–160 words when needed to teach the reasoning. Explain the underlying concept, derive why the correct answer follows, and address the misconception behind each incorrect option. For numerical questions, show the formula, substitute the given values, calculate step by step, and explain the units. End with one useful principle the learner can apply to a similar problem. Refer to options by their meaning or text, never by letters or positions because options are shuffled. Do not merely restate the correct answer, write grading instructions such as "award credit", or guess why the learner chose an option. Keep explanations grounded in the lesson and prerequisites, and use readable plain-text notation rather than Markdown or LaTeX delimiters.
+Return only the requested structured object.
 `;
 
 export const GRADING_PROMPT = `
