@@ -8,6 +8,8 @@ import remarkRehype from "remark-rehype";
 import rehypeKatex from "rehype-katex";
 import rehypeStringify from "rehype-stringify";
 import rehypeShiki from "@shikijs/rehype";
+import { lessonMathIssues } from "./lesson-math";
+import { QualityError } from "./quality-contracts";
 
 type HastNode = {
   type: string;
@@ -50,6 +52,9 @@ function rehypeImages() {
 }
 
 export async function renderMarkdown(markdown: string) {
+  if (lessonMathIssues(markdown).length) {
+    throw new QualityError("This lesson contains invalid math formatting. Regenerate it to try again.");
+  }
   const file = await unified()
     .use(remarkParse)
     .use(remarkGfm)

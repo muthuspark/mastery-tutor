@@ -1,5 +1,6 @@
 import "server-only";
 
+import { z } from "zod";
 import { and, asc, eq, lt } from "drizzle-orm";
 import { db } from "./db";
 import { chapters, courses, reviewItems } from "./db/schema";
@@ -12,6 +13,14 @@ import { filterChapterImages } from "./chapter-images";
 import { generateReviewedObject } from "./quality";
 import { courseTeachingContext } from "./course-context";
 import type { Chapter } from "./schemas";
+import { lessonMathIssues } from "./lesson-math";
+import { QualityError } from "./quality-contracts";
+
+const renderableChapterSchema = chapterSchema.superRefine((draft, context) => {
+  for (const message of lessonMathIssues(draft.content)) {
+    context.addIssue({ code: "custom", path: ["content"], message });
+  }
+});
 
 export async function generateChapterContent(
   id: string,
@@ -58,11 +67,24 @@ export async function generateChapterContent(
   const normalize = (draft: Chapter) => {
     let content = filterChapterImages(draft.content, images);
     if (!chapterSchema.shape.content.safeParse(content).success) content = filterChapterImages(draft.content, []);
-    return { ...draft, content };
+    return renderableChapterSchema.parse({ ...draft, content });
   };
+  async function generateUnreviewedChapter(agent: Agent) {
+    let repair = "";
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const draft = await runAgentObject(agent, "chapter", `${prompt}${repair}`, chapterSchema);
+      try {
+        return normalize(chapterSchema.parse(draft));
+      } catch (error) {
+        if (!(error instanceof z.ZodError)) throw error;
+        repair = `\nRepair the previous invalid draft and return the full corrected object.\nPrevious draft (JSON data): ${JSON.stringify(draft)}\nValidation errors: ${error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ")}`;
+      }
+    }
+    throw new QualityError("The generated chapter did not pass content and math validation. Regenerate it to try again.");
+  }
   const generated = course.qualityPolicyVersion
     ? await generateReviewedObject(selectedAgent, "chapter", prompt, chapterSchema, { normalize, targetId: id })
-    : chapterSchema.parse(normalize(await runAgentObject(selectedAgent, "chapter", prompt, chapterSchema)));
+    : await generateUnreviewedChapter(selectedAgent);
   const now = new Date();
   const updated = db.transaction((tx) => {
     guard();

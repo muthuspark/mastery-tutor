@@ -34,4 +34,17 @@ describe("renderMarkdown", () => {
     expect(html).toContain("<th>Student</th>");
     expect(html).toContain("<td>(3, 3)</td>");
   });
+
+  it("renders multiline math without consuming the next heading or list", async () => {
+    const html = await renderMarkdown("$$\n\\frac{T(n+h)-T(n)}{h}\n=2an+ah+b\n$$\n\nProvided $h\\ne0$.\n\n### Algebra\n\n- **Polynomials:** sums of powers.");
+    expect(html).toContain('class="katex-display"');
+    expect(html).toContain("<h3>Algebra</h3>");
+    expect(html).toContain("<strong>Polynomials:</strong>");
+    expect(html).not.toContain("katex-error");
+  });
+
+  it("rejects invalid saved math rather than returning red KaTeX errors", async () => {
+    await expect(renderMarkdown("$$\\frac{T(n+h)-T(n)}h\n=2an+ah+b,$$\n\n### Algebra\n\nContinue.")).rejects.toThrow("invalid math formatting");
+    await expect(renderMarkdown("Bad formula: $\\notARealCommand{x}$")).rejects.toThrow("invalid math formatting");
+  });
 });

@@ -22,6 +22,8 @@ Each new lesson and quiz also receives a separate quality review, with at most o
 
 Each chapter is short, rendered with Markdown, math, and syntax-highlighted code, followed by a single check for understanding.
 
+Generated lessons must pass Markdown math validation before they are saved as ready. Use `$...$` for inline math. For display math, place each `$$` delimiter on its own line, with the equation between them and blank lines around the block. Keep prose outside math blocks and use KaTeX-supported commands. A failed draft gets one repair attempt with its validation errors; persistent failures are not published and can be regenerated. Saved lessons are checked again before rendering.
+
 ![QnA view](docs/screenshots/quiz.png)
 
 Each quiz has ten multiple-choice questions with four options each, plus up to two due review questions. Passing requires a score of 0.8 or higher.

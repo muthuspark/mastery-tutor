@@ -11,6 +11,7 @@ import { claimGenerationJob, enqueueGenerationJob, invalidateChapterGeneration }
 import { processGenerationJob } from "@/lib/generation-worker";
 import { recordGenerationEvent } from "@/lib/generation-observability";
 import { renderMarkdown } from "@/lib/markdown";
+import { QualityError } from "@/lib/quality-contracts";
 
 type RouteContext = { params: Promise<{ id: string }> };
 const feedbackSchema = z.object({ difficulty: z.enum(["easy", "hard"]) });
@@ -20,6 +21,9 @@ async function getChapter(id: string) {
 }
 
 export function codexErrorResponse(error: unknown) {
+  if (error instanceof QualityError) {
+    return NextResponse.json({ error: { code: "generation_failed", message: error.message, retryable: true } }, { status: 503 });
+  }
   if (!(error instanceof CodexError)) {
     return NextResponse.json(
       { error: { code: "database_error", message: "Could not save the chapter.", retryable: true } },

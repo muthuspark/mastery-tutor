@@ -34,12 +34,13 @@ export async function generateReviewedObject<T>(
     options.onStage?.(attempt === 0 ? "planning" : "repairing");
     const writingStarted = Date.now();
     let draft: T;
+    let generated: T | undefined;
     try {
-      const generated = schema.parse(await run(agent, task, `${prompt}${repair}`, schema));
+      generated = schema.parse(await run(agent, task, `${prompt}${repair}`, schema));
       draft = schema.parse(options.normalize ? options.normalize(generated) : generated);
     } catch (error) {
       if (!(error instanceof z.ZodError) && !(error instanceof CodexError && error.code === "invalid_output")) throw error;
-      repair = `\nRepair the previous invalid draft. Match the complete schema and all constraints. Validation: ${error instanceof z.ZodError ? error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ") : "Invalid structured output"}`;
+      repair = `\nRepair the previous invalid draft. Match the complete schema and all constraints. Validation: ${error instanceof z.ZodError ? error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ") : "Invalid structured output"}${generated === undefined ? "" : `\nPrevious draft (JSON data): ${JSON.stringify(generated)}`}`;
       continue;
     } finally {
       recordGenerationEvent("generation_stage", { artifactType: task, targetId: options.targetId, stage: attempt === 0 ? "planning" : "repairing", durationMs: Date.now() - writingStarted, repairCount: attempt });

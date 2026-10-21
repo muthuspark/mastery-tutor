@@ -20,6 +20,7 @@ import { runAgentObject } from "./agent";
 import { findWikipediaImages } from "./wikipedia-images";
 import { generateChapterContent } from "./chapter";
 import { chapterSchema } from "./schemas";
+import { QualityError } from "./quality-contracts";
 
 const candidate = { title: "Neuron", imageUrl: "https://upload.wikimedia.org/neuron.svg", pageUrl: "https://en.wikipedia.org/wiki/Neuron", caption: "A nerve cell" };
 beforeEach(() => {
@@ -65,4 +66,43 @@ it("does not overwrite a newer chapter generation after image lookup and writing
   });
   await expect(generateChapterContent("chapter", "codex", 1)).rejects.toThrow("stale");
   expect(db.select().from(chapters).get()?.content).toBe("Newer lesson");
+});
+
+const malformedMathDraft = {
+  content: "A rate measures change.\n\n$$\\frac{T(n+h)-T(n)}h\n=2an+ah+b,$$\n\n### Algebra\n\nContinue with $h\\ne0$.",
+  pretest: "What does the rate measure?",
+  summary: "Rates measure change.",
+};
+const repairedMathDraft = {
+  ...malformedMathDraft,
+  content: "A rate measures change.\n\n$$\n\\frac{T(n+h)-T(n)}{h}\n=2an+ah+b\n$$\n\n### Algebra\n\nContinue with $h\\ne0$.",
+};
+
+it.each([null, 1])("repairs invalid math before saving (quality policy %s)", async (qualityPolicyVersion) => {
+  db.update(courses).set({ qualityPolicyVersion }).where(eq(courses.id, "course")).run();
+  vi.mocked(runAgentObject)
+    .mockResolvedValueOnce(malformedMathDraft)
+    .mockResolvedValueOnce(repairedMathDraft)
+    .mockResolvedValueOnce({ issues: [] });
+
+  const chapter = await generateChapterContent("chapter", "codex", 1);
+
+  expect(chapter.content).toBe(repairedMathDraft.content);
+  expect(chapter.contentGenerationStatus).toBe("ready");
+  expect(runAgentObject).toHaveBeenNthCalledWith(2, "codex", "chapter", expect.stringContaining("standalone $$ delimiter lines"), chapterSchema);
+  expect(vi.mocked(runAgentObject).mock.calls[1][2]).toContain(JSON.stringify(malformedMathDraft.content));
+  expect(vi.mocked(runAgentObject).mock.calls.map((call) => call[1])).toEqual(qualityPolicyVersion ? ["chapter", "chapter", "review"] : ["chapter", "chapter"]);
+  if (qualityPolicyVersion) expect(vi.mocked(runAgentObject).mock.calls[2][2]).toContain(JSON.stringify(chapterSchema.parse(repairedMathDraft)));
+});
+
+it.each([null, 1])("does not publish math that fails both attempts (quality policy %s)", async (qualityPolicyVersion) => {
+  db.update(courses).set({ qualityPolicyVersion }).where(eq(courses.id, "course")).run();
+  vi.mocked(runAgentObject).mockResolvedValue(malformedMathDraft);
+
+  await expect(generateChapterContent("chapter", "codex", 1)).rejects.toBeInstanceOf(QualityError);
+
+  expect(runAgentObject).toHaveBeenCalledTimes(2);
+  const chapter = db.select().from(chapters).get()!;
+  expect(chapter.content).toBeNull();
+  expect(chapter.contentGenerationStatus).not.toBe("ready");
 });
