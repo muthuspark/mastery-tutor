@@ -285,3 +285,7 @@ h1, h2, h3 { text-wrap: balance; }
 }
 
 .chapter-unlock { max-width: 68ch; margin-top: 0.75rem; color: var(--muted); font-family: var(--sans); font-size: 0.8125rem; line-height: 1.6; overflow-wrap: anywhere; }
+
+/* Guided practice follows the lesson’s reading rhythm and assessment controls. */
+.socratic-session { margin-bottom: 2.5rem; padding-block: 2rem; border-block: 1px solid var(--line); }
+.socratic-feedback { margin-top: 1.5rem; padding: 1rem 1.25rem; border-radius: 12px; background: var(--paper-deep); }

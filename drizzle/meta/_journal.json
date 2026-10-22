@@ -50,6 +50,13 @@
       "when": 1792469425591,
       "tag": "0006_oval_marrow",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1792655780564,
+      "tag": "0007_socratic_sessions",
+      "breakpoints": true
     }
   ]
 }

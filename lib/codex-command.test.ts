@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { codexArgs } from "./codex-command";
 
 describe("codexArgs", () => {
+  it("can lower reasoning effort for short interactive requests", () => {
+    const args = codexArgs({ schemaPath: "/tmp/schema.json", outputPath: "/tmp/output.json", timeoutMs: 1000, reasoningEffort: "low" });
+    expect(args.slice(-3)).toEqual(["--config", 'model_reasoning_effort="low"', "-"]);
+  });
   it("uses fixed non-interactive read-only arguments", () => {
     expect(
       codexArgs({

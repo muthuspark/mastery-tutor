@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import { integer, real, sqliteTable, text, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 import type { CourseBrief, TeachingPlan } from "../quality-contracts";
+import type { SocraticState } from "../socratic-contracts";
 
 const timestamps = {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
@@ -69,6 +70,15 @@ export const chapters = sqliteTable(
     courseStatusIndex: index("chapters_course_status_idx").on(table.courseId, table.status),
   }),
 );
+
+export const socraticSessions = sqliteTable("socratic_sessions", {
+  chapterId: text("chapter_id").primaryKey().references(() => chapters.id, { onDelete: "cascade" }),
+  id: text("id").notNull(),
+  generationVersion: integer("generation_version").notNull(),
+  revision: integer("revision").notNull().default(0),
+  state: text("state", { mode: "json" }).$type<SocraticState>().notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});
 
 export const generationJobs = sqliteTable(
   "generation_jobs",

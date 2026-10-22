@@ -7,12 +7,13 @@ import { useEffect } from "react";
 import { MermaidContent } from "@/components/mermaid-content";
 import { ReadingPageState } from "@/components/reading-page-state";
 import { BackLink } from "./back-link";
+import { SocraticSession } from "./socratic-session";
 
 type ChapterAdjustment = "easy" | "hard" | "regenerate";
 
 type CourseChapter = { id: string; idx: number; title: string; status: "locked" | "open" | "passed" };
 type CourseResponse = { course: { topic: string; qualityPolicyVersion?: number | null }; chapters: CourseChapter[] };
-type ChapterResponse = { chapter: CourseChapter & { pretest: string | null }; html: string };
+type ChapterResponse = { chapter: CourseChapter & { pretest: string | null; contentGenerationVersion?: number }; html: string };
 
 class ReadyContentError extends Error {
   constructor(message: string, readonly retryable: boolean, readonly status: number, readonly generationFailed = false) {
@@ -107,7 +108,7 @@ export function ChapterPage() {
       adjustmentMessage = `Feedback saved: too ${adjustment.variables}. Chapter update requested.`;
     }
   }
-  return <><main id="main-content" tabIndex={-1} className="reading-shell"><nav aria-label="Back navigation" className="mb-6"><BackLink href={`/course/${params.id}`}>Back to course</BackLink></nav><h1 className="display lesson-title">{chapterQuery.data.chapter.title}</h1><MermaidContent html={chapterQuery.data.html} />{chapterQuery.data.chapter.pretest ? <p className="mt-12 border-t border-[var(--line)] pt-5 text-lg text-[var(--brown)]"><span className="font-bold text-[var(--ink)]">Before you continue.</span> {chapterQuery.data.chapter.pretest}</p> : null}<Link href={`/course/${params.id}/ch/${params.idx}/quiz`} className="button-primary ui mt-10 w-full">Check your understanding →</Link><section aria-label="Chapter adjustments" className="ui mt-6 text-center">
+  return <><main id="main-content" tabIndex={-1} className="reading-shell"><nav aria-label="Back navigation" className="mb-6"><BackLink href={`/course/${params.id}`}>Back to course</BackLink></nav><h1 className="display lesson-title">{chapterQuery.data.chapter.title}</h1><SocraticSession key={`${chapterQuery.data.chapter.id}:${chapterQuery.data.chapter.contentGenerationVersion ?? 1}`} chapterId={chapterQuery.data.chapter.id} version={chapterQuery.data.chapter.contentGenerationVersion ?? 1} /><MermaidContent html={chapterQuery.data.html} />{chapterQuery.data.chapter.pretest ? <p className="mt-12 border-t border-[var(--line)] pt-5 text-lg text-[var(--brown)]"><span className="font-bold text-[var(--ink)]">Before you continue.</span> {chapterQuery.data.chapter.pretest}</p> : null}<Link href={`/course/${params.id}/ch/${params.idx}/quiz`} className="button-primary ui mt-10 w-full">Check your understanding →</Link><section aria-label="Chapter adjustments" className="ui mt-6 text-center">
     <div className="flex flex-wrap justify-center gap-5 text-xs">
       <button type="button" onClick={() => adjustment.mutate("easy")} disabled={adjustment.isPending} className="text-button disabled:cursor-wait disabled:opacity-60">Too easy</button>
       <button type="button" onClick={() => adjustment.mutate("hard")} disabled={adjustment.isPending} className="text-button disabled:cursor-wait disabled:opacity-60">Too hard</button>

@@ -44,8 +44,8 @@ export async function runAgentObject<T>(
   schema: z.ZodType<T>,
 ) {
   const model = modelFor(task, agent);
-  if (agent === "claude") return runClaudeObject(prompt, schema, { model });
-  return runCodexObject(prompt, schema, { model });
+  if (agent === "claude") return runClaudeObject(prompt, schema, { model, ...(task === "socratic" ? { isolated: true } : {}) });
+  return runCodexObject(prompt, schema, { model, ...(task === "socratic" ? { reasoningEffort: "low", isolated: true } as const : {}) });
 }
 
 export function noAgentError() {

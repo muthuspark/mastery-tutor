@@ -7,17 +7,21 @@ import { spawn } from "node:child_process";
 import { z } from "zod";
 import { codexArgs } from "./codex-command";
 import { classifyCodexFailure, CodexError } from "./codex-errors";
+import { agentTimeoutMs } from "./agent-timeout";
 
 type RunOptions = {
   model?: string;
   timeoutMs?: number;
+  reasoningEffort?: "low" | "medium" | "high" | "xhigh";
+  isolated?: boolean;
 };
 
-export type CodexTask = "syllabus" | "chapter" | "quiz" | "grading" | "review";
+export type CodexTask = "syllabus" | "chapter" | "quiz" | "grading" | "review" | "socratic";
 
 export function modelFor(task: CodexTask, agent: "codex" | "claude" = "codex") {
   const prefix = agent === "claude" ? "CLAUDE" : "CODEX";
-  const configured = process.env[`${prefix}_MODEL_${task.toUpperCase()}`];
+  const configured = process.env[`${prefix}_MODEL_${task.toUpperCase()}`]
+    || (task === "socratic" ? process.env[`${prefix}_MODEL_CHAPTER`] : undefined);
   return configured || process.env[`${prefix}_MODEL`];
 }
 
@@ -26,13 +30,13 @@ type SpawnResult = { exitCode: number | null; stderr: string };
 export type CodexRunner = (
   args: string[],
   prompt: string,
-  options: { timeoutMs: number },
+  options: { timeoutMs: number; cwd?: string },
 ) => Promise<SpawnResult>;
 
 const defaultRunner: CodexRunner = (args, prompt, options) =>
   new Promise((resolve, reject) => {
     const child = spawn("codex", args, {
-      cwd: process.cwd(),
+      cwd: options.cwd ?? process.cwd(),
       env: { ...process.env },
       stdio: ["pipe", "ignore", "pipe"],
     });
@@ -62,19 +66,20 @@ export async function runCodexObject<T>(
   const workDir = await mkdtemp(path.join(tmpdir(), "mastery-tutor-codex-"));
   const schemaPath = path.join(workDir, "schema.json");
   const outputPath = path.join(workDir, "answer.json");
-  const timeoutMs = options.timeoutMs ?? 60_000;
+  const timeoutMs = options.timeoutMs ?? agentTimeoutMs("codex");
 
   try {
     await writeFile(schemaPath, JSON.stringify(z.toJSONSchema(schema), null, 2));
     const result = await runner(
       codexArgs({
         model: options.model,
+        reasoningEffort: options.reasoningEffort,
         schemaPath,
         outputPath,
         timeoutMs,
       }),
       prompt,
-      { timeoutMs },
+      { timeoutMs, ...(options.isolated ? { cwd: workDir } : {}) },
     );
     if (result.exitCode !== 0) {
       throw new CodexError("failed", "Codex CLI returned a non-zero exit code.", true);

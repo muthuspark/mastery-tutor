@@ -6,19 +6,20 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { z } from "zod";
 import { CodexError } from "./codex-errors";
+import { agentTimeoutMs } from "./agent-timeout";
 
-type ClaudeOptions = { model?: string; timeoutMs?: number };
+type ClaudeOptions = { model?: string; timeoutMs?: number; isolated?: boolean };
 
 type ClaudeRunner = (
   args: string[],
   prompt: string,
-  options: { timeoutMs: number },
+  options: { timeoutMs: number; cwd?: string },
 ) => Promise<{ exitCode: number | null; stdout: string; stderr: string }>;
 
 const defaultRunner: ClaudeRunner = (args, prompt, options) =>
   new Promise((resolve, reject) => {
     const child = spawn("claude", args, {
-      cwd: process.cwd(),
+      cwd: options.cwd ?? process.cwd(),
       env: { ...process.env },
       stdio: ["pipe", "pipe", "pipe"],
     });
@@ -46,13 +47,13 @@ export async function runClaudeObject<T>(
   runner: ClaudeRunner = defaultRunner,
 ): Promise<T> {
   const workDir = await mkdtemp(path.join(tmpdir(), "mastery-tutor-claude-"));
-  const timeoutMs = options.timeoutMs ?? 60_000;
+  const timeoutMs = options.timeoutMs ?? agentTimeoutMs("claude");
 
   try {
     const result = await runner(
       ["-p", `${prompt}\n\nReturn only a valid JSON object matching this JSON Schema:\n${JSON.stringify(z.toJSONSchema(schema))}`, "--output-format", "json", ...(options.model ? ["--model", options.model] : [])],
       "",
-      { timeoutMs },
+      { timeoutMs, ...(options.isolated ? { cwd: workDir } : {}) },
     );
     if (result.exitCode !== 0) throw new CodexError("failed", "Claude CLI returned a non-zero exit code.", true);
     const envelope = JSON.parse(result.stdout) as { result?: string } | unknown;

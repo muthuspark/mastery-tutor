@@ -20,6 +20,8 @@ it.each(["passed", "open"])("loads a %s lesson and only prefetches assessments f
   const title = screen.getByRole("heading", { level: 1, name: chapter.title });
   expect(title.compareDocumentPosition(screen.getByText("Saved separation lesson")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(screen.getByRole("link", { name: "Back to course" })).toHaveAttribute("href", "/course/course");
+  expect(screen.getByRole("region", { name: "Chapter practice" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Check your understanding →" })).toHaveAttribute("href", "/course/course/ch/0/quiz");
   if (status === "passed") {
     expect(fetch.mock.calls.map(([url]) => url)).toEqual(["/api/courses/course", "/api/chapters/chapter"]);
   } else {
