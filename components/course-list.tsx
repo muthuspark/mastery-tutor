@@ -15,7 +15,7 @@ export function CourseList() {
   return (
     <section className="studies-section" aria-labelledby="studies-title">
       <div className="studies-heading"><h2 id="studies-title" className="display text-3xl">Your studies</h2>{!isLoading && !isError ? <span className="subject-count ui shrink-0">{courses.length} {courses.length === 1 ? "subject" : "subjects"}</span> : null}</div>
-      {isLoading ? <p className="loading-state ui mt-8 text-sm text-[var(--muted)]" role="status">Loading your studies…</p> : isError ? <p className="ui mt-5 text-sm text-[var(--accent-dark)]" role="alert">Could not load your studies. <button className="text-button min-h-11 text-sm!" onClick={() => void refetch()}>Try again</button></p> : courses.length === 0 ? <p className="empty-studies text-[var(--muted)]">Your studies will appear here.</p> : (
+      {isLoading ? <p className="loading-state ui mt-8 text-sm text-[var(--muted)]" role="status">Loading your studies…</p> : isError ? <p className="ui mt-5 text-sm text-[var(--accent-dark)]" role="alert">Could not load your studies. <button className="text-button min-h-11 text-sm!" onClick={() => void refetch()}>Try again</button></p> : courses.length === 0 ? <p className="empty-studies text-[var(--muted)]">Choose a topic above to start your first study.</p> : (
         <div className="studies-list">
           {courses.map((course) => {
             const { passed, total } = course.progress;

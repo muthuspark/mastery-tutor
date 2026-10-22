@@ -47,7 +47,7 @@ export function NewCourseForm() {
       {isSubmitting ? <GenerationOverlay stage={generationStage} agent={agent || availableAgents[0]} returnFocusRef={topicRef} /> : null}
       <form className="new-course-form" onSubmit={submit}>
         <label className="sr-only" htmlFor="topic">I want to learn</label>
-        <textarea ref={topicRef} id="topic" name="topic" required rows={4} value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="the fundamentals of system design" className="field" disabled={isSubmitting} />
+        <textarea ref={topicRef} id="topic" name="topic" required rows={4} value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="the fundamentals of system design" className="field" disabled={isSubmitting} aria-invalid={error ? true : undefined} aria-describedby={error ? "course-form-error" : undefined} />
         <div className="course-form-actions">
           <div className="agent-control">
             {isLoadingAgents ? <p className="ui text-sm text-[var(--muted)]" role="status">Finding learning agents…</p> : agentDiscoveryFailed ? (
@@ -60,7 +60,7 @@ export function NewCourseForm() {
           </div>
           <button type="submit" disabled={isSubmitting || isLoadingAgents || agentDiscoveryFailed || !agent || !availableAgents.includes(agent)} className="button-primary course-begin">{isSubmitting ? "Building your path…" : "Begin"}</button>
         </div>
-        {error ? <p className="ui mt-4 text-sm text-[var(--accent-dark)]" role="alert">{error}</p> : null}
+        {error ? <p id="course-form-error" className="ui mt-4 text-sm text-[var(--accent-dark)]" role="alert">{error}</p> : null}
       </form>
     </>
   );
