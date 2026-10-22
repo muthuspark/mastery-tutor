@@ -29,8 +29,8 @@
   --success: var(--color-slate-medium);
   --answer-correct: oklch(40% 0.10 150);
   --answer-incorrect: oklch(43% 0.15 25);
-  --sans: Arial, Helvetica, sans-serif;
-  --serif: var(--font-editorial), Georgia, serif;
+  --sans: var(--font-source-sans-pro), Arial, Helvetica, sans-serif;
+  --serif: var(--font-libre-baskerville), Georgia, serif;
   --display: var(--serif);
   --layout-max-wide: 80rem;
   --layout-max-reading: 48rem;
@@ -40,13 +40,13 @@
 
 * { box-sizing: border-box; }
 html { background: var(--paper); }
-body { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; margin: 0; background: var(--paper); color: var(--ink); font-family: var(--serif); font-size: 20px; line-height: 1.5; }
+body { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 20px; line-height: 1.5; }
 body > main { flex: 1; }
 body > .site-header, body > .site-footer { flex-shrink: 0; }
 button, textarea, input, select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 a { color: inherit; text-underline-offset: 0.2em; }
-h1, h2, h3 { text-wrap: balance; }
+h1, h2, h3, h4, h5, h6 { font-family: var(--display); text-wrap: balance; }
 .display { font-family: var(--display); font-weight: 400; letter-spacing: -0.025em; }
 .ui { font-family: var(--sans); }
 .page-shell, .reading-shell, .site-header, .generation-overlay__inner {
@@ -71,7 +71,7 @@ h1, h2, h3 { text-wrap: balance; }
 .button-secondary:hover:not(:disabled) { border-color: var(--ink); background: var(--surface); }
 .text-button { min-height: 2.75rem; padding: 0.25rem 0; border: 0; background: transparent; color: var(--muted); font-family: var(--sans); font-size: 0.8125rem; text-decoration: underline; text-underline-offset: 0.25em; cursor: pointer; }
 .text-button:hover { color: var(--ink); }
-.field { display: block; width: 100%; min-width: 0; padding: 1rem 1.25rem; border: 1px solid var(--color-cloud-dark); border-radius: 12px; background: var(--surface); color: var(--ink); font-family: var(--serif); font-size: 1.25rem; line-height: 1.5; resize: vertical; }
+.field { display: block; width: 100%; min-width: 0; padding: 1rem 1.25rem; border: 1px solid var(--color-cloud-dark); border-radius: 12px; background: var(--surface); color: var(--ink); font-family: var(--sans); font-size: 1.25rem; line-height: 1.5; resize: vertical; }
 .field::placeholder { color: var(--muted); opacity: 1; }
 .field:focus { border-color: var(--ink); }
 [role="alert"] { padding: 1rem 1.25rem; border: 1px solid var(--color-cloud-dark); border-radius: 12px; background: var(--paper-deep); color: var(--ink); }
@@ -96,13 +96,12 @@ h1, h2, h3 { text-wrap: balance; }
 .site-footer a:focus-visible { outline-color: var(--surface); }
 .footer-method { grid-column: 1 / -1; padding-top: 1.5rem; border-top: 1px solid var(--color-slate-medium); color: var(--color-cloud-medium); font: 0.6875rem var(--sans); }
 
-/* An asymmetric introduction, a warm writing surface, and an open study index. */
-.page-shell.home-page { padding-block: 3rem; }
+/* A warm writing surface followed by an open study index in one reading column. */
 .home-intro { padding-block: 3rem 2rem; }
-.home-title { max-width: 18ch; font-family: var(--sans); font-size: 3.8125rem; font-weight: 700; line-height: 1.1; letter-spacing: -0.04em; }
+.home-title { max-width: 18ch; font-family: var(--display); font-size: 3.8125rem; font-weight: 700; line-height: 1.1; letter-spacing: -0.04em; }
 .home-intro-note { max-width: 36ch; padding-bottom: 0.25rem; font-size: 1.25rem; line-height: 1.5; }
 .intro-method { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.75rem; color: var(--muted); font-size: 0.6875rem; }
-.learning-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 4rem; }
+.learning-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
 .course-creation { min-width: 0; padding: 2rem; border-radius: 24px; background: var(--color-manilla); }
 .course-creation h1 { margin-bottom: 1.5rem; font-size: 2.25rem; line-height: 1.2; }
 .creation-description { max-width: 38ch; margin-block: 1rem 1.5rem; font-size: 1.125rem; line-height: 1.5; }
@@ -163,7 +162,7 @@ h1, h2, h3 { text-wrap: balance; }
 .profile-form .field { background: var(--paper); }
 .page-state { margin-top: 2rem; padding: 2rem; border: 1px solid var(--line); border-radius: 24px; background: var(--surface); }
 .loading-state::before { content: ""; display: block; width: min(100%, 20rem); height: 0.5rem; margin-bottom: 1.5rem; background: var(--paper-deep); }
-.prose-editorial { color: var(--ink); font-family: var(--serif); font-size: 1.25rem; line-height: 1.75; overflow-wrap: anywhere; --tw-prose-body: var(--ink); --tw-prose-headings: var(--ink); --tw-prose-bold: var(--ink); --tw-prose-links: var(--ink); --tw-prose-counters: var(--muted); --tw-prose-bullets: var(--muted); }
+.prose-editorial { color: var(--ink); font-family: var(--sans); font-size: 1.25rem; line-height: 1.75; overflow-wrap: anywhere; --tw-prose-body: var(--ink); --tw-prose-headings: var(--ink); --tw-prose-bold: var(--ink); --tw-prose-links: var(--ink); --tw-prose-counters: var(--muted); --tw-prose-bullets: var(--muted); }
 .prose-editorial > :where(p, ul, ol) { max-width: 70ch; }
 .prose-editorial :is(h1, h2, h3, h4) { font-family: var(--serif); font-weight: 400; }
 .prose-editorial h1 { font-size: 3rem; line-height: 1.15; }
@@ -232,7 +231,6 @@ h1, h2, h3 { text-wrap: balance; }
 @media (max-width: 1023px) {
   .home-intro { gap: 3rem; }
   .home-title { font-size: 3.25rem; }
-  .learning-workspace { gap: 2.5rem; }
 }
 @media (max-width: 767px) {
   .site-header { min-height: 5rem; }
@@ -243,10 +241,8 @@ h1, h2, h3 { text-wrap: balance; }
   .home-title { max-width: 16ch; font-size: 2.5rem; line-height: 1.12; }
   .home-intro-note { max-width: 42ch; }
   .intro-method { gap: 1.25rem; margin-top: 1.25rem; }
-  .learning-workspace { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
   .course-creation { padding: 1.5rem; }
   .course-creation h1, .studies-heading h2 { font-size: 1.875rem; }
-  .studies-section { padding-block: 0; }
   .course-hero { padding-block: 1rem 2rem; }
   .course-hero .course-title, .settings-intro h1 { font-size: 2.75rem; }
   .chapter-row { grid-template-columns: 1.5rem minmax(0, 1fr); gap: 0.5rem 1rem; padding: 1.25rem 0.5rem; }

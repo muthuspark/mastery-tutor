@@ -5,13 +5,12 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { chapters, courses } from "@/lib/db/schema";
 import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
-import { agentForRequest, agentSchema, AGENT_COOKIE, noAgentError } from "@/lib/agent";
+import { agentForRequest, noAgentError } from "@/lib/agent";
 import { enqueueGenerationJob } from "@/lib/generation";
 import { QUALITY_POLICY_VERSION } from "@/lib/quality-contracts";
 
 const createCourseSchema = z.object({
   topic: z.string().trim().min(3).max(500),
-  agent: agentSchema.optional(),
 });
 
 function errorResponse(error: unknown) {
@@ -52,7 +51,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const agent = await agentForRequest(request, parsed.data.agent);
+    const agent = await agentForRequest(request);
     if (!agent) throw noAgentError();
     const courseId = randomUUID();
     const now = new Date();
@@ -63,7 +62,6 @@ export async function POST(request: Request) {
       enqueueGenerationJob("course", courseId, 1, now);
     });
     const response = NextResponse.json({ courseId, status: "pending" }, { status: 202 });
-    response.cookies.set(AGENT_COOKIE, agent, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 31_536_000 });
     return response;
   } catch (error) {
     return errorResponse(error);

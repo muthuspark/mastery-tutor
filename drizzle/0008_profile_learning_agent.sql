@@ -1,0 +1,1 @@
+ALTER TABLE `learner_profile` ADD `learning_agent` text;

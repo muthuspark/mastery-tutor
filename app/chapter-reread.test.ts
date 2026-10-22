@@ -20,12 +20,14 @@ vi.mock("@/lib/markdown", () => ({ renderMarkdown: vi.fn(async (content: string)
 
 import { GET as readChapter } from "@/app/api/chapters/[id]/route";
 import { GET as readCourse } from "@/app/api/courses/[id]/route";
+import { agentForRequest } from "@/lib/agent";
 import { processGenerationJob } from "@/lib/generation-worker";
 import { generateChapterContent } from "@/lib/chapter";
 import { db } from "@/lib/db";
 import { answers, attempts, chapters, courses, generationJobs, questions, reviewItems } from "@/lib/db/schema";
 
 it("rereads a completed lesson and returns to the course without changing persisted evidence", async () => {
+  vi.mocked(agentForRequest).mockRejectedValue(new Error("Saved agent unavailable"));
   // All records are in this test's isolated, migrated in-memory database.
   const now = new Date();
   db.insert(courses).values({ id: "course", topic: "Differential equations", completedAt: now, createdAt: now }).run();
@@ -56,6 +58,7 @@ it("rereads a completed lesson and returns to the course without changing persis
     expect(await course.json()).toMatchObject({ progress: { passed: 1, total: 1 } });
     expect(snapshot()).toEqual(before);
   }
+  expect(agentForRequest).not.toHaveBeenCalled();
   expect(processGenerationJob).not.toHaveBeenCalled();
   expect(generateChapterContent).not.toHaveBeenCalled();
 });

@@ -4,7 +4,7 @@
 
 <!-- Format: State the outcome, scope, and measurable reason for doing this. -->
 
-Add DeepSeek API as a third selectable learning provider beside Codex CLI and Claude CLI. A server with DEEPSEEK_API_KEY in its root .env must generate and validate learning content without either CLI installed. Keep existing course generation, quality review, and saved provider behavior.
+Add DeepSeek API as a third selectable learning provider beside Codex CLI and Claude CLI. A server with DEEPSEEK_API_KEY in its root .env must generate and validate learning content without either CLI installed. Keep existing course generation and quality review. The follow-up profile setting is the single provider choice for future work across all courses.
 
 ## Problem
 
@@ -20,8 +20,8 @@ The current provider enum, discovery, dispatcher, database typing, and home form
 
 - Support DeepSeek for every task accepted by runAgentObject.
 - Read the key on the server through Next.js environment loading.
-- Let users select DeepSeek and retain their selection using the existing cookie.
-- Keep saved course jobs on their selected provider and preserve quality validation.
+- Let users select DeepSeek in Profile settings and retain it in SQLite across browsers.
+- Use one saved profile provider consistently for future AI operations and preserve quality validation.
 - Deliver deterministic automated verification with mocked HTTP.
 
 ### Non-goals
@@ -48,7 +48,7 @@ The current provider enum, discovery, dispatcher, database typing, and home form
 1. With only a DeepSeek key configured, a learner can create a course and use all current learning features.
 2. With multiple providers configured, the learner sees only available choices and can retain DeepSeek across reloads.
 3. Without a key, DeepSeek is absent from discovery; either installed CLI remains usable.
-4. A saved DeepSeek job resumes after restart. If the key was removed, it fails with a configuration message and does not invoke a CLI.
+4. A job resumes after restart with the current profile agent. If that agent is DeepSeek and its key was removed, it fails with a configuration message and does not invoke a CLI.
 5. Invalid structured output follows existing validation/repair rules; it is never accepted as learning content.
 
 ## Requirements
@@ -56,16 +56,16 @@ The current provider enum, discovery, dispatcher, database typing, and home form
 <!-- Format: Use stable IDs such as REQ-001. For each requirement state the behavior, inputs/outputs, and priority. -->
 
 - REQ-001 (Must): Extend the provider ID set to codex, claude, and deepseek. Discover DeepSeek when process.env.DEEPSEEK_API_KEY has a nonempty trimmed value; do not contact DeepSeek during discovery.
-- REQ-002 (Must): Keep provider discovery order codex, claude, deepseek and the current no-preference default order. Existing valid cookies take precedence over defaults. A stale unavailable cookie may resolve to the first configured provider before a new operation. An explicit unavailable provider in a course creation request must fail instead of silently selecting another provider.
-- REQ-003 (Must): GET /api/agents retains {available, selected}; POST accepts deepseek and preserves existing 400/503 validation behavior and cookie attributes. Never return the key or a claim that a configured key has been authenticated.
+- REQ-002 (Must, updated by the profile-settings follow-up): Store the chosen learning agent on learner_profile.learning_agent. Use it for all future AI work across every course, including generation, review, grading, and Socratic practice. Ignore old browser cookies and per-course provider routing. Before the first save, choose the first configured provider in codex/claude/deepseek order. Never replace an unavailable saved choice automatically.
+- REQ-003 (Must, updated): GET /api/agents retains {available, selected}, where selected is the saved profile agent even if unavailable. POST remains a compatibility endpoint that saves to the profile rather than a cookie. GET/PUT /api/profile include learningAgent. Validate a changed provider against availability and save background and provider atomically; omitted learningAgent preserves the current value. A same unavailable agent may be retained while saving background.
 - REQ-004 (Must): Add a server-only runDeepSeekObject adapter using native fetch, POST https://api.deepseek.com/chat/completions, Bearer authentication, JSON request content, stream:false, and response_format:{type:"json_object"}. Dispatch all six current tasks through it when deepseek is selected.
 - REQ-005 (Must): Include explicit JSON instructions, the supplied Zod schema converted to JSON Schema, and a brief JSON-format example clearly marked illustrative; instruct the model that the supplied schema determines the actual fields. Return only schema.parse(JSON.parse(choices[0].message.content)). Require a nonempty string, a well-formed completion envelope, and finish_reason:"stop". Never use reasoning_content as learning output.
 - REQ-006 (Must): Resolve DEEPSEEK_MODEL_<TASK>, then DEEPSEEK_MODEL, then deepseek-flash. For socratic, try DEEPSEEK_MODEL_SOCRATIC, DEEPSEEK_MODEL_CHAPTER, DEEPSEEK_MODEL, then the default. Trim override values and treat blank values as absent. Forward other nonblank model IDs without hardcoded rejection; invalid models produce a sanitized configuration/request failure.
 - REQ-007 (Must): Initially set thinking:{type:"disabled"} explicitly. Use max_tokens:16384 for syllabus, chapter, quiz, grading, and review; use 4096 for socratic. These are chosen integration defaults, not measured quality or latency guarantees. Do not add implicit thinking or token-budget overrides in this change.
 - REQ-008 (Must): Extend agentTimeoutMs to deepseek; default to 180000 ms and retain the existing positive safe integer and signed 32-bit timer bounds. DEEPSEEK_TIMEOUT_MS overrides the default. Abort the HTTP request and response-body read on deadline; clean up timers after all outcomes.
 - REQ-009 (Must): Translate every adapter failure to the existing CodexError contract, with DeepSeek-specific safe messages, appropriate code, and retryability. Preserve invalid_output identity for existing quality repair logic. Make exactly one HTTP attempt per adapter invocation; leave retries and repairs to existing callers.
-- REQ-010 (Must): Persist deepseek in courses.generationAgent and retain it for worker execution. Missing configuration or a failed paid call must not switch that saved provider. Preserve existing course data and nullable legacy provider behavior.
-- REQ-011 (Must): Render only discovered provider options. Use the label DeepSeek API in selector, single-provider state, and generation overlay. The empty state explains CLI installation or server-side DEEPSEEK_API_KEY configuration. Keep existing labels, disabled/submitting behavior, and accessible form controls.
+- REQ-010 (Must, updated): Retain courses.generationAgent as a historical creation-time selection. Resolve the current saved profile agent when starting each subsequent job or interactive operation. Already-running operations retain their starting provider. Profile changes do not rewrite saved content or progress; cached reading needs no available provider.
+- REQ-011 (Must, updated): Move the selector to Profile settings with Save profile. Show the saved/current agent and unavailable state in the site header and read-only home status. Share a client query that refreshes on mount, window focus, profile save, and every 30 seconds. Render available choices plus any saved unavailable choice; preserve drafts and the active label after failed saves. Disable new generation for an unavailable selected agent.
 - REQ-012 (Must): Keep the key out of browser bundles, cookies, database rows, response objects, error details, and logs. Do not log authorization headers or raw upstream request/response bodies. Retain existing content observability without passing raw DeepSeek errors or schema values into diagnostic messages.
 - REQ-013 (Must): Document root .env configuration, model override precedence, defaults, restart after configuration changes, paid API usage, and configured-versus-authenticated availability in README.md and .env.example. Do not add a provider dependency or edit real credentials.
 
@@ -73,13 +73,12 @@ The current provider enum, discovery, dispatcher, database typing, and home form
 
 <!-- Format: Use numbered steps. Name the actor, system action, state change, and failure branch at each relevant step. -->
 
-1. Operator adds DEEPSEEK_API_KEY to root .env and restarts the Next.js server. Next.js loads it into process.env using normal precedence; the adapter does not read the file directly.
-2. Learner opens the home page. The server lists configured providers without a paid probe. The form renders available choices and restores a valid preference; no providers results in a setup message and disabled creation.
-3. Learner selects DeepSeek. POST /api/agents validates availability and sets the existing preference cookie. If preference saving fails, the form shows a useful error and restores the previous selection rather than claiming it was saved.
-4. Learner submits a course. The server validates the explicit provider, saves generationAgent:"deepseek", and enqueues the course job. If the requested provider is now unavailable, return a safe nonretryable configuration error with HTTP 503 before saving the course.
-5. The worker uses the stored provider. runAgentObject resolves the task model and calls the DeepSeek adapter. The adapter applies timeout, authenticates, sends JSON instructions, validates the completion, and returns a typed object.
-6. Existing course/lesson/quiz quality stages review and repair through the same selected provider. Only accepted output reaches existing persistence operations. Interactive grading and Socratic flows use the same dispatcher and their existing response contracts.
-7. On failure, the adapter returns a classified safe error. The worker follows its existing bounded retries, or marks nonretryable work failed. Interactive routes keep their existing error response/status mappings and retry flags. Recovery requires fixing configuration or using the existing retry action; it does not trigger provider failover.
+1. Operator configures a provider and starts the server, applying the additive profile migration.
+2. Learner opens Profile settings, chooses a learning agent, and saves it together with their background. A failed save preserves both drafts and the previous active agent.
+3. The header and home status show the current profile agent. The browser query refreshes after saving, on focus/navigation, and every 30 seconds. The home form has no selector.
+4. Course creation reads the profile rather than a browser cookie or course-request agent field. New course metadata records the original provider for historical reference.
+5. Each generation job or interactive operation resolves the current saved profile agent once. Quality review/repair within that operation retains its starting agent. Later operations use any newly saved preference.
+6. An unavailable saved provider produces an explicit error and never triggers fallback. Existing generated content and progress remain readable and unchanged.
 
 ## Technical Design
 
@@ -95,9 +94,9 @@ sequenceDiagram
     participant App as Tutor server
     participant Worker as Content generation
     participant API as DeepSeek API
-    Learner->>App: Select DeepSeek and create course
-    App->>App: Save provider and enqueue work
-    Worker->>App: Resolve saved provider and task model
+    Learner->>App: Save DeepSeek in profile and create course
+    App->>App: Read profile and enqueue work
+    Worker->>App: Resolve current profile provider and task model
     App->>API: Request JSON using server key
     API-->>App: Completion or error
     App->>App: Validate response and schema
@@ -112,7 +111,7 @@ lib/agent.ts owns discovery, preference, and dispatch. lib/codex.ts owns modelFo
 
 ### Proposed Design
 
-Introduce lib/deepseek.ts with runDeepSeekObject<T>(prompt, schema, options), where options include model, timeoutMs, and maxTokens. Use global fetch so tests can mock it, and an AbortController whose timer remains active through body consumption. Read the key at call time and reject missing configuration before fetch. Use redirect:"error" so credentials are not sent through redirects. The dispatcher supplies the task token limit; the adapter applies the fixed disabled thinking setting.
+Introduce lib/deepseek.ts with runDeepSeekObject<T>(prompt, schema, options), where options include model, timeoutMs, and maxTokens. Use global fetch so tests can mock it, and an AbortController whose timer remains active through body consumption. Read the key at call time and reject missing configuration before fetch. Use redirect:"manual" and reject 3xx responses so credentials are not sent through redirects and redirects can be classified as nonretryable. The dispatcher supplies the task token limit; the adapter applies the fixed disabled thinking setting.
 
 Build a system message containing JSON instructions, illustrative format, and JSON.stringify(z.toJSONSchema(schema)); put the existing task prompt in a user message. Do not execute tools or request reasoning. Validate the envelope and finish reason before parsing the final answer. Use static validation messages or schema issue paths/codes without raw offending values. If a timer fired, classify the failure as timeout; other network failures are failed/retryable.
 
@@ -121,14 +120,16 @@ Build a system message containing JSON instructions, illustrative format, and JS
 - lib/deepseek.ts: key access, HTTP request, timeout, response parsing, and sanitized error mapping.
 - lib/agent.ts: third ID, configured availability, explicit requested-provider validation, DeepSeek dispatch, and updated no-provider message. Restrict commandAvailable to CLI IDs so no executable probe is made for DeepSeek.
 - lib/codex.ts and lib/agent-timeout.ts: extend existing model and timeout resolution without changing CLI options or introducing runtime import cycles.
-- lib/db/schema.ts: expand generationAgent typing. Keep generation-worker.ts behavior; only adjust integration where needed to retain the selected provider and surface classified errors.
+- lib/db/schema.ts: expand generationAgent typing and add learnerProfile.learningAgent. generation-worker.ts resolves the profile at job start; the course tag remains historical.
 - app/api/agents/route.ts and app/api/courses/route.ts: retain public response shapes, accept the third ID, and reject an unavailable explicit request before persistence.
-- components/new-course-form.tsx: add a browser-safe label mapping and provider union, filter options, update status/setup copy, and handle preference-save failures. Do not import a server-only module into the component.
+- components/profile-form.tsx owns the selector and profile save. components/new-course-form.tsx shows read-only status and a settings link. lib/agent-contracts.ts shares browser-safe IDs/labels; lib/use-learning-agent.ts shares current-agent state with the header. No client component imports server-only modules.
 - README.md and .env.example: operator setup and bounded configuration contract.
 
 ### Data Model / API Changes
 
-Add deepseek to the provider union, cookie validation, course input validation, and Drizzle generationAgent enum. No new columns or API endpoints. No SQL data migration is expected because generation_agent has no database CHECK constraint; confirm the current schema and avoid an unrelated migration. Existing {available, selected}, course creation 202, and learning-content responses retain their shapes. An unavailable explicit provider uses the existing not_found error code, retryable:false, and HTTP 503. POST /api/agents keeps its existing error response shape.
+Follow-up (2026-10-22): migration 0008_profile_learning_agent adds nullable learner_profile.learning_agent. GET/PUT /api/profile now include learningAgent; omitted values preserve the setting. Shared browser-safe contracts live in lib/agent-contracts.ts. Profile, dispatcher, job worker, syllabus review, header, and home status now use the saved profile choice; courses.generationAgent is provenance only. This supersedes the original cookie/course-binding design below.
+
+The provider union and Drizzle generationAgent enum include deepseek. Migration 0008 adds learner_profile.learning_agent; generation_agent itself remains unrestricted SQLite text. Existing {available, selected}, course creation 202, and learning-content response shapes remain compatible. Profile GET/PUT include learningAgent. Course creation ignores agent overrides and uses the profile. An unavailable saved provider produces not_found/retryable:false with HTTP 503 at course creation. POST /api/agents retains its response shape but persists the profile choice.
 
 ### Technical Decisions
 
@@ -157,28 +158,30 @@ Mock fetch, timers, CLI discovery, and environment values. Verify HTTP inputs, p
 
 ### Confirmed decisions
 
+- Follow-up request: move agent selection into Profile settings and persist it. With no response to the optional scope question, apply the stated recommended scope to future AI work in all courses; retain running operations and saved content.
+
 - The user requested DeepSeek API alongside Claude CLI and Codex CLI.
 - The API key must come from .env through the server environment.
-- The user invoked msdd-spec after the saved exploration, authorizing this specification and generated task list.
+- The user invoked msdd-spec after the saved exploration, then msdd-build to authorize implementation of the specification and its defaults.
 
 ### Assumptions
 
 - DeepSeek is a peer provider for every current task, including review and Socratic practice.
-- Keep existing default ordering and cookie behavior, except explicit unavailable requests now fail to prevent an unintended provider choice.
-- Use deepseek-flash with thinking disabled, 16384 output tokens for non-Socratic tasks, and 4096 for Socratic calls. The optional preference question has no answer at specification time; these are proposed defaults, not user-confirmed choices.
+- Keep default ordering before the first profile save. Ignore browser cookies and use the saved profile choice thereafter.
+- Use deepseek-flash with thinking disabled, 16384 output tokens for non-Socratic tasks, and 4096 for Socratic calls. These defaults were proposed at specification time and implemented after the user invoked msdd-build.
 - Treat global/task model overrides as operator-controlled IDs; upstream validation handles unsupported IDs.
 
 ### Constraints
 
-- Only specification artifacts change in this phase. Implementation starts through msdd-build.
+- Implementation is authorized through msdd-build; changes remain within this provider integration.
 - Preserve all pre-existing local edits, including CLI isolation, timeout, schema, and Socratic work; inspect the current workspace again before build.
 - Do not require a CLI for DeepSeek-only use, expose the key, or add network calls to provider discovery.
-- Live DeepSeek credentials and account access have not been verified. The exploration found no root .env or .env.local.
+- Live DeepSeek credentials and account access have not been verified. A root .env now exists with DEEPSEEK_API_KEY and DEEPSEEK_MODEL; only variable names were inspected and the real file was not edited. Running application discovery confirms DeepSeek is configured.
 - Keep retry/quality policy and learner-content APIs compatible.
 
 ### Open questions
 
-- No blocking architecture choice remains. The learner may revise the proposed thinking/model defaults before build.
+- No blocking architecture choice remains. The specified default settings are implemented; global/task model environment overrides remain available.
 - Live output quality, latency, and account access remain unmeasured; report this limitation if no live smoke check is performed.
 
 ## Edge Cases and Failure Handling
@@ -199,7 +202,7 @@ Mock fetch, timers, CLI discovery, and environment values. Verify HTTP inputs, p
 | Deadline before headers or during body read | Abort; timeout/retryable; clear timer | Existing retry path |
 | Redirect | Reject without following; failed/nonretryable | Check official endpoint/service configuration |
 | Invalid envelope, non-stop finish reason, null/empty content, malformed JSON, schema mismatch | invalid_output/retryable with static safe validation detail; do not persist content | Existing bounded schema repair where applicable |
-| Unavailable or malformed cookie | Ignore invalid cookie or use configured default before a new operation | Select an available provider |
+| Old browser preference cookie | Ignore it; use the profile, or the configured default before the first save | Select and save an agent in Profile settings |
 | Preference POST fails | Display error and restore the previous selection | Retry selection |
 | All providers unavailable | Empty available list, selected:null, helpful setup text, disabled creation | Configure a provider |
 | Existing saved Codex/Claude or null provider | Preserve existing execution and legacy default resolution | Existing recovery behavior |
@@ -211,12 +214,12 @@ Availability is configuration, not authentication. Do not retry nonretryable err
 
 <!-- Format: Use stable IDs such as AC-001. Make each criterion observable and state how it will be verified. -->
 
-- AC-001 (REQ-001–003): Mocked discovery tests cover all eight CLI/key combinations and whitespace keys; no fetch occurs. Unknown selections return 400, unavailable selections return 503, and deepseek preferences persist with existing cookie attributes.
-- AC-002 (REQ-004–007): Adapter tests assert endpoint, redirect policy, headers, JSON mode, disabled thinking, model precedence, all task token budgets, and typed output. No CLI process is launched for DeepSeek tasks.
+- AC-001 (REQ-001–003, updated): Discovery covers all availability combinations; the profile choice persists across requests, without cookies or a paid probe. Invalid selections fail and unavailable changed choices leave both profile fields unchanged. Old cookies and course-request agent fields do not override the profile.
+- AC-002 (REQ-004–007): Adapter tests assert endpoint, manual redirect rejection, headers, JSON mode, disabled thinking, model precedence, all task token budgets, and typed output. No CLI process is launched for DeepSeek tasks.
 - AC-003 (REQ-005,009): Table-driven tests cover malformed envelopes, empty/null content, length/missing/other finish reasons, invalid JSON, schema failure, and all HTTP/network classes. Invalid content never reaches learning-artifact persistence.
 - AC-004 (REQ-008): Fake-timer tests prove deadline cancellation before headers and during body reading, and cleanup after success/failure; invalid timeout values retain the existing default.
-- AC-005 (REQ-009,010): Worker/quality integration tests retain deepseek across a resumed job, use existing review/repair behavior, and honor retryable:false on key/authentication/balance failure. Explicit unavailable course creation returns 503 without a saved course or job.
-- AC-006 (REQ-011): Component tests cover DeepSeek-only and mixed availability, filtered options, label/overlay text, empty state, cookie-restored choice, and rollback on failed preference saving. A mocked Playwright smoke test can select DeepSeek, reload, and submit a course without a real API call.
+- AC-005 (REQ-009,010, updated): Worker tests use the current profile despite a different course generationAgent, retain existing quality repair, and fail without fallback when that saved profile agent becomes unavailable. Cached lesson reading succeeds without resolving an AI provider.
+- AC-006 (REQ-011, updated): Component/browser checks save the profile agent, preserve unsaved fields after failure, restore it on reload, remove the home selector, refresh the header, show unavailable choices, and submit course intent without an agent override. Check a 375px viewport for overflow.
 - AC-007 (REQ-012): Tests use a sentinel key and hostile upstream error body and assert that logs, returned errors, provider responses, cookies, and saved course metadata contain no sentinel. Code review confirms server-only credential access.
 - AC-008 (REQ-013): README and .env.example document all supported variables, defaults, setup/restart, API cost, and configuration-only discovery with no real key committed.
 - AC-009 (All): Typecheck, lint, build, relevant CLI/provider/quality tests, and the mocked browser smoke pass, or any pre-existing unrelated failure is separately evidenced. No unrelated local edit is reverted.
@@ -241,9 +244,52 @@ Availability is configuration, not authentication. Do not retry nonretryable err
 4. Update components/new-course-form.tsx and its tests for discovered options, DeepSeek labels, setup state, and failed-preference rollback; add a mocked e2e/provider-selection.spec.ts for selecting/restoring DeepSeek and course submission. Preserve existing form/focus behavior. Depends on step 3.
 5. Document DEEPSEEK_API_KEY, global/task model overrides, DEEPSEEK_TIMEOUT_MS, defaults, startup, costs, and discovery limits in README.md and .env.example; keep real environment files and existing unrelated edits untouched. Depends on steps 1–4.
 
+6. Move provider selection to saved Profile settings, add the profile migration and shared current-agent display, and route future AI work through that profile setting across existing courses. Preserve cached reading and verify profile persistence, unavailable choices, draft recovery, provider consistency, and mobile/browser behavior. This follows the user request after the initial DeepSeek build.
+
 ## Verification and Implementation Notes
 
 <!-- Format: List commands/tests, expected evidence, rollout checks, and a place to record deviations. -->
 
-- Verify the feature after steps 1–5 with npm run typecheck, npm run lint, npm run build, and npm test -- lib/deepseek.test.ts lib/agent.test.ts lib/agent-timeout.test.ts lib/codex.test.ts lib/claude.test.ts lib/quality.test.ts app/agents-route.test.ts app/courses-route.test.ts app/course-preparation.test.ts app/socratic-route.test.ts components/new-course-form.test.tsx; add the named missing feature tests during implementation. Run npx playwright test e2e/provider-selection.spec.ts with mocked service responses and an isolated test database. Expected evidence is passing feature checks plus unchanged CLI behavior; investigate and separately document pre-existing unrelated failures without reverting other work.
+- Verify the feature after steps 1–5 with npm run typecheck, npm run lint, npm run build, and npm test -- lib/deepseek.test.ts lib/agent.test.ts lib/agent-timeout.test.ts lib/codex.test.ts lib/claude.test.ts lib/quality.test.ts app/agents-route.test.ts app/courses-route.test.ts app/course-preparation.test.ts app/socratic-route.test.ts components/new-course-form.test.tsx; add the named missing feature tests during implementation. Run npx playwright test e2e/provider-selection.spec.ts with mocked service responses; backend integration tests use an isolated in-memory database. If an existing development server holds the Next.js dev lock, run this browser-only test against it with a temporary Playwright config and no webServer process. All browser write requests remain mocked. Expected evidence is passing feature checks plus unchanged CLI behavior; investigate and separately document pre-existing unrelated failures without reverting other work.
 - Record implementation evidence and deviations in this section: commands/results, provider/model compatibility changes, database migration conclusion, and any changed task boundaries. Before implementation, re-read the installed Next.js guide for the affected APIs and verify current official DeepSeek model/parameter support. Keep automated tests independent of live credentials; if a live smoke test is performed during a later build, document the model and outcome without key/prompt disclosure. A live test is optional and not required for the mocked acceptance suite.
+
+<!--
+Evidence: T1 — 25 focused provider/configuration/CLI tests passed; typecheck passed. SQLite migration 0006 defines generation_agent as unrestricted text, so expanding the Drizzle enum requires no SQL migration. Installed Next.js environment loading guidance and current official DeepSeek chat parameters were checked before implementation. CLI model resolution is unchanged; trimming applies to DeepSeek overrides only.
+-->
+
+<!--
+Evidence: Adapter design refinement — native fetch with redirect:error obscures redirects as generic network failures. Use redirect:manual and reject 3xx as nonretryable to meet the specified failure semantics without following redirects.
+-->
+
+<!--
+Evidence: T2 — 33 adapter tests passed without unhandled errors; typecheck passed. Tests cover valid output, missing keys, 13 HTTP statuses including redirects, invalid envelopes/JSON/schema output, safe network errors, and abort before headers or during body consumption. A test-only unused rejection promise was corrected before task completion. Timers are cleared on all tested paths.
+-->
+
+<!--
+Evidence: T3 — 58 dispatch/API/worker/quality/course/Socratic tests passed; typecheck passed. The real dispatcher and mocked HTTP were exercised with an in-memory migrated database: saved DeepSeek work completed review, malformed output repaired, missing/auth/balance failures did not retry or switch providers, rate limits returned to pending, and unavailable explicit course requests wrote no rows. Integration coverage is in app/deepseek-course.test.ts in addition to the originally named suites. Existing worker and route contracts needed no structural rewrite.
+-->
+
+<!--
+Evidence: T4 — 15 form tests, typecheck, and one Chromium smoke test passed. The smoke selects DeepSeek, restores its HttpOnly cookie across reload, and submits the selected provider using mocked requests. The existing port-3000 development server held the dev lock; a temporary config targeted that server without starting or stopping it. Backend persistence tests remain isolated in memory. A strict alert locator was refined to exclude Next.js route announcements. Product/register context and installed route/cookie guides were read; no visual redesign was introduced.
+Evidence: MSDD tooling detail — this installed CLI derives tasks from every prose line in Verification notes, including Evidence records. Completed-check records are therefore Evidence-prefixed HTML comments, which the parser excludes from task generation. The intended seven-task plan is unchanged.
+-->
+
+<!--
+Evidence: T5 — README.md and .env.example now document the key, six task model overrides and precedence, model/thinking/token/timeout defaults, normal Next.js environment precedence, restart/retry behavior, configuration-only discovery, API costs, and speculative Socratic calls. Setup uses root .env as requested. git diff --check passed; no real environment file was edited and no dependency was added.
+-->
+
+<!--
+Evidence: T12 (verification task, formerly T6) — npm run lint passed; npm run typecheck passed; npm run build passed (Next.js 16.3.8). The final targeted regression run passed 127 tests across 13 files, including the added DeepSeek database integration and existing Codex command tests. Chromium selection/cookie/submission smoke passed. git diff --check and msdd review passed. The production build's generated next-env.d.ts path change was restored to the pre-build development imports. The build emitted only the existing parent-directory package-lock warning. No live DeepSeek completion was performed.
+-->
+
+<!--
+Evidence: T7 — Implementation facts, redirect handling, actual integration test location, browser-server reuse, and final verification results are recorded in this living specification. Read-only GET http://127.0.0.1:3000/api/agents returned available:[codex,claude,deepseek], selected:codex, confirming real Next.js environment discovery with the existing default order. Root .env variable names DEEPSEEK_API_KEY and DEEPSEEK_MODEL are present; values were not printed or changed. Account authentication and live generation quality remain untested. No SQL migration or dependency was needed. All seven intended tasks are complete; verification's generated ID changed from T6 to T12 after the browser execution note was reconciled.
+-->
+
+<!--
+Evidence: Profile-settings follow-up — migration 0008 adds only learner_profile.learning_agent and was generated with Drizzle and applied successfully. Provider status is shared by the header/home through useLearningAgent; a saved unavailable provider remains visible and never falls back. A compatibility /api/agents POST writes the profile; old cookies are ignored. Profile-save validation is atomic. Course tags remain historical. Cached chapter reads bypass provider resolution. The optional scope question received no answer, so the stated global-future-work assumption was used.
+-->
+
+<!--
+Evidence: Profile-settings completion — 155 targeted regression tests passed across 16 files before the shared-state refinement; the final affected UI rerun passed all 18 form/profile tests. Final lint and production build (including TypeScript) passed. Chromium provider persistence and cross-page header checks passed, and the final profile smoke passed after all client-state changes; the 375px screenshot was visually inspected without overflow. Full-suite discovery reported 11 failures: two stale provider-error expectations were corrected and pass in the targeted rerun; nine unrelated layout/course-page failures remain in untouched or concurrently edited code. Existing learner data/profile values were not changed by browser tests: endpoint writes were mocked, backend tests used migrated in-memory databases, and only the additive migration was applied locally. No live AI completion was performed. Generated next-env imports were restored after production verification. README and this specification now describe the profile as the authority and the course tag as a creation-time reference.
+-->

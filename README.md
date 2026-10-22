@@ -2,7 +2,7 @@
 
 Mastery Tutor turns a learning intention into a focused, chapter-by-chapter path. You name what you want to understand, read a short lesson, answer a few retrieval questions, and unlock the next idea only when you have mastered the current one.
 
-It is deliberately small: one learner, one local SQLite database, and a locally installed Codex or Claude CLI running server-side for structured course, lesson, quiz, and free-text grading generation.
+It is deliberately small: one learner, one local SQLite database, and Codex CLI, Claude CLI, or DeepSeek API running server-side for structured course, lesson, quiz, and free-text grading generation.
 
 ## The experience
 
@@ -35,7 +35,7 @@ Most learning tools optimize for content consumption. Mastery Tutor is organized
 - Generate a dependency-aware syllabus from a plain-language topic.
 - Prepare the first lesson after accepting the course plan, then warm newly unlocked lessons through saved generation jobs.
 - Render LaTeX formulas with KaTeX and Mermaid diagrams when they improve an explanation.
-- Mix deterministic MCQ grading with rubric-based Codex grading for free text.
+- Mix deterministic MCQ grading with rubric-based AI grading for free text.
 - Keep failed attempts, remediation, and missed-concept review schedules.
 - Unlock the next chapter transactionally after mastery.
 - Export the course as Markdown without making another model call.
@@ -44,7 +44,7 @@ Most learning tools optimize for content consumption. Mastery Tutor is organized
 
 - Next.js App Router, React, TypeScript, and Tailwind CSS
 - Drizzle ORM with SQLite via `better-sqlite3`
-- Codex or Claude CLI with structured JSON output and Zod validation
+- Codex CLI, Claude CLI, or DeepSeek API with structured JSON output and Zod validation
 - Vitest, Testing Library, and Playwright
 - Unified Markdown, KaTeX, and Shiki rendering
 
@@ -52,9 +52,9 @@ Most learning tools optimize for content consumption. Mastery Tutor is organized
 
 - Node.js 20+
 - npm
-- Codex CLI or Claude CLI installed and already authenticated for the same OS user running the server
+- At least one provider: an authenticated Codex/Claude CLI for the same OS user running the server, or a DeepSeek API key
 
-The normal local path does not need an API key. If the server runs as a different service user, in a container, or in a headless environment, configure authentication for the selected CLI in that process. When both CLIs are available, choose between them on the home screen; the selection persists until changed.
+The CLI path does not need an API key. DeepSeek uses a paid API key and requires no CLI installation. If the server runs as a different service user, in a container, or in a headless environment, configure authentication for the selected CLI in that process. Choose a configured learning agent in **Profile settings** and click **Save profile**. The choice is stored in SQLite and applies across browsers and all courses. The header and home form show the current agent. Before the first save, the default order is Codex, Claude, then DeepSeek.
 
 ## Run locally
 
@@ -62,13 +62,34 @@ The normal local path does not need an API key. If the server runs as a differen
 git clone https://github.com/muthuspark/mastery-tutor.git
 cd mastery-tutor
 npm install
-cp .env.example .env.local
+cp .env.example .env
 npm run dev
 ```
 
 Open [http://127.0.0.1:3000](http://127.0.0.1:3000).
 
 The development command applies SQLite migrations automatically. The database is created at `data/tutor.db`.
+
+## DeepSeek API setup
+
+Add your key to the repository-root `.env` file, then restart the server:
+
+```dotenv
+DEEPSEEK_API_KEY=your-key-here
+# Optional settings:
+DEEPSEEK_MODEL=deepseek-flash
+DEEPSEEK_TIMEOUT_MS=180000
+```
+
+Open **Profile settings**, select **DeepSeek API**, then click **Save profile**. It can run course planning, lesson and quiz writing, quality review, free-text grading, and Socratic practice without Codex or Claude installed. The key stays on the server. Do not use a `NEXT_PUBLIC_` variable or commit your `.env` file. Next.js uses normal environment precedence: process variables and more specific `.env` files can override `.env`.
+
+DeepSeek appears when a nonempty key is configured. Discovery does not contact the API or verify authentication, model access, or account balance. Errors identify missing configuration, authentication, insufficient balance, or temporary service failure. After fixing configuration, restart and use the existing retry action. A saved profile agent is never silently replaced. If it is unavailable, configure it or choose another agent in Profile settings. Changing the profile agent applies to future generation, review, practice, and grading in every course, including existing courses. Calls already running finish with their starting agent; saved content and progress are unchanged.
+
+The default model is `deepseek-flash`. To select another supported model, set `DEEPSEEK_MODEL` (for example, `deepseek-v4-pro`). Task overrides take precedence: `DEEPSEEK_MODEL_SYLLABUS`, `DEEPSEEK_MODEL_CHAPTER`, `DEEPSEEK_MODEL_QUIZ`, `DEEPSEEK_MODEL_GRADING`, `DEEPSEEK_MODEL_REVIEW`, and `DEEPSEEK_MODEL_SOCRATIC`. Socratic practice checks its own override, then the chapter override, then the global model, then the default. Other tasks check their own override, the global model, then the default. Blank values are ignored.
+
+Requests use JSON output with local schema validation, thinking disabled, and output limits of 16,384 tokens per call (4,096 for Socratic calls). The default timeout is 180,000 milliseconds for each call, including response-body reading. Override it with a positive integer up to 2,147,483,647; invalid values use the default.
+
+DeepSeek charges for API usage. A course can require several writing, review, and repair calls. Socratic practice can prepare a follow-up in the background that goes unused. The adapter makes one HTTP attempt per invocation; existing generation jobs can retry transient failures up to three attempts. Cancelling a timed-out request does not guarantee that it was not billed. Automated provider tests use mocked HTTP and do not validate live teaching quality or account access.
 
 ## Useful commands
 
@@ -87,18 +108,18 @@ npm run build       # Production build
 The browser talks only to Next.js route handlers. Model work stays on the server:
 
 ```text
-Learner → Next.js UI → Route handler → Codex / Claude CLI
+Learner → Next.js UI → Route handler → Codex CLI / Claude CLI / DeepSeek API
                               ↓
                          SQLite / Drizzle
 ```
 
 Codex is invoked with fixed arguments, a read-only sandbox, a bounded timeout, and a generated JSON Schema. Claude runs in non-interactive JSON print mode with the schema in its prompt and a bounded timeout. Every response is parsed and validated with Zod before it can be persisted. Prompts, credentials, command lines, and raw CLI output are not exposed to the browser.
 
-Each CLI call has a three-minute timeout, including individual planning, writing, and review calls. Set `CODEX_TIMEOUT_MS` or `CLAUDE_TIMEOUT_MS` in the server environment to allow more time on slower models or connections. Values must be positive integer milliseconds within Node's timer range; invalid values use the default. After changing environment settings, restart the server and select **Try again** on the saved course if preparation previously failed.
+Each provider call has a three-minute timeout, including individual planning, writing, and review calls. Set `CODEX_TIMEOUT_MS`, `CLAUDE_TIMEOUT_MS`, or `DEEPSEEK_TIMEOUT_MS` in the server environment to allow more time on slower models or connections. Values must be positive integer milliseconds within Node's timer range; invalid values use the default. After changing environment settings, restart the server and select **Try again** on the saved course if preparation previously failed.
 
 Interactive chapter practice uses a separate `socratic` task. Codex runs these short requests with low reasoning effort in a temporary working directory, using only the supplied lesson and conversation. Optional `CODEX_MODEL_SOCRATIC` and `CLAUDE_MODEL_SOCRATIC` overrides fall back to the chapter/global model settings. After displaying a question, the server prepares one likely next step in the background. It reuses that result only for the matching answer, hint usage, agent, learner profile, and lesson version; other choices receive a newly generated follow-up. Preparation never records an answer or changes progress. One speculative call may go unused if the learner chooses differently or leaves. The cache is bounded, expires after five minutes, and safely falls back to generation after a server restart.
 
-New-course planning, lessons, and quizzes run through the saved generation queue. A worker renews its lease every 30 seconds and checks ownership and generation versions before publication. Persistent review rejection requires explicit retry; transient CLI failures have at most three job attempts. Requests do not wait for multi-call generation. The selected agent is saved with each new course; optional `CODEX_MODEL_REVIEW` and `CLAUDE_MODEL_REVIEW` overrides follow the existing per-task model configuration.
+New-course planning, lessons, and quizzes run through the saved generation queue. A worker renews its lease every 30 seconds and checks ownership and generation versions before publication. Persistent review rejection requires explicit retry; transient provider failures have at most three job attempts. Requests do not wait for multi-call generation. Each course records its creation-time agent for reference; future AI work uses the current profile agent. The old browser preference cookie is ignored. Optional `CODEX_MODEL_REVIEW` and `CLAUDE_MODEL_REVIEW` overrides follow the existing per-task model configuration.
 
 Apply migrations and restart all app processes sharing a database after this upgrade so each background worker recognizes course-preparation jobs. Keep a server process running while preparation is in progress. Profile edits affect future generated explanations without silently changing accepted course goals or saved progress.
 
@@ -108,6 +129,7 @@ Apply migrations and restart all app processes sharing a database after this upg
 app/                 Pages and route handlers
 components/          Client-side learning views
 lib/codex.ts         Server-only Codex CLI adapter
+lib/deepseek.ts      Server-only DeepSeek HTTP adapter
 lib/db/              Drizzle schema and SQLite connection
 lib/gating.ts         Mastery and chapter progression rules
 lib/review.ts         Missed-concept scheduling

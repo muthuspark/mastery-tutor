@@ -17,8 +17,6 @@ import {
 import { generateQuiz } from "./quiz";
 import { recordGenerationEvent } from "./generation-observability";
 import { db } from "./db";
-import { chapters, courses } from "./db/schema";
-import { eq } from "drizzle-orm";
 import { prepareCourse } from "./course-planner";
 import { QualityError } from "./quality-contracts";
 import { ownedJob, renewGenerationLease } from "./generation";
@@ -60,9 +58,7 @@ export async function processGenerationJob(job: GenerationJob, workerId: string,
   heartbeat.unref();
   try {
     guard();
-    const chapter = job.artifactType === "course" ? undefined : db.select().from(chapters).where(eq(chapters.id, job.targetId)).get();
-    const course = db.select().from(courses).where(eq(courses.id, chapter?.courseId ?? job.targetId)).get();
-    const agent = requestedAgent ?? course?.generationAgent ?? await agentForRequest(new Request("http://localhost"));
+    const agent = await agentForRequest(new Request("http://localhost"), requestedAgent);
     if (!agent) throw new Error("No generation agent is available");
     if (job.artifactType === "course") {
       await prepareCourse(job.targetId, agent, job.generationVersion, guard);

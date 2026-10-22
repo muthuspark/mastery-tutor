@@ -18,7 +18,13 @@ type RunOptions = {
 
 export type CodexTask = "syllabus" | "chapter" | "quiz" | "grading" | "review" | "socratic";
 
-export function modelFor(task: CodexTask, agent: "codex" | "claude" = "codex") {
+export function modelFor(task: CodexTask, agent: "codex" | "claude" | "deepseek" = "codex") {
+  if (agent === "deepseek") {
+    return process.env[`DEEPSEEK_MODEL_${task.toUpperCase()}`]?.trim()
+      || (task === "socratic" ? process.env.DEEPSEEK_MODEL_CHAPTER?.trim() : undefined)
+      || process.env.DEEPSEEK_MODEL?.trim()
+      || "deepseek-flash";
+  }
   const prefix = agent === "claude" ? "CLAUDE" : "CODEX";
   const configured = process.env[`${prefix}_MODEL_${task.toUpperCase()}`]
     || (task === "socratic" ? process.env[`${prefix}_MODEL_CHAPTER`] : undefined);

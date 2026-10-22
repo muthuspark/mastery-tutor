@@ -4,7 +4,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { chapters, courses } from "@/lib/db/schema";
 import { coursePlanSchema, QualityError, reviewSchema, syllabusGraphIssues } from "@/lib/quality-contracts";
-import { runAgentObject } from "@/lib/agent";
+import { agentForRequest, noAgentError, runAgentObject } from "@/lib/agent";
 import { REVIEW_PROMPT } from "@/lib/quality";
 import { learnerProfilePrompt } from "@/lib/profile";
 import { enqueueGenerationJob, invalidateChapterGeneration } from "@/lib/generation";
@@ -70,11 +70,13 @@ export async function PATCH(request: Request, context: RouteContext) {
   const merged = existing.map((chapter) => ({ ...chapter, ...edits.get(chapter.id) }));
   if (syllabusGraphIssues(merged).length) return NextResponse.json({ error: { code: "invalid_input", message: "Every prerequisite must identify an earlier chapter, without duplicates. Chapter titles must be distinct." } }, { status: 400 });
   if (course.qualityPolicyVersion) {
-    if (course.preparationStatus !== "ready" || !course.generationAgent) return NextResponse.json({ error: { code: "preparing", message: "Wait for course preparation before editing." } }, { status: 409 });
+    if (course.preparationStatus !== "ready") return NextResponse.json({ error: { code: "preparing", message: "Wait for course preparation before editing." } }, { status: 409 });
     const plan = coursePlanSchema.safeParse({ topic: course.topic, brief: course.brief, chapters: merged });
     if (!plan.success) return NextResponse.json({ error: { code: "invalid_input", message: "The edited outline is incomplete." } }, { status: 400 });
     try {
-      const review = reviewSchema.parse(await runAgentObject(course.generationAgent, "review", `${REVIEW_PROMPT}\n${learnerProfilePrompt()}\nLearning request: ${JSON.stringify(course.learningRequest)}\nArtifact: syllabus\nDraft: ${JSON.stringify(plan.data)}`, reviewSchema));
+      const agent = await agentForRequest(request);
+      if (!agent) throw noAgentError();
+      const review = reviewSchema.parse(await runAgentObject(agent, "review", `${REVIEW_PROMPT}\n${learnerProfilePrompt()}\nLearning request: ${JSON.stringify(course.learningRequest)}\nArtifact: syllabus\nDraft: ${JSON.stringify(plan.data)}`, reviewSchema));
       if (review.issues.some((issue) => issue.severity === "blocking")) throw new QualityError();
     } catch (error) {
       return NextResponse.json({ error: { code: error instanceof QualityError ? "quality_rejected" : "review_failed", message: error instanceof QualityError ? "The edited outline needs revision to fit the course goal and chapter coverage." : "Could not review these edits. Try again.", retryable: true } }, { status: error instanceof QualityError ? 422 : 502 });

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { chapters, courses } from "@/lib/db/schema";
 import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
-import { agentForRequest, type Agent } from "@/lib/agent";
+import { type Agent } from "@/lib/agent";
 import { generateChapterContent } from "@/lib/chapter";
 import { claimGenerationJob, enqueueGenerationJob, invalidateChapterGeneration } from "@/lib/generation";
 import { processGenerationJob } from "@/lib/generation-worker";
@@ -92,10 +92,10 @@ async function regenerateChapterNow(id: string, agent?: Agent) {
   return chapter;
 }
 
-export async function GET(request: Request, context: RouteContext) {
+export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   try {
-    const chapter = await generateChapter(id, false, await agentForRequest(request));
+    const chapter = await generateChapter(id);
     if (chapter instanceof NextResponse) return chapter;
     return NextResponse.json({
       chapter,

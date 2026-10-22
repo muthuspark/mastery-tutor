@@ -10,6 +10,7 @@ const timestamps = {
 export const learnerProfile = sqliteTable("learner_profile", {
   id: integer("id").primaryKey(),
   aboutMe: text("about_me").notNull().default(""),
+  learningAgent: text("learning_agent", { enum: ["codex", "claude", "deepseek"] }),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
@@ -20,7 +21,7 @@ export const courses = sqliteTable("courses", {
   learningRequest: text("learning_request"),
   brief: text("brief", { mode: "json" }).$type<CourseBrief | null>(),
   qualityPolicyVersion: integer("quality_policy_version"),
-  generationAgent: text("generation_agent", { enum: ["codex", "claude"] }),
+  generationAgent: text("generation_agent", { enum: ["codex", "claude", "deepseek"] }),
   preparationStatus: text("preparation_status", { enum: ["pending", "generating", "ready", "failed"] }).notNull().default("ready"),
   preparationStage: text("preparation_stage", { enum: ["planning", "reviewing", "repairing"] }),
   preparationError: text("preparation_error"),

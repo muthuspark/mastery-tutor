@@ -18,9 +18,9 @@ export function CoursePage() {
   const [isRevisiting, setIsRevisiting] = useState(false);
   const [revisitError, setRevisitError] = useState("");
   const { data, isLoading, isError, refetch, isFetching, isFetched } = useQuery<CourseResponse>({ queryKey: ["course", params.id], queryFn: () => fetch(`/api/courses/${params.id}`).then((response) => { if (!response.ok) throw new Error("Could not load course"); return response.json(); }), refetchInterval: (query) => ["pending", "generating"].includes(query.state.data?.course.preparationStatus ?? "") ? 2_000 : false });
-  if (isLoading && !isFetched) return <main id="main-content" tabIndex={-1} className="page-shell"><p className="loading-state ui text-sm text-[var(--muted)]" role="status">Loading course…</p></main>;
+  if (isLoading && !isFetched) return <main id="main-content" tabIndex={-1} className="reading-shell"><p className="loading-state ui text-sm text-[var(--muted)]" role="status">Loading course…</p></main>;
   if (isError || !data) return (
-    <main id="main-content" tabIndex={-1} className="page-shell">
+    <main id="main-content" tabIndex={-1} className="reading-shell">
       <BackToLearning />
       <h1 className="display text-4xl leading-none">Course unavailable</h1>
       <p className="ui mt-5 text-sm text-[var(--muted)]" role={isFetching ? "status" : "alert"}>{isFetching ? "Loading course…" : "Could not load this course."}</p>
@@ -50,7 +50,7 @@ export function CoursePage() {
     }
   }
   return (
-    <main id="main-content" tabIndex={-1} className="page-shell">
+    <main id="main-content" tabIndex={-1} className="reading-shell">
       <BackToLearning />
       <header className="course-hero">
         <h1 className="display max-w-3xl text-4xl leading-none">{data.course.topic}</h1>

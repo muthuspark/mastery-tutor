@@ -3,15 +3,22 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 import { learnerProfile } from "./db/schema";
+import type { Agent } from "./agent-contracts";
 
 export function getProfile() {
-  return { aboutMe: db.select().from(learnerProfile).where(eq(learnerProfile.id, 1)).get()?.aboutMe ?? "" };
+  const profile = db.select().from(learnerProfile).where(eq(learnerProfile.id, 1)).get();
+  return { aboutMe: profile?.aboutMe ?? "", learningAgent: profile?.learningAgent ?? null };
 }
 
-export function saveProfile(aboutMe: string) {
-  db.insert(learnerProfile).values({ id: 1, aboutMe, updatedAt: new Date() })
-    .onConflictDoUpdate({ target: learnerProfile.id, set: { aboutMe, updatedAt: new Date() } }).run();
-  return { aboutMe };
+export function saveProfile(aboutMe: string, learningAgent = getProfile().learningAgent) {
+  db.insert(learnerProfile).values({ id: 1, aboutMe, learningAgent, updatedAt: new Date() })
+    .onConflictDoUpdate({ target: learnerProfile.id, set: { aboutMe, learningAgent, updatedAt: new Date() } }).run();
+  return { aboutMe, learningAgent };
+}
+
+export function saveLearningAgent(learningAgent: Agent) {
+  db.insert(learnerProfile).values({ id: 1, aboutMe: "", learningAgent, updatedAt: new Date() })
+    .onConflictDoUpdate({ target: learnerProfile.id, set: { learningAgent, updatedAt: new Date() } }).run();
 }
 
 export function learnerProfilePrompt(aboutMe = getProfile().aboutMe) {

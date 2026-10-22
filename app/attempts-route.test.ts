@@ -113,7 +113,7 @@ describe("attempt grading agent requirements", () => {
     db.insert(questions).values({ ...first, id: freeResponseId, type }).run();
     const response = await submit([{ questionId, response: "0" }, { questionId: freeResponseId, response: "An explanation" }]);
     expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ error: { code: "not_found", message: expect.stringContaining("Install either the Codex or Claude CLI"), retryable: false } });
+    expect(await response.json()).toMatchObject({ error: { code: "not_found", message: expect.stringContaining("Install Codex or Claude CLI, or configure DEEPSEEK_API_KEY"), retryable: false } });
     expect(agentForRequest).toHaveBeenCalledTimes(1);
     expect(runAgentObject).not.toHaveBeenCalled();
     expect(db.select().from(attempts).all()).toEqual([]);

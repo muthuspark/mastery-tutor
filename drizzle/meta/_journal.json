@@ -57,6 +57,13 @@
       "when": 1792655780564,
       "tag": "0007_socratic_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1792673324057,
+      "tag": "0008_profile_learning_agent",
+      "breakpoints": true
     }
   ]
 }

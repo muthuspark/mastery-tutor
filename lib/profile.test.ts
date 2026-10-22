@@ -34,9 +34,9 @@ beforeEach(() => { db.delete(learnerProfile).run(); vi.mocked(runAgentObject).mo
 
 describe("learner profile", () => {
   it("defaults to empty, persists edits, trims, and clears", async () => {
-    expect(await (await GET()).json()).toEqual({ aboutMe: "" });
-    expect(await (await put({ aboutMe: "  Experienced engineer  " })).json()).toEqual({ aboutMe: "Experienced engineer" });
-    expect(await (await GET()).json()).toEqual({ aboutMe: "Experienced engineer" });
+    expect(await (await GET()).json()).toEqual({ aboutMe: "", learningAgent: null });
+    expect(await (await put({ aboutMe: "  Experienced engineer  " })).json()).toEqual({ aboutMe: "Experienced engineer", learningAgent: null });
+    expect(await (await GET()).json()).toEqual({ aboutMe: "Experienced engineer", learningAgent: null });
     await put({ aboutMe: "New to biology" });
     expect(getProfile().aboutMe).toBe("New to biology");
     await put({ aboutMe: "  " });
@@ -87,4 +87,16 @@ describe("learner profile", () => {
     await gradeAnswer({ id: randomUUID(), chapterId: chapter.id, type: "short", prompt: "Explain", options: null, rubric: "Accuracy", modelAnswer: "Correct", conceptTag: "probability", generationVersion: 1, isReview: false, createdAt: new Date() }, "Correct");
     expect(vi.mocked(runAgentObject).mock.calls.find(call => call[1] === "grading")![2]).toContain("Use practical examples");
   });
+});
+
+it("persists and validates the learning agent with the profile", async () => {
+  vi.stubEnv("DEEPSEEK_API_KEY", "test-key");
+  try {
+    expect((await put({ aboutMe: "Engineer", learningAgent: "deepseek" })).status).toBe(200);
+    expect(getProfile()).toEqual({ aboutMe: "Engineer", learningAgent: "deepseek" });
+    await put({ aboutMe: "Updated background" });
+    expect(getProfile().learningAgent).toBe("deepseek");
+    expect((await put({ aboutMe: "Bad", learningAgent: "unknown" })).status).toBe(400);
+    expect(getProfile().aboutMe).toBe("Updated background");
+  } finally { vi.unstubAllEnvs(); }
 });
