@@ -83,7 +83,10 @@ export async function runCodexObject<T>(
     return schema.parse(output);
   } catch (error) {
     if (error instanceof z.ZodError || error instanceof SyntaxError) {
-      throw new CodexError("invalid_output", "Codex returned invalid structured output.", true);
+      const details = error instanceof z.ZodError
+        ? error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ")
+        : "Response was not valid JSON";
+      throw new CodexError("invalid_output", `Codex returned invalid structured output: ${details.slice(0, 2000)}`, true);
     }
     throw classifyCodexFailure(error);
   } finally {

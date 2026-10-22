@@ -66,6 +66,14 @@ export async function POST(request: Request, context: RouteContext) {
         complete = courseIsComplete(currentAsPassed);
         if (complete) tx.update(courses).set({ completedAt: now }).where(eq(courses.id, chapter.courseId)).run();
       }
+      // Retire only review questions successfully answered in this attempt.
+      // Process new misses afterwards so another miss on the same concept wins.
+      for (const answer of graded.filter((item) => item.score >= 0.8 && reviewIds.has(item.question.id))) {
+        tx.delete(reviewItems).where(and(
+          eq(reviewItems.courseId, chapter.courseId),
+          eq(reviewItems.sourceQuestionId, answer.question.id),
+        )).run();
+      }
       for (const answer of graded.filter((item) => item.missedConcept)) {
         const conceptTag = answer.missedConcept as string;
         const existing = tx.select().from(reviewItems).where(and(eq(reviewItems.courseId, chapter.courseId), eq(reviewItems.conceptTag, conceptTag))).get();

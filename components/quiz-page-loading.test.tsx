@@ -17,6 +17,15 @@ function mount(fetch: ReturnType<typeof vi.fn>) {
 }
 const loaded = () => screen.findByRole("heading", { name: quiz.questions[0].prompt });
 
+it("shows the saved quality failure reason instead of a generic load error", async () => {
+  const reason = "The generated quiz did not pass quality review: alignment at questions[2]: Use only currency assumptions taught in this lesson. Try again.";
+  const fetch = vi.fn().mockResolvedValueOnce(response(course)).mockResolvedValue(response({ error: { code: "generation_failed", message: reason, retryable: true } }, 503));
+  mount(fetch);
+  expect(await screen.findByRole("alert")).toHaveTextContent(reason);
+  expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+
 it("shows loading while course lookup is pending, then renders questions", async () => {
   let resolve!: (value: unknown) => void;
   const fetch = vi.fn().mockImplementationOnce(() => new Promise(done => { resolve = done; })).mockResolvedValue(response(quiz));

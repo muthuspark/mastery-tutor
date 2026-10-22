@@ -22,12 +22,30 @@ describe("bounded quality review", () => {
     await expect(generateReviewedObject("claude", "syllabus", "Context", coursePlanSchema, { run })).rejects.toBeInstanceOf(QualityError);
     expect(run).toHaveBeenCalledTimes(4);
   });
-  it("uses the same repair budget for invalid structure and never accepts malformed review", async () => {
+  it("bounds structure repairs and never accepts malformed review", async () => {
     const run = vi.fn<typeof runAgentObject>().mockResolvedValue({});
     await expect(generateReviewedObject("codex", "syllabus", "Context", coursePlanSchema, { run })).rejects.toBeInstanceOf(QualityError);
     expect(run).toHaveBeenCalledTimes(2);
     run.mockReset().mockResolvedValueOnce(samplePlan()).mockResolvedValueOnce({});
     await expect(generateReviewedObject("codex", "syllabus", "Context", coursePlanSchema, { run })).rejects.toBeInstanceOf(QualityError);
     expect(run).toHaveBeenCalledTimes(2);
+  });
+  it("still repairs reviewer findings after a structural repair", async () => {
+    const run = vi.fn<typeof runAgentObject>();
+    run.mockResolvedValueOnce({})
+      .mockResolvedValueOnce(samplePlan()).mockResolvedValueOnce({ issues: [issue] })
+      .mockResolvedValueOnce(samplePlan()).mockResolvedValueOnce({ issues: [] });
+    await expect(generateReviewedObject("codex", "syllabus", "Context", coursePlanSchema, { run })).resolves.toEqual(samplePlan());
+    expect(run.mock.calls.map((call) => call[1])).toEqual(["syllabus", "syllabus", "review", "syllabus", "review"]);
+    expect(run.mock.calls[3][2]).toContain(issue.guidance);
+    expect(run.mock.calls[3][2]).toContain(JSON.stringify(issue));
+  });
+  it("retains actionable review findings after the content repair is exhausted", async () => {
+    const run = vi.fn<typeof runAgentObject>();
+    run.mockResolvedValueOnce(samplePlan()).mockResolvedValueOnce({ issues: [issue] })
+      .mockResolvedValueOnce(samplePlan()).mockResolvedValueOnce({ issues: [issue] });
+    await expect(generateReviewedObject("codex", "syllabus", "Context", coursePlanSchema, { run }))
+      .rejects.toThrow(`repetition at chapters[0]: ${issue.guidance}`);
+    expect(run).toHaveBeenCalledTimes(4);
   });
 });

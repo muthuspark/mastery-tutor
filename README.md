@@ -16,7 +16,7 @@ The course view keeps the full path visible while making only the next chapter a
 
 New courses prepare in the background. The app saves your full learning request, builds a course brief and 1–24 focused chapters, and reviews the plan before making it available. The course page shows preparation, review, or repair status. You can leave and return; interrupted jobs resume after the server restarts. If preparation fails, use **Try again** on that course instead of creating a duplicate.
 
-Each new lesson and quiz also receives a separate quality review, with at most one repair per attempt. Lessons use the accepted course plan and stay within 600 words. Quizzes use the accepted lesson and its objectives. Review adds preparation time and can miss mistakes; it does not certify factual accuracy or learning outcomes. Existing courses keep their saved content, progress, and earlier generation policy.
+Each new lesson and quiz also receives a separate quality review. Generation allows one structural-validation repair and one content-review repair, with at most three drafts total. Review findings are logged, and persistent failures retain the reason for retrying. Lessons use the accepted course plan and stay within 600 words. Quizzes use the accepted lesson and its objectives. Review adds preparation time and can miss mistakes; it does not certify factual accuracy or learning outcomes. Existing courses keep their saved content, progress, and earlier generation policy.
 
 ![Reading view](docs/screenshots/chapter.png)
 

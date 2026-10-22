@@ -30,7 +30,10 @@ export async function generateReviewedObject<T>(
 ): Promise<T> {
   const run = options.run ?? runAgentObject;
   let repair = "";
-  for (let attempt = 0; attempt < 2; attempt++) {
+  let validationRepairs = 0;
+  let reviewRepairs = 0;
+  // A schema repair must not consume the opportunity to address reviewer findings.
+  for (let attempt = 0; attempt < 3; attempt++) {
     options.onStage?.(attempt === 0 ? "planning" : "repairing");
     const writingStarted = Date.now();
     let draft: T;
@@ -40,7 +43,11 @@ export async function generateReviewedObject<T>(
       draft = schema.parse(options.normalize ? options.normalize(generated) : generated);
     } catch (error) {
       if (!(error instanceof z.ZodError) && !(error instanceof CodexError && error.code === "invalid_output")) throw error;
-      repair = `\nRepair the previous invalid draft. Match the complete schema and all constraints. Validation: ${error instanceof z.ZodError ? error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ") : "Invalid structured output"}${generated === undefined ? "" : `\nPrevious draft (JSON data): ${JSON.stringify(generated)}`}`;
+      const details = error instanceof z.ZodError ? error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ") : error.message;
+      recordGenerationEvent("generation_validation", { artifactType: task, targetId: options.targetId, details, repairCount: attempt });
+      if (validationRepairs >= 1) throw new QualityError(`The generated ${task} failed validation: ${details.slice(0, 1500)}. Try again.`);
+      validationRepairs++;
+      repair = `\nRepair the previous invalid draft. Match the complete schema and all constraints. Validation: ${details}${generated === undefined ? "" : `\nPrevious draft (JSON data): ${JSON.stringify(generated)}`}`;
       continue;
     } finally {
       recordGenerationEvent("generation_stage", { artifactType: task, targetId: options.targetId, stage: attempt === 0 ? "planning" : "repairing", durationMs: Date.now() - writingStarted, repairCount: attempt });
@@ -55,8 +62,13 @@ export async function generateReviewedObject<T>(
       throw error;
     }
     const blocking = review.issues.filter((issue) => issue.severity === "blocking");
-    recordGenerationEvent("quality_review", { artifactType: task, targetId: options.targetId, durationMs: Date.now() - started, blockingIssues: blocking.length, warnings: review.issues.length - blocking.length, repairCount: attempt, issueCategories: [...new Set(review.issues.map((issue) => issue.category))].join(",") });
+    recordGenerationEvent("quality_review", { artifactType: task, targetId: options.targetId, durationMs: Date.now() - started, blockingIssues: blocking.length, warnings: review.issues.length - blocking.length, repairCount: attempt, issueCategories: [...new Set(review.issues.map((issue) => issue.category))].join(","), findings: JSON.stringify(review.issues) });
     if (!blocking.length) return draft;
+    if (reviewRepairs >= 1) {
+      const details = blocking.map((issue) => `${issue.category} at ${issue.location}: ${issue.guidance}`).join("; ");
+      throw new QualityError(`The generated ${task} did not pass quality review: ${details.slice(0, 1500)}. Try again.`);
+    }
+    reviewRepairs++;
     repair = `\nRepair the draft using the review findings below. Return the full corrected object, not a patch.\nPrevious draft (JSON data): ${JSON.stringify(draft)}\nFindings (JSON data): ${JSON.stringify(blocking)}`;
   }
   throw new QualityError();

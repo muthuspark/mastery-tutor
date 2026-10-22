@@ -149,6 +149,42 @@ describe("attempt grading agent requirements", () => {
 });
 
 describe("concept gaps across attempt outcomes", () => {
+  function pendingReview() {
+    const now = new Date();
+    const priorChapterId = randomUUID();
+    const reviewQuestionId = randomUUID();
+    const reviewId = randomUUID();
+    db.update(chapters).set({ idx: 1 }).where(eq(chapters.id, chapterId)).run();
+    db.insert(chapters).values({ id: priorChapterId, courseId, idx: 0, title: "Earlier lesson", objectives: [], prerequisites: [], status: "passed", createdAt: now }).run();
+    const currentQuestion = db.select().from(questions).where(eq(questions.id, questionId)).get()!;
+    db.insert(questions).values({ ...currentQuestion, id: reviewQuestionId, chapterId: priorChapterId, prompt: "Review the earlier method", conceptTag: "earlier-concept" }).run();
+    db.insert(reviewItems).values({ id: reviewId, courseId, conceptTag: "earlier-concept", sourceQuestionId: reviewQuestionId, misses: 1, dueAfterChapterIdx: 1, createdAt: now }).run();
+    return { reviewId, reviewQuestionId };
+  }
+
+  it.each([true, false])("clears a correct review answer even when the overall attempt passes=%s", async (correctCurrent) => {
+    const { reviewId, reviewQuestionId } = pendingReview();
+    const result = await submit([{ questionId, response: correctCurrent ? "y = Ce^x" : "y = x" }, { questionId: reviewQuestionId, response: "y = Ce^x" }]);
+    expect(result.status).toBe(200);
+    expect(await result.json()).toMatchObject({ passed: correctCurrent });
+    expect(db.select().from(reviewItems).where(eq(reviewItems.id, reviewId)).get()).toBeUndefined();
+  });
+
+  it("keeps an incorrect review scheduled for a later chapter", async () => {
+    const { reviewId, reviewQuestionId } = pendingReview();
+    const result = await submit([{ questionId, response: "y = Ce^x" }, { questionId: reviewQuestionId, response: "y = x" }]);
+    expect(result.status).toBe(200);
+    expect(db.select().from(reviewItems).where(eq(reviewItems.id, reviewId)).get()).toMatchObject({ misses: 2, dueAfterChapterIdx: 3, sourceQuestionId: reviewQuestionId });
+  });
+
+  it("retains a new miss on a concept even when its old review question is answered correctly", async () => {
+    const { reviewQuestionId } = pendingReview();
+    db.update(questions).set({ conceptTag: "earlier-concept" }).where(eq(questions.id, questionId)).run();
+    const result = await submit([{ questionId, response: "y = x" }, { questionId: reviewQuestionId, response: "y = Ce^x" }]);
+    expect(result.status).toBe(200);
+    expect(db.select().from(reviewItems).all()).toMatchObject([{ conceptTag: "earlier-concept", sourceQuestionId: questionId, misses: 1 }]);
+  });
+
   function tenQuestionQuiz() {
     const first = db.select().from(questions).where(eq(questions.id, questionId)).get()!;
     const quiz = Array.from({ length: 10 }, (_, index) => ({

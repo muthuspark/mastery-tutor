@@ -37,6 +37,6 @@ describe("runCodexObject", () => {
           return { exitCode: 0, stderr: "" };
         },
       ),
-    ).rejects.toMatchObject({ code: "invalid_output", retryable: true });
+    ).rejects.toMatchObject({ code: "invalid_output", retryable: true, message: expect.stringContaining("score:") });
   });
 });

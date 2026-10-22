@@ -2,6 +2,7 @@ import "server-only";
 
 export type GenerationEvent =
   | "generation_stage"
+  | "generation_validation"
   | "quality_review"
   | "job_enqueued"
   | "job_duplicate"

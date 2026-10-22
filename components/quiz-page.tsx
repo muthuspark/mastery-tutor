@@ -13,16 +13,16 @@ type CourseResponse = { course?: { qualityPolicyVersion?: number | null }; chapt
 type Result = { remediation?: string | null; score: number; passed: boolean; complete?: boolean; nextChapterIdx?: number | null; answers: { prompt: string; response: string; score: number; feedback: string; modelAnswer: string; missedConcept: string | null }[] };
 
 class QuizLoadError extends Error {
-  constructor(readonly status: number, readonly retryable: boolean, readonly generationFailed = false) {
-    super(status === 202 ? "generation_pending" : "Could not load this QnA");
+  constructor(readonly status: number, readonly retryable: boolean, readonly generationFailed = false, message?: string) {
+    super(status === 202 ? "generation_pending" : message || "Could not load this QnA");
   }
 }
 
 async function fetchReadyJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
   if (response.status === 202 || !response.ok) {
-    const body = await response.json().catch(() => null) as { error?: { retryable?: boolean; code?: string } } | null;
-    throw new QuizLoadError(response.status, response.status === 202 || body?.error?.retryable === true, body?.error?.code === "generation_failed");
+    const body = await response.json().catch(() => null) as { error?: { retryable?: boolean; code?: string; message?: string } } | null;
+    throw new QuizLoadError(response.status, response.status === 202 || body?.error?.retryable === true, body?.error?.code === "generation_failed", body?.error?.message);
   }
   return response.json();
 }
@@ -108,6 +108,7 @@ export function QuizPage() {
     const message = lockedChapter ? "This chapter is locked. Complete the earlier chapters before taking its QnA."
       : unavailable ? "This chapter is unavailable. Return to the course to choose a chapter."
       : pending ? "Your QnA is still being prepared. Try again in a moment, or return to the chapter while you wait."
+      : loadError instanceof QuizLoadError && loadError.generationFailed ? loadError.message
       : "Could not load this QnA. Try again, or return to the chapter.";
     return <main id="main-content" tabIndex={-1} className="reading-shell">
       <h1 className="display mt-16 text-4xl leading-none">{unavailable ? "QnA unavailable" : pending ? "QnA still preparing" : "Could not load QnA"}</h1>
