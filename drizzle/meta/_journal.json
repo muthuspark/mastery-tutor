@@ -64,6 +64,13 @@
       "when": 1792673324057,
       "tag": "0008_profile_learning_agent",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1792719680219,
+      "tag": "0009_chapter_versions",
+      "breakpoints": true
     }
   ]
 }

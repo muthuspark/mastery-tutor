@@ -104,3 +104,42 @@ it("clears a previous action's outcome when another adjustment starts", async ()
   expect(await controls.findByRole("alert")).toHaveTextContent("Select Too hard to try again.");
   expect(controls.getByRole("status")).not.toHaveTextContent("Feedback saved");
 });
+
+it.each([
+  { action: "easy", name: "Too easy", label: "Deeper explanation" },
+  { action: "hard", name: "Too hard", label: "Simpler explanation" },
+])("keeps the original text visible while $name generates and appends the accepted version", async ({ action, name, label }) => {
+  const { client, post, fetch, controls } = await mount();
+  client.setQueryData(["course", "course"], { ...course, course: { ...course.course, qualityPolicyVersion: 1 } });
+  const original = { generationVersion: 1, depthHint: null, html: lesson.html };
+  const pending = { ...lesson, chapter: { ...chapter, contentGenerationVersion: 2, contentGenerationStatus: "generating", depthHint: action }, versions: [original] };
+  const ready = { ...pending, chapter: { ...pending.chapter, contentGenerationStatus: "ready" }, versions: [original, { generationVersion: 2, depthHint: action, html: "Adjusted lesson text" }] };
+  post.mockResolvedValue(response());
+  let reads = 0;
+  fetch.mockImplementation((url: string, init?: RequestInit) => init?.method === "POST" ? post(url, init) : Promise.resolve({ ...response(), json: async () => ++reads === 1 ? pending : ready }));
+
+  fireEvent.click(controls.getByRole("button", { name }));
+  expect(await screen.findByText(/Your earlier text is still available above/)).toBeVisible();
+  expect(screen.getByText(lesson.html)).toBeVisible();
+  expect(screen.getByRole("heading", { name: "Original explanation" })).toBeVisible();
+  controls.getAllByRole("button").forEach(control => expect(control).toBeDisabled());
+
+  expect(await screen.findByText("Adjusted lesson text", {}, { timeout: 4_000 })).toBeVisible();
+  expect(screen.getByText(lesson.html)).toBeVisible();
+  expect(screen.getByRole("heading", { name: label })).toBeVisible();
+  expect(screen.getAllByRole("article").map(article => article.textContent)).toEqual([lesson.html, "Adjusted lesson text"]);
+  controls.getAllByRole("button").forEach(control => expect(control).toBeEnabled());
+});
+
+it("keeps the original explanation visible if the adjusted version fails", async () => {
+  const { client, controls } = await mount();
+  await act(async () => client.setQueryData(["chapter", "chapter"], {
+    ...lesson,
+    chapter: { ...chapter, contentGenerationVersion: 2, contentGenerationStatus: "failed", depthHint: "hard" },
+    versions: [{ generationVersion: 1, depthHint: null, html: lesson.html }],
+  }));
+  expect(screen.getByText(lesson.html)).toBeVisible();
+  expect(await screen.findByRole("alert")).toHaveTextContent("Could not prepare the new explanation. Your earlier text is still available.");
+  expect(screen.queryByRole("heading", { name: "Could not load chapter" })).not.toBeInTheDocument();
+  expect(controls.getByRole("button", { name: "Regenerate chapter" })).toBeEnabled();
+});

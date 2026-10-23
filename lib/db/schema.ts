@@ -72,6 +72,18 @@ export const chapters = sqliteTable(
   }),
 );
 
+export const chapterVersions = sqliteTable("chapter_versions", {
+  chapterId: text("chapter_id").notNull().references(() => chapters.id, { onDelete: "cascade" }),
+  generationVersion: integer("generation_version").notNull(),
+  content: text("content").notNull(),
+  pretest: text("pretest"),
+  summary: text("summary"),
+  depthHint: text("depth_hint", { enum: ["easy", "hard"] }),
+  generatedAt: integer("generated_at", { mode: "timestamp_ms" }),
+}, (table) => ({
+  chapterVersionUnique: uniqueIndex("chapter_versions_chapter_version_unique").on(table.chapterId, table.generationVersion),
+}));
+
 export const socraticSessions = sqliteTable("socratic_sessions", {
   chapterId: text("chapter_id").primaryKey().references(() => chapters.id, { onDelete: "cascade" }),
   id: text("id").notNull(),

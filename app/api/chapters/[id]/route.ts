@@ -3,14 +3,14 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { chapters, courses } from "@/lib/db/schema";
+import { chapters, chapterVersions, courses } from "@/lib/db/schema";
 import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
 import { type Agent } from "@/lib/agent";
 import { generateChapterContent } from "@/lib/chapter";
 import { claimGenerationJob, enqueueGenerationJob, invalidateChapterGeneration } from "@/lib/generation";
 import { processGenerationJob } from "@/lib/generation-worker";
 import { recordGenerationEvent } from "@/lib/generation-observability";
-import { renderMarkdown } from "@/lib/markdown";
+import { chapterResponse, savedChapterVersions } from "@/lib/chapter-response";
 import { QualityError } from "@/lib/quality-contracts";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -44,6 +44,8 @@ async function generateChapter(id: string, force = false, agent?: Agent) {
   if (chapter.status === "locked") {
     return NextResponse.json({ error: { code: "locked", message: "This chapter is locked." } }, { status: 403 });
   }
+  // Difficulty adjustments keep accepted explanations readable while the new one is prepared.
+  if (chapter.content && savedChapterVersions(id).length) return chapter;
   const reviewed = db.select().from(courses).where(eq(courses.id, chapter.courseId)).get()?.qualityPolicyVersion;
   if (reviewed) {
     if (chapter.contentGenerationStatus === "ready" && chapter.content) return chapter;
@@ -97,10 +99,7 @@ export async function GET(_request: Request, context: RouteContext) {
   try {
     const chapter = await generateChapter(id);
     if (chapter instanceof NextResponse) return chapter;
-    return NextResponse.json({
-      chapter,
-      html: await renderMarkdown(chapter.content ?? ""),
-    });
+    return NextResponse.json(await chapterResponse(chapter));
   } catch (error) {
     return codexErrorResponse(error);
   }
@@ -115,7 +114,19 @@ export async function POST(request: Request, context: RouteContext) {
   const chapter = await getChapter(id);
   if (!chapter) return NextResponse.json({ error: { code: "not_found", message: "Chapter not found." } }, { status: 404 });
   if (chapter.status === "locked") return NextResponse.json({ error: { code: "locked", message: "This chapter is locked." } }, { status: 403 });
-  const invalidated = invalidateChapterGeneration(id, parsed.data.difficulty);
-  if (invalidated) enqueueGenerationJob("chapter", id, invalidated.contentGenerationVersion);
+  const adjusted = db.transaction(() => {
+    const current = db.select().from(chapters).where(eq(chapters.id, id)).get();
+    const legacyReady = current?.contentGenerationStatus === "pending" && current.contentGenerationVersion === 1 && current.generatedAt;
+    if (!current?.content || (current.contentGenerationStatus !== "ready" && !legacyReady)) return false;
+    db.insert(chapterVersions).values({
+      chapterId: id, generationVersion: current.contentGenerationVersion,
+      content: current.content, pretest: current.pretest, summary: current.summary,
+      depthHint: current.depthHint, generatedAt: current.generatedAt,
+    }).onConflictDoNothing().run();
+    const invalidated = invalidateChapterGeneration(id, parsed.data.difficulty);
+    if (invalidated) enqueueGenerationJob("chapter", id, invalidated.contentGenerationVersion);
+    return true;
+  });
+  if (!adjusted) return NextResponse.json({ error: { code: "generation_pending", message: "Wait for the current explanation to finish before requesting another version.", retryable: true } }, { status: 409 });
   return NextResponse.json({ saved: true, depthHint: parsed.data.difficulty });
 }

@@ -13,7 +13,11 @@ type ChapterAdjustment = "easy" | "hard" | "regenerate";
 
 type CourseChapter = { id: string; idx: number; title: string; status: "locked" | "open" | "passed" };
 type CourseResponse = { course: { topic: string; qualityPolicyVersion?: number | null }; chapters: CourseChapter[] };
-type ChapterResponse = { chapter: CourseChapter & { pretest: string | null; contentGenerationVersion?: number }; html: string };
+type ChapterResponse = {
+  chapter: CourseChapter & { pretest: string | null; contentGenerationVersion?: number; contentGenerationStatus?: "pending" | "generating" | "ready" | "failed"; depthHint?: "easy" | "hard" | null };
+  html: string;
+  versions?: { generationVersion: number; depthHint: "easy" | "hard" | null; html: string }[];
+};
 
 class ReadyContentError extends Error {
   constructor(message: string, readonly retryable: boolean, readonly status: number, readonly generationFailed = false) {
@@ -40,10 +44,12 @@ export function ChapterPage() {
   const courseQuery = useQuery<CourseResponse>({ queryKey: ["course", params.id], queryFn: () => fetchReadyJson(`/api/courses/${params.id}`) });
   const chapter = courseQuery.data?.chapters.find((item) => item.idx === Number(params.idx));
   const reviewed = Boolean(courseQuery.data?.course.qualityPolicyVersion);
-  const chapterQuery = useQuery<ChapterResponse>({ queryKey: ["chapter", chapter?.id], enabled: Boolean(chapter?.id), queryFn: () => fetchReadyJson(`/api/chapters/${chapter?.id}`), retry: (count, error) => reviewed && error instanceof ReadyContentError && error.status === 202 ? true : retryReadyContent(count, error), retryDelay: retryReadyContentDelay });
+  const chapterQuery = useQuery<ChapterResponse>({ queryKey: ["chapter", chapter?.id], enabled: Boolean(chapter?.id), queryFn: () => fetchReadyJson(`/api/chapters/${chapter?.id}`), retry: (count, error) => reviewed && error instanceof ReadyContentError && error.status === 202 ? true : retryReadyContent(count, error), retryDelay: retryReadyContentDelay, refetchInterval: (query) => query.state.data?.versions?.length && ["pending", "generating"].includes(query.state.data.chapter.contentGenerationStatus ?? "") ? 2_000 : false });
+  const preparingVersion = Boolean(chapterQuery.data?.versions?.length) && ["pending", "generating"].includes(chapterQuery.data?.chapter.contentGenerationStatus ?? "");
+  const failedVersion = chapterQuery.data?.chapter.contentGenerationStatus === "failed";
   useEffect(() => {
     // Rereading completed lessons must not generate quizzes or later lessons.
-    if (!chapter || chapter.status === "passed" || !chapterQuery.data || !courseQuery.data) return;
+    if (!chapter || chapter.status === "passed" || preparingVersion || failedVersion || !chapterQuery.data || !courseQuery.data) return;
     void queryClient.prefetchQuery({
       queryKey: ["quiz-v2", params.id, params.idx],
       queryFn: () => fetchReadyJson(`/api/chapters/${chapter.id}/quiz`),
@@ -59,7 +65,7 @@ export function ChapterPage() {
         retryDelay: retryReadyContentDelay,
       });
     }
-  }, [chapter, chapterQuery.data, courseQuery.data, params.id, params.idx, queryClient]);
+  }, [chapter, chapterQuery.data, courseQuery.data, params.id, params.idx, queryClient, preparingVersion, failedVersion]);
   const adjustment = useMutation({
     mutationFn: async (action: ChapterAdjustment) => {
       const response = await fetch(`/api/chapters/${chapter?.id}${action === "regenerate" ? "/regenerate" : ""}`, {
@@ -71,7 +77,7 @@ export function ChapterPage() {
     },
     // An explicit learner action is required to retry any adjustment.
     retry: false,
-    onSuccess: () => reviewed ? queryClient.resetQueries({ queryKey: ["chapter", chapter?.id] }) : queryClient.invalidateQueries({ queryKey: ["chapter", chapter?.id] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chapter", chapter?.id] }),
   });
   // Only an explicit recovery action restarts a terminally failed reviewed artifact.
   const recovery = useMutation({ mutationFn: async () => {
@@ -86,7 +92,7 @@ export function ChapterPage() {
   const loadError = courseQuery.isError ? courseQuery.error : chapterQuery.error;
   const status = loadError instanceof ReadyContentError ? loadError.status : undefined;
   const unavailable = (!courseQuery.isError && !courseQuery.isFetching && !chapter) || status === 403 || status === 404;
-  if (recovery.isPending || courseQuery.isError || chapterQuery.isError || !chapterQuery.data) {
+  if (recovery.isPending || courseQuery.isError || (chapterQuery.isError && !chapterQuery.data) || !chapterQuery.data) {
     const preparing = status === 202;
     return <ReadingPageState
       kind="failure"
@@ -105,14 +111,23 @@ export function ChapterPage() {
     if (adjustment.variables === "regenerate") {
       adjustmentMessage = adjustment.data === 202 ? "Chapter regeneration requested. The chapter is being prepared." : "Chapter regenerated.";
     } else {
-      adjustmentMessage = `Feedback saved: too ${adjustment.variables}. Chapter update requested.`;
+      adjustmentMessage = !preparingVersion && !failedVersion && (chapterQuery.data.versions?.length ?? 0) > 1
+        ? `${adjustment.variables === "easy" ? "Deeper" : "Simpler"} explanation added below the earlier text.`
+        : `Feedback saved: too ${adjustment.variables}. Chapter update requested.`;
     }
   }
-  return <><main id="main-content" tabIndex={-1} className="reading-shell"><nav aria-label="Back navigation" className="mb-6"><BackLink href={`/course/${params.id}`}>Back to course</BackLink></nav><h1 className="display lesson-title">{chapterQuery.data.chapter.title}</h1><SocraticSession key={`${chapterQuery.data.chapter.id}:${chapterQuery.data.chapter.contentGenerationVersion ?? 1}`} chapterId={chapterQuery.data.chapter.id} version={chapterQuery.data.chapter.contentGenerationVersion ?? 1} /><MermaidContent html={chapterQuery.data.html} />{chapterQuery.data.chapter.pretest ? <p className="mt-12 border-t border-[var(--line)] pt-5 text-lg text-[var(--brown)]"><span className="font-bold text-[var(--ink)]">Before you continue.</span> {chapterQuery.data.chapter.pretest}</p> : null}<Link href={`/course/${params.id}/ch/${params.idx}/quiz`} className="button-primary ui mt-10 w-full">Check your understanding →</Link><section aria-label="Chapter adjustments" className="ui mt-6 text-center">
+  return <><main id="main-content" tabIndex={-1} className="reading-shell"><nav aria-label="Back navigation" className="mb-6"><BackLink href={`/course/${params.id}`}>Back to course</BackLink></nav><h1 className="display lesson-title">{chapterQuery.data.chapter.title}</h1>{!preparingVersion && !failedVersion ? <SocraticSession key={`${chapterQuery.data.chapter.id}:${chapterQuery.data.chapter.contentGenerationVersion ?? 1}`} chapterId={chapterQuery.data.chapter.id} version={chapterQuery.data.chapter.contentGenerationVersion ?? 1} /> : null}
+  {chapterQuery.data.versions?.length ? chapterQuery.data.versions.map((version, index) => (
+    <section key={version.generationVersion} aria-labelledby={`explanation-${version.generationVersion}`} className={index > 0 ? "mt-12 border-t border-[var(--line)] pt-8" : ""}>
+      <h2 id={`explanation-${version.generationVersion}`} className="display mb-6 text-2xl">{index === 0 ? "Original explanation" : version.depthHint === "easy" ? "Deeper explanation" : version.depthHint === "hard" ? "Simpler explanation" : "Another explanation"}</h2>
+      <MermaidContent html={version.html} />
+    </section>
+  )) : <MermaidContent html={chapterQuery.data.html} />}
+  {preparingVersion ? <p role="status" className="ui mt-8 text-sm text-[var(--muted)]">Preparing {chapterQuery.data.chapter.depthHint === "easy" ? "a deeper" : "a simpler"} explanation. Your earlier text is still available above.</p> : failedVersion ? <p role="alert" className="ui mt-8 text-sm">Could not prepare the new explanation. Your earlier text is still available. Select Regenerate chapter to try again.</p> : null}{chapterQuery.data.chapter.pretest ? <p className="mt-12 border-t border-[var(--line)] pt-5 text-lg text-[var(--brown)]"><span className="font-bold text-[var(--ink)]">Before you continue.</span> {chapterQuery.data.chapter.pretest}</p> : null}<Link href={`/course/${params.id}/ch/${params.idx}/quiz`} className="button-primary ui mt-10 w-full">Check your understanding →</Link><section aria-label="Chapter adjustments" className="ui mt-6 text-center">
     <div className="flex flex-wrap justify-center gap-5 text-xs">
-      <button type="button" onClick={() => adjustment.mutate("easy")} disabled={adjustment.isPending} className="text-button disabled:cursor-wait disabled:opacity-60">Too easy</button>
-      <button type="button" onClick={() => adjustment.mutate("hard")} disabled={adjustment.isPending} className="text-button disabled:cursor-wait disabled:opacity-60">Too hard</button>
-      <button type="button" onClick={() => adjustment.mutate("regenerate")} disabled={adjustment.isPending} className="text-button disabled:cursor-wait disabled:opacity-60">{adjustment.isPending && adjustment.variables === "regenerate" ? "Regenerating…" : "Regenerate chapter"}</button>
+      <button type="button" onClick={() => adjustment.mutate("easy")} disabled={adjustment.isPending || preparingVersion || failedVersion} className="text-button disabled:cursor-wait disabled:opacity-60">Too easy</button>
+      <button type="button" onClick={() => adjustment.mutate("hard")} disabled={adjustment.isPending || preparingVersion || failedVersion} className="text-button disabled:cursor-wait disabled:opacity-60">Too hard</button>
+      <button type="button" onClick={() => adjustment.mutate("regenerate")} disabled={adjustment.isPending || preparingVersion} className="text-button disabled:cursor-wait disabled:opacity-60">{adjustment.isPending && adjustment.variables === "regenerate" ? "Regenerating…" : "Regenerate chapter"}</button>
     </div>
     <p role="status" className={`mt-4 text-sm ${adjustment.isSuccess ? "text-[var(--success)]" : "text-[var(--muted)]"}`}>
       {adjustmentMessage}
