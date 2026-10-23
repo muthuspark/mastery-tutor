@@ -27,7 +27,7 @@ const workerRegistry = globalThis as typeof globalThis & {
 };
 
 function workerError(error: unknown) {
-  if (error instanceof QualityError) return { message: error.message, retryable: false };
+  if (error instanceof QualityError) return { message: error.message, retryable: true };
   if (error instanceof CodexError) {
     const classified = classifyCodexFailure(error);
     return { message: classified.message, retryable: classified.retryable };
