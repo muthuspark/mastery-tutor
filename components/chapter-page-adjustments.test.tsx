@@ -9,137 +9,144 @@ vi.mock("./mermaid-content", () => ({ MermaidContent: ({ html }: { html: string 
 const clients: QueryClient[] = [];
 afterEach(() => { cleanup(); clients.forEach(client => client.clear()); clients.length = 0; vi.unstubAllGlobals(); });
 
-const chapter = { id: "chapter", idx: 0, title: "Separation", status: "passed", pretest: null };
+const chapter = { id: "chapter", idx: 0, title: "Separation", status: "passed", pretest: "What does the constant represent?", contentGenerationVersion: 1, contentGenerationStatus: "ready", generatedAt: "2026-01-01" };
 const course = { course: { topic: "Differential equations" }, chapters: [chapter] };
-const lesson = { chapter, html: "Saved separation lesson" };
-const response = (status = 200) => ({ ok: status >= 200 && status < 300, status });
-const actions = [
-  { name: "Too easy", action: "easy", path: "/api/chapters/chapter", success: "Feedback saved: too easy. Chapter update requested." },
-  { name: "Too hard", action: "hard", path: "/api/chapters/chapter", success: "Feedback saved: too hard. Chapter update requested." },
-  { name: "Regenerate chapter", action: "regenerate", path: "/api/chapters/chapter/regenerate", success: "Chapter regenerated." },
-];
+const lesson = { chapter, html: "Canonical lesson" };
+const original = { id: "original", ordinal: 1, kind: "original" as const, sourceContentVersion: 1, level: 2 as const, label: "Guided", content: "Guided explanation", html: "Guided explanation" };
+const timeline = (overrides: Record<string, unknown> = {}) => ({
+  canonicalVersion: 1,
+  baselineExplanationId: original.id,
+  effectiveLevel: 2 as 1 | 2 | 3 | 4 | 5 | 6,
+  legacyBaseline: false,
+  sections: [original],
+  activeRequest: null,
+  failedRequest: null,
+  ...overrides,
+});
+const response = (status = 200, body: unknown = {}) => ({ ok: status >= 200 && status < 300, status, json: async () => body }) as Response;
 
-async function mount() {
-  // Seed ready, completed content to isolate actions from generation and prefetching.
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity }, mutations: { retry: 3 } } });
+async function mount(options: { timeline?: ReturnType<typeof timeline>; chapter?: typeof chapter } = {}) {
+  const currentTimeline = { value: options.timeline ?? timeline() };
+  const currentChapter = options.chapter ?? chapter;
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity }, mutations: { retry: 2 } } });
   clients.push(client);
-  client.setQueryData(["course", "course"], course);
-  client.setQueryData(["chapter", "chapter"], lesson);
-  client.setQueryData(["quiz-v2", "course", "0"], { evidence: "existing assessment" });
-  const post = vi.fn();
-  const fetch = vi.fn((url: string, init?: RequestInit) => init?.method === "POST" ? post(url, init) : Promise.resolve({ ...response(), json: async () => lesson }));
+  client.setQueryData(["quiz-v2", "course", "0"], { existingAssessment: true });
+  const post = vi.fn(async (url: string, init?: RequestInit) => {
+    void init;
+    if (url.endsWith("/retry")) return response(202, { id: "retry-1", level: 1, status: "pending" });
+    if (url.endsWith("/explanations")) return response(202, { id: "pending-1", level: 1, status: "pending" });
+    return response(202, { status: "generating" });
+  });
+  const fetch = vi.fn(async (url: string, init?: RequestInit) => {
+    if (init?.method === "POST") return post(url, init);
+    if (url === "/api/courses/course") return response(200, { ...course, chapters: [currentChapter] });
+    if (url === "/api/chapters/chapter") return response(200, { chapter: currentChapter, html: lesson.html });
+    if (url === "/api/chapters/chapter/explanations") return response(200, currentTimeline.value);
+    if (url === "/api/chapters/chapter/quiz") return response(200, { questions: [] });
+    return response(404);
+  });
   vi.stubGlobal("fetch", fetch);
-  const invalidate = vi.spyOn(client, "invalidateQueries");
   render(<QueryClientProvider client={client}><ChapterPage /></QueryClientProvider>);
-  expect(await screen.findByText(lesson.html)).toBeVisible();
-  const controls = within(screen.getByRole("region", { name: "Chapter adjustments" }));
-  return { client, post, fetch, invalidate, controls };
+  expect(await screen.findByText("Guided explanation")).toBeVisible();
+  const controls = within(screen.getByRole("region", { name: "Explanation controls" }));
+  return { client, post, fetch, controls, currentTimeline };
 }
 
-it.each(actions)("announces $name progress, blocks duplicate/conflicting actions, and acknowledges success", async ({ name, action, path, success }) => {
-  const { controls, post, fetch, invalidate, client } = await mount();
-  let resolve!: (value: unknown) => void;
-  post.mockImplementation(() => new Promise(done => { resolve = done; }));
-  const button = controls.getByRole("button", { name });
+it("renders every explanation once and places depth controls after the pretest and before the quiz", async () => {
+  const applied = { id: "applied", ordinal: 2, kind: "alternative" as const, sourceContentVersion: 1, level: 3 as const, label: "Applied", content: "Applied explanation", html: "Applied explanation" };
+  await mount({ timeline: timeline({ baselineExplanationId: applied.id, effectiveLevel: 3, sections: [original, applied] }) });
+  expect(screen.getAllByRole("article").map((item) => item.textContent)).toEqual(["Guided explanation", "Applied explanation"]);
+  expect(screen.getByText("Current explanation: Applied (3 of 6)")).toBeVisible();
+  const main = screen.getByRole("main");
+  const pretest = within(main).getByText(/What does the constant represent/);
+  const controls = within(main).getByRole("region", { name: "Explanation controls" });
+  const quiz = within(main).getByRole("link", { name: "Check your understanding →" });
+  expect(pretest.compareDocumentPosition(controls) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(controls.compareDocumentPosition(quiz) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
+it("sends an adjacent request once, announces progress, keeps focus, and appends after a reload", async () => {
+  const { post, client, controls, currentTimeline } = await mount();
+  post.mockImplementation(async (url: string, init?: RequestInit) => {
+    const body = JSON.parse(String(init?.body));
+    expect(url).toBe("/api/chapters/chapter/explanations");
+    expect(body).toMatchObject({ direction: "simpler", expectedContentVersion: 1, baselineExplanationId: "original" });
+    currentTimeline.value = timeline({ activeRequest: { id: "pending-1", status: "pending", level: 1 } });
+    return response(202, { id: "pending-1", level: 1, status: "pending" });
+  });
+  const button = controls.getByRole("button", { name: "Simpler" });
   button.focus();
-  expect(button).toHaveFocus();
   fireEvent.click(button);
-  await waitFor(() => expect(controls.getByRole("status")).toHaveTextContent(action === "regenerate" ? "Regenerating chapter…" : "Saving difficulty feedback and updating chapter…"));
-  for (const control of controls.getAllByRole("button")) {
-    expect(control).toBeDisabled();
-    fireEvent.click(control);
-  }
+  await waitFor(() => expect(controls.getByRole("status")).toHaveTextContent("Preparing"));
   expect(post).toHaveBeenCalledTimes(1);
-  expect(post).toHaveBeenCalledWith(path, action === "regenerate" ? { method: "POST" } : { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ difficulty: action }) });
-  expect(screen.getByText(lesson.html)).toBeVisible();
-  expect(invalidate).not.toHaveBeenCalled();
-  await act(async () => resolve(response()));
-  await waitFor(() => expect(controls.getByRole("status")).toHaveTextContent(success));
-  expect(invalidate).toHaveBeenCalledExactlyOnceWith({ queryKey: ["chapter", "chapter"] });
-  expect(fetch.mock.calls.filter(([, init]) => !init)).toEqual([["/api/chapters/chapter"]]);
-  controls.getAllByRole("button").forEach(control => expect(control).toBeEnabled());
-  expect(controls.queryByRole("alert")).not.toBeInTheDocument();
-  expect(client.getQueryData(["course", "course"])).toEqual(course);
-  expect(client.getQueryData(["quiz-v2", "course", "0"])).toEqual({ evidence: "existing assessment" });
+  expect(button).toHaveFocus();
+  expect(button).toHaveAttribute("aria-disabled", "true");
+  expect(screen.getByText("Guided explanation")).toBeVisible();
+  expect(client.getQueryData(["quiz-v2", "course", "0"])).toEqual({ existingAssessment: true });
+
+  const intuitive = { id: "intuitive", ordinal: 2, kind: "alternative" as const, sourceContentVersion: 1, level: 1 as const, label: "Intuitive", content: "Intuitive explanation", html: "Intuitive explanation" };
+  await act(async () => {
+    currentTimeline.value = timeline({ baselineExplanationId: intuitive.id, effectiveLevel: 1, sections: [original, intuitive] });
+    client.setQueryData(["chapter-explanations", "chapter"], currentTimeline.value);
+  });
+  await waitFor(() => expect(screen.getAllByRole("article").map((item) => item.textContent)).toEqual(["Guided explanation", "Intuitive explanation"]));
+  expect(screen.getByText("Current explanation: Intuitive (1 of 6)")).toBeVisible();
+  expect(controls.getByText("This is the simplest level (1 of 6)." )).toBeVisible();
+  expect(button).toHaveAttribute("aria-disabled", "true");
+  expect(button).toHaveFocus();
 });
 
-it.each(actions.flatMap(action => ["http", "network"].map(failure => ({ ...action, failure }))))("keeps the lesson after $name $failure failure and only retries on explicit action", async ({ name, action, failure, success }) => {
-  const { controls, post, fetch, invalidate, client } = await mount();
-  if (failure === "http") post.mockResolvedValue(response(503));
-  else post.mockRejectedValue(new TypeError("Failed to fetch"));
-  fireEvent.click(controls.getByRole("button", { name }));
-  expect(await controls.findByRole("alert")).toHaveTextContent(action === "regenerate" ? "Could not regenerate this chapter. Select Regenerate chapter to try again." : `Could not save difficulty feedback. Select Too ${action} to try again.`);
-  expect(controls.getByRole("status")).toBeEmptyDOMElement();
-  expect(screen.getByText(lesson.html)).toBeVisible();
-  expect(screen.getByRole("link", { name: "Check your understanding →" })).toHaveAttribute("href", "/course/course/ch/0/quiz");
-  expect(invalidate).not.toHaveBeenCalled();
-  expect(fetch).toHaveBeenCalledTimes(1);
-  expect(client.isMutating()).toBe(0); // Explicit retry:false overrides even a retrying provider.
-  expect(client.getQueryData(["chapter", "chapter"])).toEqual(lesson);
-  expect(client.getQueryData(["quiz-v2", "course", "0"])).toEqual({ evidence: "existing assessment" });
-  controls.getAllByRole("button").forEach(control => expect(control).toBeEnabled());
-  post.mockResolvedValue(response());
-  fireEvent.click(controls.getByRole("button", { name }));
-  await waitFor(() => expect(controls.getByRole("status")).toHaveTextContent(success));
-  expect(controls.queryByRole("alert")).not.toBeInTheDocument();
-  expect(post).toHaveBeenCalledTimes(2);
-  expect(invalidate).toHaveBeenCalledTimes(1);
+it("shows boundaries and legacy depth without inventing a level", async () => {
+  const intuitive = { ...original, level: 1 as const, label: "Intuitive" };
+  const { controls, client } = await mount({ timeline: timeline({ effectiveLevel: 1, sections: [intuitive] }) });
+  expect(controls.getByRole("button", { name: "Simpler" })).toHaveAttribute("aria-disabled", "true");
+  expect(controls.getByText("This is the simplest level (1 of 6)." )).toBeVisible();
+  await act(async () => client.setQueryData(["chapter-explanations", "chapter"], timeline({
+    baselineExplanationId: "legacy", legacyBaseline: true, effectiveLevel: 2,
+    sections: [{ ...original, id: "legacy", kind: "legacy", level: null, label: null }],
+  })));
+  await waitFor(() => expect(screen.getByText("Depth not recorded. Adjustments start from Guided (2 of 6).")).toBeVisible());
+  expect(screen.getByRole("heading", { name: "Explanation · Depth not recorded" })).toBeVisible();
 });
 
-it("acknowledges accepted regeneration without claiming it has completed", async () => {
-  const { controls, post } = await mount();
-  post.mockResolvedValue(response(202));
-  fireEvent.click(controls.getByRole("button", { name: "Regenerate chapter" }));
-  await waitFor(() => expect(controls.getByRole("status")).toHaveTextContent("Chapter regeneration requested. The chapter is being prepared."));
-  expect(controls.getByRole("status")).not.toHaveTextContent("Chapter regenerated.");
+it("offers explicit retry at the saved target and preserves the accepted history", async () => {
+  const failedTimeline = timeline({ failedRequest: { id: "failed-1", status: "failed" as const, level: 1 as const, jobVersion: 2 } });
+  const { post, controls, currentTimeline, client } = await mount({ timeline: failedTimeline });
+  post.mockImplementation(async (url: string, init?: RequestInit) => {
+    expect(url).toBe("/api/chapters/chapter/explanations/failed-1/retry");
+    expect(JSON.parse(String(init?.body))).toMatchObject({ expectedJobVersion: 2 });
+    currentTimeline.value = timeline({ activeRequest: { id: "failed-1", status: "pending", level: 1 } });
+    return response(202, { id: "failed-1", level: 1, status: "pending" });
+  });
+  const retry = controls.getByRole("button", { name: "Retry explanation" });
+  retry.focus();
+  fireEvent.click(retry);
+  await waitFor(() => expect(controls.getByRole("status")).toHaveTextContent("Preparing"));
+  expect(post).toHaveBeenCalledTimes(1);
+  expect(retry).toHaveFocus();
+  expect(screen.getByText("Guided explanation")).toBeVisible();
+  expect(client.getQueryData(["quiz-v2", "course", "0"])).toEqual({ existingAssessment: true });
 });
 
-it("clears a previous action's outcome when another adjustment starts", async () => {
-  const { controls, post } = await mount();
-  post.mockResolvedValueOnce(response());
-  fireEvent.click(controls.getByRole("button", { name: "Too easy" }));
-  await waitFor(() => expect(controls.getByRole("status")).toHaveTextContent("Feedback saved: too easy."));
+it("retains cached explanation text when status reads fail and exposes a read-only retry", async () => {
+  const { client } = await mount();
+  const cached = client.getQueryData(["chapter-explanations", "chapter"]);
+  const fetch = vi.mocked(globalThis.fetch);
+  fetch.mockImplementationOnce(async () => response(503, { error: { message: "offline", retryable: false } }));
+  await act(async () => { await client.invalidateQueries({ queryKey: ["chapter-explanations", "chapter"] }); });
+  expect(screen.getByText("Guided explanation")).toBeVisible();
+  expect(await screen.findByRole("alert")).toHaveTextContent("Could not refresh explanation status");
+  expect(client.getQueryData(["chapter-explanations", "chapter"])).toEqual(cached);
+  expect(screen.getByRole("button", { name: "Retry status check" })).toBeVisible();
+});
+
+it("keeps the quiz link and preserves the current text if a request fails", async () => {
+  const { controls, post, client } = await mount();
   post.mockRejectedValueOnce(new TypeError("Failed to fetch"));
-  fireEvent.click(controls.getByRole("button", { name: "Too hard" }));
-  expect(await controls.findByRole("alert")).toHaveTextContent("Select Too hard to try again.");
-  expect(controls.getByRole("status")).not.toHaveTextContent("Feedback saved");
-});
-
-it.each([
-  { action: "easy", name: "Too easy", label: "Deeper explanation" },
-  { action: "hard", name: "Too hard", label: "Simpler explanation" },
-])("keeps the original text visible while $name generates and appends the accepted version", async ({ action, name, label }) => {
-  const { client, post, fetch, controls } = await mount();
-  client.setQueryData(["course", "course"], { ...course, course: { ...course.course, qualityPolicyVersion: 1 } });
-  const original = { generationVersion: 1, depthHint: null, html: lesson.html };
-  const pending = { ...lesson, chapter: { ...chapter, contentGenerationVersion: 2, contentGenerationStatus: "generating", depthHint: action }, versions: [original] };
-  const ready = { ...pending, chapter: { ...pending.chapter, contentGenerationStatus: "ready" }, versions: [original, { generationVersion: 2, depthHint: action, html: "Adjusted lesson text" }] };
-  post.mockResolvedValue(response());
-  let reads = 0;
-  fetch.mockImplementation((url: string, init?: RequestInit) => init?.method === "POST" ? post(url, init) : Promise.resolve({ ...response(), json: async () => ++reads === 1 ? pending : ready }));
-
-  fireEvent.click(controls.getByRole("button", { name }));
-  expect(await screen.findByText(/Your earlier text is still available above/)).toBeVisible();
-  expect(screen.getByText(lesson.html)).toBeVisible();
-  expect(screen.getByRole("heading", { name: "Original explanation" })).toBeVisible();
-  controls.getAllByRole("button").forEach(control => expect(control).toBeDisabled());
-
-  expect(await screen.findByText("Adjusted lesson text", {}, { timeout: 4_000 })).toBeVisible();
-  expect(screen.getByText(lesson.html)).toBeVisible();
-  expect(screen.getByRole("heading", { name: label })).toBeVisible();
-  expect(screen.getAllByRole("article").map(article => article.textContent)).toEqual([lesson.html, "Adjusted lesson text"]);
-  controls.getAllByRole("button").forEach(control => expect(control).toBeEnabled());
-});
-
-it("keeps the original explanation visible if the adjusted version fails", async () => {
-  const { client, controls } = await mount();
-  await act(async () => client.setQueryData(["chapter", "chapter"], {
-    ...lesson,
-    chapter: { ...chapter, contentGenerationVersion: 2, contentGenerationStatus: "failed", depthHint: "hard" },
-    versions: [{ generationVersion: 1, depthHint: null, html: lesson.html }],
-  }));
-  expect(screen.getByText(lesson.html)).toBeVisible();
-  expect(await screen.findByRole("alert")).toHaveTextContent("Could not prepare the new explanation. Your earlier text is still available.");
-  expect(screen.queryByRole("heading", { name: "Could not load chapter" })).not.toBeInTheDocument();
-  expect(controls.getByRole("button", { name: "Regenerate chapter" })).toBeEnabled();
+  fireEvent.click(controls.getByRole("button", { name: "More depth" }));
+  expect(await controls.findByRole("alert")).toHaveTextContent("Failed to fetch");
+  expect(screen.getByText("Guided explanation")).toBeVisible();
+  expect(screen.getByRole("link", { name: "Check your understanding →" })).toHaveAttribute("href", "/course/course/ch/0/quiz");
+  expect(client.getQueryData(["quiz-v2", "course", "0"])).toEqual({ existingAssessment: true });
+  expect(post).toHaveBeenCalledTimes(1);
 });

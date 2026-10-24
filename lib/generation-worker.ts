@@ -3,6 +3,7 @@ import "server-only";
 import { classifyCodexFailure, CodexError } from "./codex-errors";
 import { agentForRequest, type Agent } from "./agent";
 import { generateChapterContent } from "./chapter";
+import { generateExplanation } from "./explanation";
 import {
   claimNextGenerationJob,
   completeGenerationJob,
@@ -41,6 +42,7 @@ export async function processGenerationJob(job: GenerationJob, workerId: string,
   const skipped = db.transaction(() => {
     if (!ownedJob(job.id, workerId)) return "lost" as const;
     if (!isCurrentGeneration(job)) {
+      if (job.artifactType === "explanation") markGenerationOutcome(job, "failed", "Chapter or course source changed. Retry this explanation from the current chapter.");
       completeGenerationJob(job.id, workerId);
       return "stale" as const;
     }
@@ -64,6 +66,8 @@ export async function processGenerationJob(job: GenerationJob, workerId: string,
       await prepareCourse(job.targetId, agent, job.generationVersion, guard);
     } else if (job.artifactType === "chapter") {
       await generateChapterContent(job.targetId, agent, job.generationVersion, guard);
+    } else if (job.artifactType === "explanation") {
+      await generateExplanation(job.targetId, agent, guard);
     } else {
       await generateQuiz(job.targetId, agent, job.generationVersion, guard);
     }

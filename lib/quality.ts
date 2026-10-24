@@ -24,12 +24,14 @@ export async function generateReviewedObject<T>(
   schema: z.ZodType<T>,
   options: {
     targetId?: string;
+    artifactType?: string;
     normalize?: (draft: T) => T;
     onStage?: (stage: "planning" | "reviewing" | "repairing") => void;
     run?: (agent: Agent, task: CodexTask, prompt: string, schema: z.ZodType) => Promise<unknown>;
   } = {},
 ): Promise<T> {
   const run = options.run ?? runAgentObject;
+  const artifactType = options.artifactType ?? task;
   let repair = "";
   let validationRepairs = 0;
   let reviewRepairs = 0;
@@ -45,13 +47,13 @@ export async function generateReviewedObject<T>(
     } catch (error) {
       if (!(error instanceof z.ZodError) && !(error instanceof CodexError && error.code === "invalid_output")) throw error;
       const details = error instanceof z.ZodError ? error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ") : error.message;
-      recordGenerationEvent("generation_validation", { artifactType: task, targetId: options.targetId, details, repairCount: attempt });
+      recordGenerationEvent("generation_validation", { artifactType, targetId: options.targetId, details, repairCount: attempt });
       if (validationRepairs >= 1) throw new QualityError(`The generated ${task} failed validation: ${details.slice(0, 1500)}. Try again.`);
       validationRepairs++;
       repair = `\nRepair the previous invalid draft. Match the complete schema and all constraints. Validation: ${details}${generated === undefined ? "" : `\nPrevious draft (JSON data): ${JSON.stringify(generated)}`}`;
       continue;
     } finally {
-      recordGenerationEvent("generation_stage", { artifactType: task, targetId: options.targetId, stage: attempt === 0 ? "planning" : "repairing", durationMs: Date.now() - writingStarted, repairCount: attempt });
+      recordGenerationEvent("generation_stage", { artifactType, targetId: options.targetId, stage: attempt === 0 ? "planning" : "repairing", durationMs: Date.now() - writingStarted, repairCount: attempt });
     }
     options.onStage?.("reviewing");
     let review;
@@ -63,7 +65,7 @@ export async function generateReviewedObject<T>(
       throw error;
     }
     const blocking = review.issues.filter((issue) => issue.severity === "blocking");
-    recordGenerationEvent("quality_review", { artifactType: task, targetId: options.targetId, durationMs: Date.now() - started, blockingIssues: blocking.length, warnings: review.issues.length - blocking.length, repairCount: attempt, issueCategories: [...new Set(review.issues.map((issue) => issue.category))].join(","), findings: JSON.stringify(review.issues) });
+    recordGenerationEvent("quality_review", { artifactType, targetId: options.targetId, durationMs: Date.now() - started, blockingIssues: blocking.length, warnings: review.issues.length - blocking.length, repairCount: attempt, issueCategories: [...new Set(review.issues.map((issue) => issue.category))].join(","), findings: JSON.stringify(review.issues) });
     if (!blocking.length) return draft;
     if (reviewRepairs >= 1) {
       const details = blocking.map((issue) => `${issue.category} at ${issue.location}: ${issue.guidance}`).join("; ");

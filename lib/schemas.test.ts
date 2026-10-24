@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chapterSchema, gradeSchema, quizSchema, syllabusSchema } from "./schemas";
+import { chapterSchema, explanationSchema, gradeSchema, quizSchema, syllabusSchema } from "./schemas";
 
 describe("LLM contracts", () => {
   it("accepts a valid chapter and rejects content over 600 words", () => {
@@ -14,6 +14,13 @@ describe("LLM contracts", () => {
         summary: "Summary",
       }).success,
     ).toBe(false);
+  });
+
+  it("validates content-only explanations and enforces the same 600-word limit", () => {
+    expect(explanationSchema.safeParse({ content: "A short explanation" }).success).toBe(true);
+    expect(explanationSchema.safeParse({ content: "  " }).success).toBe(false);
+    expect(explanationSchema.safeParse({ content: Array.from({ length: 601 }, () => "word").join(" ") }).success).toBe(false);
+    expect(explanationSchema.safeParse({ content: "A short explanation", summary: "not accepted" }).success).toBe(false);
   });
 
   it("enforces syllabus size and grade bounds", () => {

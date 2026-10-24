@@ -1,14 +1,20 @@
 import "server-only";
 
-import { and, asc, eq, gte, lte, or } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte, or } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db } from "./db";
-import { chapters, courses, generationJobs } from "./db/schema";
+import { chapterExplanations, chapters, courses, generationJobs } from "./db/schema";
 import { recordGenerationEvent } from "./generation-observability";
 
-export type GenerationArtifact = "course" | "chapter" | "quiz";
+export type GenerationArtifact = "course" | "chapter" | "quiz" | "explanation";
 export type GenerationJobStatus = "pending" | "running" | "completed" | "failed";
 export type GenerationJob = typeof generationJobs.$inferSelect;
+
+export class ActiveChapterExplanationError extends Error {
+  constructor() {
+    super("Wait for the current explanation to finish before regenerating this chapter.");
+  }
+}
 
 export const GENERATION_LEASE_MS = 120_000;
 export const GENERATION_MAX_ATTEMPTS = 3;
@@ -234,6 +240,7 @@ export function recoverExpiredGenerationJobs(at = new Date()) {
       const error = status === "failed" ? "Preparation was interrupted too many times. Try again." : null;
       tx.update(generationJobs).set({ status, lastError: error, nextRunAt: at, leaseOwner: null, leaseExpiresAt: null, updatedAt: at }).where(eq(generationJobs.id, job.id)).run();
       if (isCurrentGeneration(job)) markGenerationOutcome(job, status, error ?? "Preparation interrupted; retrying.", at);
+      else if (job.artifactType === "explanation") markStaleExplanation(job);
     }
     return expired.length;
   });
@@ -244,6 +251,17 @@ export function recoverExpiredGenerationJobs(at = new Date()) {
 export function isCurrentGeneration(job: Pick<GenerationJob, "artifactType" | "targetId" | "generationVersion">) {
   if (job.artifactType === "course") {
     return db.select().from(courses).where(and(eq(courses.id, job.targetId), eq(courses.preparationVersion, job.generationVersion))).get() !== undefined;
+  }
+  if (job.artifactType === "explanation") {
+    const explanation = db.select().from(chapterExplanations).where(eq(chapterExplanations.id, job.targetId)).get();
+    const chapter = explanation && db.select().from(chapters).where(eq(chapters.id, explanation.chapterId)).get();
+    const course = chapter && db.select().from(courses).where(eq(courses.id, chapter.courseId)).get();
+    const current = Boolean(explanation && chapter && course
+      && explanation.jobVersion === job.generationVersion
+      && explanation.sourceContentVersion === chapter.contentGenerationVersion
+      && explanation.sourcePreparationVersion === course.preparationVersion);
+    if (!current) recordGenerationEvent("artifact_stale", { artifactType: job.artifactType, targetId: job.targetId, generationVersion: job.generationVersion });
+    return current;
   }
   const chapter = db.select().from(chapters).where(eq(chapters.id, job.targetId)).get();
   if (!chapter) return false;
@@ -261,6 +279,10 @@ export function generationStatusFor(
   if (artifactType === "course") {
     const course = db.select().from(courses).where(eq(courses.id, chapterId)).get();
     return course ? { status: course.preparationStatus, version: course.preparationVersion, error: course.preparationError, updatedAt: course.preparationUpdatedAt } : undefined;
+  }
+  if (artifactType === "explanation") {
+    const explanation = db.select().from(chapterExplanations).where(eq(chapterExplanations.id, chapterId)).get();
+    return explanation ? { status: explanation.status, version: explanation.jobVersion, error: explanation.error, updatedAt: explanation.generatedAt ?? explanation.createdAt } : undefined;
   }
   const chapter = db.select().from(chapters).where(eq(chapters.id, chapterId)).get();
   if (!chapter) return undefined;
@@ -294,6 +316,12 @@ export function markGenerationStarted(
       .where(and(eq(chapters.id, job.targetId), eq(chapters.contentGenerationVersion, job.generationVersion)))
       .run().changes > 0;
   }
+  if (job.artifactType === "explanation") {
+    return db.update(chapterExplanations)
+      .set({ status: "generating", error: null })
+      .where(and(eq(chapterExplanations.id, job.targetId), eq(chapterExplanations.jobVersion, job.generationVersion), inArray(chapterExplanations.status, ["pending", "generating"])))
+      .run().changes > 0;
+  }
   return db.update(chapters)
     .set({ quizGenerationStatus: "generating", quizGenerationError: null, quizGenerationUpdatedAt: at })
     .where(and(eq(chapters.id, job.targetId), eq(chapters.contentGenerationVersion, job.generationVersion)))
@@ -317,6 +345,12 @@ export function markGenerationOutcome(
       .where(and(eq(chapters.id, job.targetId), eq(chapters.contentGenerationVersion, job.generationVersion)))
       .run().changes > 0;
   }
+  if (job.artifactType === "explanation") {
+    return db.update(chapterExplanations)
+      .set({ status, error })
+      .where(and(eq(chapterExplanations.id, job.targetId), eq(chapterExplanations.jobVersion, job.generationVersion), inArray(chapterExplanations.status, ["pending", "generating"])))
+      .run().changes > 0;
+  }
   return db.update(chapters)
     .set({ quizGenerationStatus: status, quizGenerationError: error, quizGenerationUpdatedAt: at })
     .where(and(eq(chapters.id, job.targetId), eq(chapters.contentGenerationVersion, job.generationVersion)))
@@ -327,10 +361,14 @@ export function invalidateChapterGeneration(
   chapterId: string,
   depthHint?: "easy" | "hard",
   at = new Date(),
+  options: { rejectActiveExplanation?: boolean } = {},
 ) {
   return db.transaction((tx) => {
     const chapter = tx.select().from(chapters).where(eq(chapters.id, chapterId)).get();
     if (!chapter) return undefined;
+    if (options.rejectActiveExplanation && tx.select().from(chapterExplanations).where(and(
+      eq(chapterExplanations.chapterId, chapterId), inArray(chapterExplanations.status, ["pending", "generating"]),
+    )).get()) throw new ActiveChapterExplanationError();
     const version = chapter.contentGenerationVersion + 1;
     tx.update(chapters)
       .set({
@@ -348,5 +386,11 @@ export function invalidateChapterGeneration(
       .run();
     return { ...chapter, contentGenerationVersion: version, depthHint: depthHint ?? chapter.depthHint };
   });
+}
+
+function markStaleExplanation(job: Pick<GenerationJob, "targetId" | "generationVersion">) {
+  return db.update(chapterExplanations).set({ status: "failed", error: "Chapter or course source changed. Retry this explanation from the current chapter." })
+    .where(and(eq(chapterExplanations.id, job.targetId), eq(chapterExplanations.jobVersion, job.generationVersion), inArray(chapterExplanations.status, ["pending", "generating"])))
+    .run().changes > 0;
 }
 

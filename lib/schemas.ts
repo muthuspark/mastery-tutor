@@ -24,6 +24,12 @@ export const chapterSchema = z.object({
   summary: z.string().trim().min(1),
 });
 
+export const explanationSchema = z.object({
+  content: z.string().trim().min(1).refine((value) => value.split(/\s+/).length <= 600, {
+    message: "Explanation content must be 600 words or fewer",
+  }),
+}).strict();
+
 export const quizSchema = z.object({
   questions: z
     .array(
@@ -55,5 +61,6 @@ export const gradeSchema = z.object({
 
 export type Syllabus = z.infer<typeof syllabusSchema>;
 export type Chapter = z.infer<typeof chapterSchema>;
+export type Explanation = z.infer<typeof explanationSchema>;
 export type Quiz = z.infer<typeof quizSchema>;
 export type Grade = z.infer<typeof gradeSchema>;

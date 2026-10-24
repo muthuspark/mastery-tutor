@@ -1,20 +1,21 @@
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { chapters, chapterVersions, courses } from "@/lib/db/schema";
+import { chapterExplanations, chapters, courses } from "@/lib/db/schema";
 import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
 import { type Agent } from "@/lib/agent";
 import { generateChapterContent } from "@/lib/chapter";
-import { claimGenerationJob, enqueueGenerationJob, invalidateChapterGeneration } from "@/lib/generation";
+import { ActiveChapterExplanationError, claimGenerationJob, enqueueGenerationJob, invalidateChapterGeneration } from "@/lib/generation";
 import { processGenerationJob } from "@/lib/generation-worker";
 import { recordGenerationEvent } from "@/lib/generation-observability";
 import { chapterResponse, savedChapterVersions } from "@/lib/chapter-response";
 import { QualityError } from "@/lib/quality-contracts";
+import { ensureExplanationBaseline, readChapterExplanations, requestChapterExplanation } from "@/lib/chapter-explanations";
 
 type RouteContext = { params: Promise<{ id: string }> };
-const feedbackSchema = z.object({ difficulty: z.enum(["easy", "hard"]) });
+const feedbackSchema = z.object({ difficulty: z.enum(["easy", "hard"]), requestId: z.string().uuid().optional() });
 
 async function getChapter(id: string) {
   return db.select().from(chapters).where(eq(chapters.id, id)).get();
@@ -77,12 +78,21 @@ async function regenerateChapterNow(id: string, agent?: Agent) {
   const existing = await getChapter(id);
   if (!existing) return NextResponse.json({ error: { code: "not_found", message: "Chapter not found." } }, { status: 404 });
   if (existing.status === "locked") return NextResponse.json({ error: { code: "locked", message: "This chapter is locked." } }, { status: 403 });
+  if (db.select().from(chapterExplanations).where(and(
+    eq(chapterExplanations.chapterId, id), inArray(chapterExplanations.status, ["pending", "generating"]),
+  )).get()) return NextResponse.json({ error: { code: "explanation_active", message: "Wait for the current explanation to finish before regenerating this chapter.", retryable: true } }, { status: 409 });
   const reviewed = db.select().from(courses).where(eq(courses.id, existing.courseId)).get()?.qualityPolicyVersion;
   if (reviewed && (existing.contentGenerationStatus === "pending" || existing.contentGenerationStatus === "generating")) {
     enqueueGenerationJob("chapter", id, existing.contentGenerationVersion);
     return NextResponse.json({ status: "generating", retryable: true }, { status: 202 });
   }
-  const invalidated = invalidateChapterGeneration(id);
+  let invalidated;
+  try {
+    invalidated = invalidateChapterGeneration(id, undefined, new Date(), { rejectActiveExplanation: true });
+  } catch (error) {
+    if (error instanceof ActiveChapterExplanationError) return NextResponse.json({ error: { code: "explanation_active", message: error.message, retryable: true } }, { status: 409 });
+    throw error;
+  }
   if (!invalidated) return NextResponse.json({ error: { code: "not_found", message: "Chapter not found." } }, { status: 404 });
   const job = enqueueGenerationJob("chapter", id, invalidated.contentGenerationVersion);
   if (reviewed) return NextResponse.json({ status: "generating", retryable: true }, { status: 202 });
@@ -111,22 +121,25 @@ export async function POST(request: Request, context: RouteContext) {
   if (!parsed.success) {
     return NextResponse.json({ error: { code: "invalid_input", message: "Invalid chapter feedback." } }, { status: 400 });
   }
-  const chapter = await getChapter(id);
-  if (!chapter) return NextResponse.json({ error: { code: "not_found", message: "Chapter not found." } }, { status: 404 });
-  if (chapter.status === "locked") return NextResponse.json({ error: { code: "locked", message: "This chapter is locked." } }, { status: 403 });
-  const adjusted = db.transaction(() => {
-    const current = db.select().from(chapters).where(eq(chapters.id, id)).get();
-    const legacyReady = current?.contentGenerationStatus === "pending" && current.contentGenerationVersion === 1 && current.generatedAt;
-    if (!current?.content || (current.contentGenerationStatus !== "ready" && !legacyReady)) return false;
-    db.insert(chapterVersions).values({
-      chapterId: id, generationVersion: current.contentGenerationVersion,
-      content: current.content, pretest: current.pretest, summary: current.summary,
-      depthHint: current.depthHint, generatedAt: current.generatedAt,
-    }).onConflictDoNothing().run();
-    const invalidated = invalidateChapterGeneration(id, parsed.data.difficulty);
-    if (invalidated) enqueueGenerationJob("chapter", id, invalidated.contentGenerationVersion);
-    return true;
-  });
-  if (!adjusted) return NextResponse.json({ error: { code: "generation_pending", message: "Wait for the current explanation to finish before requesting another version.", retryable: true } }, { status: 409 });
-  return NextResponse.json({ saved: true, depthHint: parsed.data.difficulty });
+  try {
+    const chapter = await getChapter(id);
+    if (!chapter) return NextResponse.json({ error: { code: "not_found", message: "Chapter not found." } }, { status: 404 });
+    ensureExplanationBaseline(id);
+    const timeline = readChapterExplanations(id);
+    if (!timeline.baselineExplanationId) return NextResponse.json({ error: { code: "not_ready", message: "The chapter has no accepted explanation to adjust.", retryable: true } }, { status: 409 });
+    const result = requestChapterExplanation({
+      chapterId: id,
+      direction: parsed.data.difficulty === "easy" ? "deeper" : "simpler",
+      requestId: parsed.data.requestId ?? randomUUID(),
+      expectedContentVersion: chapter.contentGenerationVersion,
+      baselineExplanationId: timeline.baselineExplanationId,
+    });
+    return NextResponse.json({ saved: true, id: result.explanation.id, level: result.explanation.level, status: result.explanation.status }, { status: result.replay ? 200 : 202 });
+  } catch (error) {
+    if (error instanceof Error && "status" in error && typeof error.status === "number") {
+      const apiError = error as Error & { code?: string; retryable?: boolean; status: number };
+      return NextResponse.json({ error: { code: apiError.code ?? "generation_error", message: apiError.message, retryable: apiError.retryable ?? false } }, { status: apiError.status });
+    }
+    return NextResponse.json({ error: { code: "database_error", message: "Could not request another explanation.", retryable: true } }, { status: 500 });
+  }
 }

@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { integer, real, sqliteTable, text, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 import type { CourseBrief, TeachingPlan } from "../quality-contracts";
 import type { SocraticState } from "../socratic-contracts";
@@ -51,6 +51,7 @@ export const chapters = sqliteTable(
       .notNull()
       .default("locked"),
     depthHint: text("depth_hint", { enum: ["easy", "hard"] }),
+    originalExplanationLevel: integer("original_explanation_level"),
     contentGenerationStatus: text("content_generation_status", { enum: ["pending", "generating", "ready", "failed"] })
       .notNull()
       .default("pending"),
@@ -93,11 +94,37 @@ export const socraticSessions = sqliteTable("socratic_sessions", {
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
 
+export const chapterExplanations = sqliteTable("chapter_explanations", {
+  id: text("id").primaryKey(),
+  chapterId: text("chapter_id").notNull().references(() => chapters.id, { onDelete: "cascade" }),
+  ordinal: integer("ordinal").notNull(),
+  kind: text("kind", { enum: ["original", "alternative", "legacy"] }).notNull(),
+  sourceContentVersion: integer("source_content_version").notNull(),
+  sourcePreparationVersion: integer("source_preparation_version").notNull(),
+  importKey: text("import_key"),
+  parentExplanationId: text("parent_explanation_id"),
+  requestId: text("request_id"),
+  direction: text("direction", { enum: ["simpler", "deeper"] }),
+  level: integer("level"),
+  content: text("content"),
+  status: text("status", { enum: ["pending", "generating", "ready", "failed"] }).notNull(),
+  error: text("error"),
+  jobVersion: integer("job_version").notNull().default(1),
+  lastRetryRequestId: text("last_retry_request_id"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  generatedAt: integer("generated_at", { mode: "timestamp_ms" }),
+}, (table) => ({
+  ordinalUnique: uniqueIndex("chapter_explanations_chapter_ordinal_unique").on(table.chapterId, table.ordinal),
+  requestUnique: uniqueIndex("chapter_explanations_chapter_request_unique").on(table.chapterId, table.requestId).where(sql`${table.requestId} IS NOT NULL`),
+  importUnique: uniqueIndex("chapter_explanations_chapter_import_unique").on(table.chapterId, table.importKey).where(sql`${table.importKey} IS NOT NULL`),
+  activeUnique: uniqueIndex("chapter_explanations_one_active_per_chapter_unique").on(table.chapterId).where(sql`${table.status} IN ('pending', 'generating')`),
+}));
+
 export const generationJobs = sqliteTable(
   "generation_jobs",
   {
     id: text("id").primaryKey(),
-    artifactType: text("artifact_type", { enum: ["course", "chapter", "quiz"] }).notNull(),
+    artifactType: text("artifact_type", { enum: ["course", "chapter", "quiz", "explanation"] }).notNull(),
     targetId: text("target_id").notNull(),
     generationVersion: integer("generation_version").notNull(),
     status: text("status", { enum: ["pending", "running", "completed", "failed"] })

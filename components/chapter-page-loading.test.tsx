@@ -13,6 +13,7 @@ const chapter = { id: "chapter", idx: 0, title: "Separation", status: "passed", 
 const course = { course: { topic: "Differential equations" }, chapters: [chapter] };
 const lesson = { chapter, html: "Saved separation lesson" };
 const response = (body: unknown, status = 200) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
+const explanations = { canonicalVersion: 1, baselineExplanationId: "original", effectiveLevel: 2, legacyBaseline: false, sections: [{ id: "original", ordinal: 1, kind: "original", sourceContentVersion: 1, level: 2, label: "Guided", content: "Saved separation lesson", html: "Saved separation lesson" }], activeRequest: null, failedRequest: null };
 function mount(fetch: ReturnType<typeof vi.fn>) {
   vi.stubGlobal("fetch", fetch);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
@@ -26,7 +27,8 @@ it("announces loading during both course lookup and chapter loading in the readi
   let resolveCourse!: (value: unknown) => void;
   let resolveLesson!: (value: unknown) => void;
   mount(vi.fn().mockImplementationOnce(() => new Promise(done => { resolveCourse = done; }))
-    .mockImplementationOnce(() => new Promise(done => { resolveLesson = done; })));
+    .mockImplementationOnce(() => new Promise(done => { resolveLesson = done; }))
+    .mockResolvedValue(response(explanations)));
   expect(main().getByRole("status")).toHaveTextContent("Loading chapter…");
   expect(screen.getByRole("main")).toHaveClass("reading-shell");
   await act(async () => resolveCourse(response(course)));
@@ -60,17 +62,19 @@ it.each(["http", "network"])("recovers a %s chapter failure with a disabled pend
   await act(async () => resolve(response(lesson)));
   expect(await screen.findByText(lesson.html)).toBeVisible();
   expect(main().queryByRole("alert")).not.toBeInTheDocument();
-  expect(fetch.mock.calls).toEqual([["/api/courses/course"], ["/api/chapters/chapter"], ["/api/chapters/chapter"]]);
+  await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/chapters/chapter/explanations"));
+  expect(fetch.mock.calls.map(([url]) => url)).toEqual(["/api/courses/course", "/api/chapters/chapter", "/api/chapters/chapter", "/api/chapters/chapter/explanations"]);
   expect(client.getQueryData(["course", "course"])).toEqual(course);
 });
 
 it("retries a failed course lookup before fetching the chapter", async () => {
-  const fetch = vi.fn().mockResolvedValueOnce(response({}, 500)).mockResolvedValueOnce(response(course)).mockResolvedValueOnce(response(lesson));
+  const fetch = vi.fn().mockResolvedValueOnce(response({}, 500)).mockResolvedValueOnce(response(course)).mockResolvedValueOnce(response(lesson)).mockResolvedValue(response(explanations));
   mount(fetch);
   await screen.findByRole("alert");
   fireEvent.click(main().getByRole("button", { name: "Try again" }));
   expect(await screen.findByText(lesson.html)).toBeVisible();
-  expect(fetch.mock.calls).toEqual([["/api/courses/course"], ["/api/courses/course"], ["/api/chapters/chapter"]]);
+  await waitFor(() => expect(fetch).toHaveBeenCalledWith("/api/chapters/chapter/explanations"));
+  expect(fetch.mock.calls.map(([url]) => url)).toEqual(["/api/courses/course", "/api/courses/course", "/api/chapters/chapter", "/api/chapters/chapter/explanations"]);
 });
 
 it.each([
@@ -109,19 +113,19 @@ it("preserves all 45 automatic preparation retries, then allows manual recovery"
   fireEvent.click(main().getByRole("button", { name: "Try again" }));
   await act(async () => { await vi.advanceTimersByTimeAsync(100); });
   expect(main().getByText(lesson.html)).toBeVisible();
-  expect(fetch).toHaveBeenCalledTimes(48);
+  expect(fetch).toHaveBeenCalledTimes(49); // recovery also reads the explanation timeline
 });
 
 it("automatically recovers a retryable service failure without manual intervention", async () => {
   vi.useFakeTimers();
   const fetch = vi.fn().mockResolvedValueOnce(response(course))
-    .mockResolvedValueOnce(response({ error: { retryable: true } }, 503)).mockResolvedValueOnce(response(lesson));
+    .mockResolvedValueOnce(response({ error: { retryable: true } }, 503)).mockResolvedValueOnce(response(lesson)).mockResolvedValue(response(explanations));
   mount(fetch);
   await act(async () => { await vi.advanceTimersByTimeAsync(100); });
   expect(main().getByRole("status")).toHaveTextContent("Loading chapter…");
   await act(async () => { await vi.advanceTimersByTimeAsync(2_000); });
   expect(main().getByText(lesson.html)).toBeVisible();
-  expect(fetch).toHaveBeenCalledTimes(3);
+  expect(fetch).toHaveBeenCalledTimes(4);
 });
 
 it("restores the recovery controls when a manual retry also fails", async () => {
@@ -133,8 +137,8 @@ it("restores the recovery controls when a manual retry also fails", async () => 
   expect(await screen.findByRole("button", { name: "Try again" })).toBeEnabled();
   expect(main().getByRole("heading", { name: "Could not load chapter" })).toBeVisible();
   expect(main().getByRole("alert")).toHaveTextContent("Could not load this chapter.");
-  fetch.mockResolvedValueOnce(response(lesson));
+  fetch.mockResolvedValueOnce(response(lesson)).mockResolvedValue(response(explanations));
   fireEvent.click(main().getByRole("button", { name: "Try again" }));
   expect(await screen.findByText(lesson.html)).toBeVisible();
-  expect(fetch.mock.calls).toEqual([["/api/courses/course"], ["/api/chapters/chapter"], ["/api/chapters/chapter"], ["/api/chapters/chapter"]]);
+  expect(fetch.mock.calls.map(([url]) => url)).toEqual(["/api/courses/course", "/api/chapters/chapter", "/api/chapters/chapter", "/api/chapters/chapter", "/api/chapters/chapter/explanations"]);
 });

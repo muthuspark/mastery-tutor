@@ -15,7 +15,7 @@ vi.mock("./agent", () => ({ runAgentObject: vi.fn(), agentForRequest: vi.fn(), n
 vi.mock("./wikipedia-images", () => ({ findWikipediaImages: vi.fn() }));
 
 import { db } from "./db";
-import { chapters, courses } from "./db/schema";
+import { chapterExplanations, chapters, courses } from "./db/schema";
 import { runAgentObject } from "./agent";
 import { findWikipediaImages } from "./wikipedia-images";
 import { generateChapterContent } from "./chapter";
@@ -38,17 +38,36 @@ it.each(["codex", "claude"] as const)("supplies candidates to %s and persists ve
   const chapter = await generateChapterContent("chapter", agent, 1);
   expect(findWikipediaImages).toHaveBeenCalledWith("Neurons", ["Explain nerve cells"]);
   expect(runAgentObject).toHaveBeenCalledWith(agent, "chapter", expect.stringContaining(JSON.stringify([candidate])), chapterSchema);
+  expect(vi.mocked(runAgentObject).mock.calls[0][2]).toContain("Guided (2 of 6)");
   expect(chapter.content).toContain(candidate.imageUrl);
   expect(chapter.content).toContain(candidate.pageUrl);
   expect(chapter.content).not.toContain("fake.jpg");
   expect(chapter.contentGenerationStatus).toBe("ready");
   expect(chapter.status).toBe("open");
+  expect(chapter.originalExplanationLevel).toBe(2);
+  expect(db.select().from(chapterExplanations).all()).toMatchObject([
+    { kind: "original", sourceContentVersion: 1, level: 2, content: chapter.content, status: "ready", importKey: "original:1" },
+  ]);
 });
 
 it("saves a text-only lesson when no images are available", async () => {
   vi.mocked(findWikipediaImages).mockResolvedValue([]);
   vi.mocked(runAgentObject).mockResolvedValue({ content: "A neuron transmits signals.", pretest: "Think", summary: "Signals" });
   expect((await generateChapterContent("chapter", "codex", 1)).content).toBe("A neuron transmits signals.");
+});
+
+it("keeps accepted originals and appends a Guided snapshot after explicit regeneration", async () => {
+  vi.mocked(runAgentObject)
+    .mockResolvedValueOnce({ content: "First original", pretest: "Think", summary: "First" })
+    .mockResolvedValueOnce({ content: "Regenerated original", pretest: "Think again", summary: "Second" });
+  await generateChapterContent("chapter", "codex", 1);
+  db.update(chapters).set({ contentGenerationVersion: 2, contentGenerationStatus: "pending" }).where(eq(chapters.id, "chapter")).run();
+  await generateChapterContent("chapter", "codex", 2);
+
+  expect(db.select().from(chapterExplanations).orderBy(chapterExplanations.ordinal).all()).toMatchObject([
+    { kind: "original", sourceContentVersion: 1, level: 2, content: "First original", importKey: "original:1" },
+    { kind: "original", sourceContentVersion: 2, level: 2, content: "Regenerated original", importKey: "original:2" },
+  ]);
 });
 
 it("falls back to text if adding missing image attribution would exceed 600 words", async () => {
