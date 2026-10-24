@@ -81,7 +81,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); text-wrap: balance; }
 /* Flat publication-style navigation and a dark closing band. */
 .skip-link { position: fixed; top: 0.75rem; left: 1rem; z-index: 300; padding: 0.75rem 1rem; background: var(--surface); color: var(--ink); font: 0.875rem var(--sans); transform: translateY(-200%); }
 .skip-link:focus { transform: translateY(0); }
-.site-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; min-height: 6rem; padding-block: 1rem; border-bottom: 1px solid var(--line); }
+.site-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; min-height: 6rem; padding-block: 1rem; }
 .site-brand { display: inline-flex; align-items: center; gap: 0.75rem; min-height: 2.75rem; color: var(--ink); font: 700 0.75rem var(--sans); letter-spacing: 0.075em; text-transform: uppercase; text-decoration: none; }
 .brand-mark { width: 1.6rem; height: 1.6rem; flex-shrink: 0; }
 .site-header-status { display: inline-flex; align-items: center; min-height: 2.75rem; }
