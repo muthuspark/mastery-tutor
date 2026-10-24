@@ -23,9 +23,9 @@ for (const width of [1440, 390]) {
     });
     await page.goto("/course/practice-course/ch/0");
     await expect(page.getByRole("region", { name: "Chapter practice" })).toBeVisible();
-    expect(requests).toHaveLength(0);
-    await page.getByRole("button", { name: "Start or resume practice" }).click();
     await expect(page.getByRole("heading", { name: prompts[0] })).toBeFocused();
+    expect(requests).toHaveLength(1);
+    expect(requests[0]).toMatchObject({ action: "start", version: 1 });
     await expect(page.getByRole("heading", { name: prompts[0] })).toHaveAccessibleDescription(session.question!.setup!);
     await page.getByRole("button", { name: "Give me a hint" }).click();
     await expect(page.getByRole("region", { name: "Chapter practice" }).getByRole("status")).toContainText("Think about how you use an index");
@@ -37,8 +37,8 @@ for (const width of [1440, 390]) {
     await expect(page.getByRole("heading", { name: prompts[1] })).toBeFocused();
     expect(requests[1]).toMatchObject({ choiceIndex: 0, usedHint: true });
     await page.reload();
-    await page.getByRole("button", { name: "Start or resume practice" }).click();
-    await expect(page.getByRole("heading", { name: prompts[1] })).toBeVisible();
+    await expect(page.getByRole("heading", { name: prompts[1] })).toBeFocused();
+    expect(requests[2]).toMatchObject({ action: "start", version: 1 });
     for (let index = 1; index < 3; index++) {
       await page.getByRole("radio", { name: "A. Use an index to locate it" }).check();
       await page.getByRole("button", { name: "Continue", exact: true }).click();

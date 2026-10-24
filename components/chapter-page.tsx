@@ -76,7 +76,7 @@ const retryReadyContentDelay = () => 2_000;
 
 function sectionHeading(section: ExplanationTimeline["sections"][number]) {
   if (section.level === null || !section.label) {
-    return section.kind === "original" ? "Original explanation · Depth not recorded" : "Explanation · Depth not recorded";
+    return section.kind === "original" ? "Original explanation" : "Explanation";
   }
   return section.kind === "original" ? `Original explanation · ${section.label}` : `${section.label} explanation`;
 }
@@ -159,12 +159,6 @@ export function ChapterPage() {
     retry: false,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chapter-explanations", chapter?.id] }),
   });
-  const adjustment = useMutation({
-    mutationFn: async () => postJson(`/api/chapters/${chapter?.id}/regenerate`),
-    retry: false,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chapter", chapter?.id] }),
-  });
-
   // Only an explicit recovery action restarts a terminally failed reviewed artifact.
   const recovery = useMutation({ mutationFn: async () => {
     if (reviewed && chapterQuery.error instanceof ReadyContentError && chapterQuery.error.generationFailed) {
@@ -223,23 +217,29 @@ export function ChapterPage() {
       </section>
     )) : <MermaidContent html={chapterQuery.data.html} />}
 
-    {preparingVersion ? <p role="status" className="ui mt-8 text-sm text-[var(--muted)]">Preparing the original explanation. Earlier accepted explanations remain available above.</p> : failedVersion ? <p role="alert" className="ui mt-8 text-sm">Could not prepare the new chapter version. Your earlier explanations remain available above. Select Regenerate chapter to try again.</p> : null}
+    {preparingVersion ? <p role="status" className="ui mt-8 text-sm text-[var(--muted)]">Preparing the original explanation. Earlier accepted explanations remain available above.</p> : failedVersion ? <p role="alert" className="ui mt-8 text-sm">Could not prepare the new chapter version. Your earlier explanations remain available above.</p> : null}
     {chapterQuery.data.chapter.pretest ? <p className="mt-12 border-t border-[var(--line)] pt-5 text-lg text-[var(--brown)]"><span className="font-bold text-[var(--ink)]">Before you continue.</span> {chapterQuery.data.chapter.pretest}</p> : null}
 
     <section aria-label="Explanation controls" className="ui mt-7 border-t border-[var(--line)] pt-5">
       {currentSection && currentSection.level !== null && currentSection.label
         ? <p className="mb-3 text-sm text-[var(--muted)]">Current explanation: {currentSection.label} ({currentSection.level} of 6)</p>
-        : timeline?.legacyBaseline
-          ? <p className="mb-3 text-sm text-[var(--muted)]">Depth not recorded. Adjustments start from Guided (2 of 6).</p>
-          : <p className="mb-3 text-sm text-[var(--muted)]">The current explanation level is not available yet.</p>}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-        <button type="button" onClick={() => { if (!controlsDisabled && effectiveLevel > 1) requestExplanation.mutate("simpler"); }} aria-disabled={controlsDisabled || effectiveLevel === 1} className="text-button aria-disabled:cursor-wait aria-disabled:opacity-60">Simpler</button>
-        <button type="button" onClick={() => { if (!controlsDisabled && effectiveLevel < 6) requestExplanation.mutate("deeper"); }} aria-disabled={controlsDisabled || effectiveLevel === 6} className="text-button aria-disabled:cursor-wait aria-disabled:opacity-60">More depth</button>
-        {showRetryButton ? <button type="button" onClick={() => { if (!requestInFlight) retryExplanation.mutate(); }} aria-disabled={requestInFlight} className="text-button aria-disabled:cursor-wait aria-disabled:opacity-60">
-          {retryExplanation.isPending || activeExplanation ? "Retrying explanation…" : "Retry explanation"}
-        </button> : retryAccepted ? <button type="button" disabled className="text-button disabled:cursor-default disabled:opacity-60">Explanation added</button> : null}
-        {timeline?.failedRequest && !activeExplanation ? <span className="text-sm text-[var(--accent-dark)]">The new explanation could not be prepared. Your accepted text is unchanged.</span> : null}
+        : !timeline?.legacyBaseline
+          ? <p className="mb-3 text-sm text-[var(--muted)]">The current explanation level is not available yet.</p>
+          : null}
+      <div className="chapter-action-row">
+        <div className="chapter-adjustment-group">
+          <p>Adjust explanation</p>
+          <div role="group" aria-label="Adjust explanation depth" className="chapter-adjustment-buttons">
+            <button type="button" onClick={() => { if (!controlsDisabled && effectiveLevel > 1) requestExplanation.mutate("simpler"); }} aria-disabled={controlsDisabled || effectiveLevel <= 1} className="chapter-segment-button aria-disabled:cursor-not-allowed aria-disabled:opacity-60">Simpler</button>
+            <button type="button" onClick={() => { if (!controlsDisabled && effectiveLevel < 6) requestExplanation.mutate("deeper"); }} aria-disabled={controlsDisabled || effectiveLevel >= 6} className="chapter-segment-button aria-disabled:cursor-not-allowed aria-disabled:opacity-60">More depth</button>
+          </div>
+        </div>
+        <Link href={`/course/${params.id}/ch/${params.idx}/quiz`} className="button-primary ui chapter-quiz-cta">Check your understanding →</Link>
       </div>
+      {showRetryButton ? <button type="button" onClick={() => { if (!requestInFlight) retryExplanation.mutate(); }} aria-disabled={requestInFlight} className="text-button mt-2 aria-disabled:cursor-wait aria-disabled:opacity-60">
+        {retryExplanation.isPending || activeExplanation ? "Retrying explanation…" : "Retry explanation"}
+      </button> : retryAccepted ? <p className="mt-2 text-sm text-[var(--muted)]" role="status">Explanation added</p> : null}
+      {timeline?.failedRequest && !activeExplanation ? <p className="mt-2 text-sm text-[var(--accent-dark)]">The new explanation could not be prepared. Your accepted text is unchanged.</p> : null}
       {atSimplest ? <p className="mt-2 text-sm text-[var(--muted)]">This is the simplest level (1 of 6).</p> : atDeepest ? <p className="mt-2 text-sm text-[var(--muted)]">This is the deepest level (6 of 6).</p> : null}
       <p role="status" aria-live="polite" className="mt-3 text-sm text-[var(--muted)]">{requestMessage}</p>
       {requestExplanation.isError || retryExplanation.isError ? <p role="alert" className="mt-3 text-sm text-[var(--accent-dark)]">{requestExplanation.error?.message ?? retryExplanation.error?.message}</p> : null}
@@ -249,13 +249,5 @@ export function ChapterPage() {
       </div> : null}
     </section>
 
-    <Link href={`/course/${params.id}/ch/${params.idx}/quiz`} className="button-primary ui mt-4 w-full">Check your understanding →</Link>
-    <section aria-label="Chapter regeneration" className="ui mt-4 text-center">
-      <button type="button" onClick={() => adjustment.mutate()} disabled={adjustment.isPending || preparingVersion || requestInFlight} className="text-button disabled:cursor-wait disabled:opacity-60">
-        {adjustment.isPending ? "Regenerating chapter…" : "Regenerate chapter"}
-      </button>
-      {adjustment.isError ? <p role="alert" className="mt-2 text-sm text-[var(--accent-dark)]">{adjustment.error.message} Select Regenerate chapter to try again.</p> : null}
-      {adjustment.isSuccess ? <p role="status" className="mt-2 text-sm text-[var(--muted)]">Chapter regeneration requested. The chapter is being prepared.</p> : null}
-    </section>
   </main></>;
 }

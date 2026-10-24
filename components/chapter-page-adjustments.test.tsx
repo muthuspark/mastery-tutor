@@ -105,8 +105,8 @@ it("shows boundaries and legacy depth without inventing a level", async () => {
     baselineExplanationId: "legacy", legacyBaseline: true, effectiveLevel: 2,
     sections: [{ ...original, id: "legacy", kind: "legacy", level: null, label: null }],
   })));
-  await waitFor(() => expect(screen.getByText("Depth not recorded. Adjustments start from Guided (2 of 6).")).toBeVisible());
-  expect(screen.getByRole("heading", { name: "Explanation · Depth not recorded" })).toBeVisible();
+  expect(screen.queryByText("Depth not recorded. Adjustments start from Guided (2 of 6).")).not.toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Explanation" })).toBeVisible();
 });
 
 it("offers explicit retry at the saved target and preserves the accepted history", async () => {

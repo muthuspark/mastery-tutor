@@ -39,8 +39,8 @@ test("appends explanation levels for a migrated mastered chapter and retains the
   });
 
   await page.goto("/course/legacy-course/ch/0");
-  await expect(page.getByText("Depth not recorded. Adjustments start from Guided (2 of 6)." )).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Explanation · Depth not recorded" })).toBeVisible();
+  await expect(page.getByText("Depth not recorded. Adjustments start from Guided (2 of 6)." )).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Explanation" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Check your understanding →" })).toBeVisible();
 
   await page.getByRole("button", { name: "Retry explanation" }).click();
@@ -62,7 +62,7 @@ test("appends explanation levels for a migrated mastered chapter and retains the
   await expect(page.getByRole("link", { name: "Check your understanding →" })).toHaveAttribute("href", "/course/legacy-course/ch/0/quiz");
   expect(quizRequests).toEqual([]);
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Explanation · Depth not recorded" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Explanation" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Intuitive explanation" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Applied explanation" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Guided explanation" })).toHaveCount(2);

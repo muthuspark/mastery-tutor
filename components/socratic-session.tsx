@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { SocraticRequest, SocraticSessionView } from "@/lib/socratic-contracts";
 
 class PracticeError extends Error {
@@ -13,6 +13,7 @@ export function SocraticSession({ chapterId, version }: { chapterId: string; ver
   const headingId = useId();
   const focusRef = useRef<HTMLHeadingElement>(null);
   const inFlight = useRef(false);
+  const startAttempted = useRef(false);
   const practice = useMutation({
     mutationFn: async (input: SocraticRequest): Promise<SocraticSessionView> => {
       const response = await fetch(`/api/chapters/${chapterId}/socratic`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) });
@@ -24,19 +25,23 @@ export function SocraticSession({ chapterId, version }: { chapterId: string; ver
     onSuccess: (next) => setSession(next),
     onSettled: () => { inFlight.current = false; },
   });
-  function send(input: SocraticRequest) {
+  const send = useCallback((input: SocraticRequest) => {
     if (inFlight.current) return;
     inFlight.current = true;
     practice.mutate(input);
-  }
+  }, [practice.mutate]);
+  useEffect(() => {
+    if (startAttempted.current) return;
+    startAttempted.current = true;
+    send({ action: "start", version });
+  }, [send, version]);
   useEffect(() => {
     if (session) focusRef.current?.focus();
   }, [session]);
   const lastTurn = session?.turns.at(-1);
   const conflict = practice.error instanceof PracticeError && practice.error.status === 409;
-  const pendingMessage = practice.variables?.action === "answer" ? "Following your reasoning and preparing the next step…" : "Preparing your guided practice…";
+  const pendingMessage = practice.variables?.action === "answer" ? "Following your reasoning and preparing the next step…" : "Preparing your first question…";
   return <section aria-label="Chapter practice" className="socratic-session">
-    {!session ? <button type="button" className="button-secondary ui mt-6" disabled={practice.isPending} onClick={() => send({ action: "start", version })}>Start or resume practice</button> : null}
     {session?.question ? <>
       {lastTurn ? <div className="socratic-feedback" aria-live="polite">
         <p className="ui text-sm font-semibold">{lastTurn.correct ? "Building on your thinking" : "Let’s examine that"}</p>
@@ -63,6 +68,7 @@ export function SocraticSession({ chapterId, version }: { chapterId: string; ver
     {practice.isPending ? <p role="status" className="loading-state ui mt-6 text-sm text-[var(--muted)]">{pendingMessage}</p> : null}
     {practice.isError ? <div className="mt-5">
       <p role="alert" className="ui text-sm">{practice.error instanceof PracticeError ? practice.error.message : "Could not reach the tutor. Your saved practice is still available. Try again."}</p>
+      {!session && !conflict ? <button type="button" className="button-secondary ui mt-3" onClick={() => send({ action: "start", version })}>Try again</button> : null}
       {conflict ? <button type="button" className="text-button ui mt-3 text-sm" onClick={() => window.location.reload()}>Reload chapter</button> : null}
     </div> : null}
   </section>;

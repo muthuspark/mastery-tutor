@@ -24,16 +24,15 @@ function stubResponses(...responses: { status?: number; body: unknown }[]) {
   return fetch;
 }
 async function start() {
-  fireEvent.click(screen.getByRole("button", { name: "Start or resume practice" }));
   await screen.findByRole("heading", { name: first.question!.prompt });
 }
 
-it("loads only on request, shows one question, and submits a choice with hint usage", async () => {
+it("starts guided practice automatically, shows one question, and submits a choice with hint usage", async () => {
   const second = { ...first, question: { ...first.question!, id: "question-2", prompt: "Why not index every column?" }, turns: [turn] };
   const fetch = stubResponses({ body: first }, { body: second });
   mount();
-  expect(fetch).not.toHaveBeenCalled();
   await start();
+  expect(fetch).toHaveBeenCalledTimes(1);
   expect(screen.queryByRole("button", { name: "Start over" })).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
   expect(screen.getByRole("heading", { name: first.question!.prompt })).toHaveFocus();
