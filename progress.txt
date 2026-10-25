@@ -6515,3 +6515,63 @@
   "decision": "Stop after this commit: iteration limit reached",
   "commitMessage": "ralph: Disclose the full consequences of retaking a mastery check\n\nRalph-Run: 20261019140545445-7b45bf6c\nRalph-Iteration: 5"
 }
+
+[2026-10-25T04:45:07.711Z] 20261025044507705-f6947bb5 — Run started
+{
+  "goal": "# PRD: Private Beta User Onboarding\n\n## Summary\n\nConvert Mastery Tutor from a single-learner app into an invite-only service where each learner signs in with an email OTP and has a private learning workspace.\n\nAfter verifying their email, new learners go directly to course creation. Returning learners see their saved courses and progress. Existing courses and progress transfer to the owner’s account.\n\nPayments, credits, and pricing are deferred.\n\n## Goals and User Experience\n\nThe first release must let invited learners independently create, study, and resume courses without accessing another learner’s information.\n\n**New learner flow**\n\n1. Open the app and enter an email address.\n2. If invited, receive a six-digit login code through Mailtrap.\n3. Enter the code to verify email ownership and create an account.\n4. Arrive at the existing course creation form.\n\n**Returning learner flow**\n\n- An active session opens the learner’s workspace directly.\n- An expired session requires another email OTP.\n- Signing out returns to the login screen and clears cached learner data.\n\nThere is no required name, password, profile questionnaire, or product tour. Learners can optionally describe their background in settings.\n\n## Product Requirements\n\n### Invitations and login\n\n- Maintain a server-configured allowlist of invited emails. Include the owner email automatically.\n- Normalize emails consistently by trimming whitespace and treating case consistently. Do not rewrite aliases or remove address components.\n- Check invitation eligibility both when requesting a code and when completing sign-in.\n- Uninvited visitors see a clear invitation-only message and cannot create accounts or trigger email delivery.\n- Use a single email field followed by a single code field that supports paste, keyboard submission, and OTP autofill.\n- Allow learners to correct their email address and request a replacement code.\n- Removing an email from the allowlist blocks subsequent access, including existing sessions.\n\n### OTP and sessions\n\nProposed defaults:\n\n| Setting | Default |\n|---|---|\n| Code length | Six digits |\n| Code validity | Five minutes |\n| Incorrect verification attempts | Three per issued code |\n| Resend cooldown | 60 seconds |\n| Session lifetime | Seven days, fixed expiry |\n| OTP storage | Hashed |\n| Resend behavior | Replace the previous code |\n\n- Consume each code once. Successful verification cannot be replayed.\n- Enforce persistent request limits per email and IP, including concurrent requests.\n- Do not record codes, credentials, or session tokens in application logs.\n- Use secure, HTTP-only session cookies in production.\n- Validate sessions and access on the server. Page redirects alone are insufficient.\n- Logout invalidates the current session.\n\n### Mailtrap delivery\n\n- Use Mailtrap’s transactional HTTP API for login emails.\n- Configure `MAILTRAP_API_KEY` and `FROM_EMAIL` in this app’s own server environment, using the existing setup in `../agent/.env` as the configuration source.\n- Do not make this app depend on reading the sibling app’s environment at runtime.\n- Send emails branded as Mastery Tutor, with the code, expiry, and instructions for ignoring an unsolicited request.\n- If Mailtrap rejects or cannot confirm a send, show a retryable delivery error. Provider acceptance must not be described as confirmed inbox delivery.\n- Keep credentials and raw provider errors out of browser responses.\n\n### Private learning data\n\n- Associate each course and learner profile with an authenticated user.\n- Enforce ownership across course lists, lessons, quizzes, attempts, review items, practice sessions, explanations, regeneration, and exports.\n- Derive identity from the session rather than a client-supplied user ID.\n- Return an unauthenticated response for protected API requests without a valid session. Return a consistent not-found response for another learner’s resources.\n- Background jobs resolve the course owner’s profile and context rather than using the global learner profile.\n- Clear browser query caches on logout or account changes.\n- Preserve current learning and mastery behavior.\n\n### Learner settings\n\n- Keep background personalization optional and private.\n- Remove AI provider selection and server-configuration instructions from learner-facing screens.\n- Select the AI provider through server configuration.\n- Present service failures in language that helps learners retry without exposing infrastructure details.\n\n### Existing data\n\n- Configure an explicit owner email before migration.\n- Assign existing courses, profile, progress, and related learning records to that owner.\n- Make migration repeatable without duplicating or reassigning records.\n- Never assign existing data to whichever learner happens to register first.\n- Back up the database before migration and verify record counts and relationships afterward.\n\n## Technical Direction and Boundaries\n\nUse Better Auth for email OTP authentication and session management, integrated with Drizzle. Connect its email delivery callback to Mailtrap.\n\nAdd authentication records and course/profile ownership. Existing course and chapter identifiers can remain unchanged; related records inherit access through their owning course.\n\nRetain SQLite for this milestone on a single persistent server. A broader production database and deployment migration is separate work.\n\nNew server configuration includes the auth secret, application URL, owner email, invited emails, selected AI provider, and Mailtrap settings. Fail clearly when required configuration is missing.\n\nOut of scope:\n\n- Payments, credit balances, purchases, and course entitlements.\n- Enforcing the future one-free-lesson offer.\n- Teams, classrooms, collaboration, and shared course catalogs.\n- Social login, passwords, email changes, and invitation-management UI.\n- A marketing-site redesign.\n\n## Acceptance and Validation\n\nThe milestone is complete when:\n\n- An invited learner receives a code, signs in, and reaches course creation without additional setup.\n- A returning learner resumes their own courses and progress.\n- Uninvited emails cannot send codes, register, or access protected resources.\n- Wrong, expired, replaced, exhausted, and previously consumed codes fail correctly.\n- Cooldowns and rate limits hold under repeated and concurrent requests.\n- Mailtrap failures produce recoverable feedback without exposing secrets.\n- Two learners cannot read, modify, export, or trigger AI work against each other’s resources.\n- Background generation uses the correct learner’s context.\n- Logout and account switching leave no previous learner’s cached information visible.\n- Existing owner data survives migration, and rerunning migration is safe.\n- Login works on mobile and desktop with keyboard navigation, accessible labels, and clear loading and error states.\n\nValidate authentication, authorization, migration, and delivery failures with automated tests. Exercise the full login and two-user learning flows in browser tests using a controlled email transport. Verify real Mailtrap delivery before inviting beta users.\n\nTrack code requests, provider acceptance/failure, successful verification, first-course creation, and first-lesson opening without logging OTPs or learning content. Use the beta to establish onboarding completion and delivery reliability baselines.",
+  "branch": "ralph/20261025044507705-f6947bb5",
+  "iterations": 10,
+  "model": "Codex configured default",
+  "maxFixAttempts": 3,
+  "timeoutMinutes": 30,
+  "baseUrl": "http://localhost:3000",
+  "agentSandbox": "phase-default"
+}
+
+[2026-10-25T04:45:07.731Z] 20261025044507705-f6947bb5 — Phase started
+{
+  "iteration": 1,
+  "phase": "baseline"
+}
+
+[2026-10-25T04:45:12.256Z] 20261025044507705-f6947bb5 — Check passed
+{
+  "iteration": 1,
+  "phase": "baseline",
+  "command": "npm run lint",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261025044507705-f6947bb5/1-baseline-1792903507735-0-lint.log"
+}
+
+[2026-10-25T04:45:14.065Z] 20261025044507705-f6947bb5 — Check passed
+{
+  "iteration": 1,
+  "phase": "baseline",
+  "command": "npm run typecheck",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261025044507705-f6947bb5/1-baseline-1792903512260-1-typecheck.log"
+}
+
+[2026-10-25T04:45:36.308Z] 20261025044507705-f6947bb5 — Check failed
+{
+  "iteration": 1,
+  "phase": "baseline",
+  "command": "npm run test",
+  "error": "Error: npm run exited 1. See /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261025044507705-f6947bb5/1-baseline-1792903514070-2-test.log",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261025044507705-f6947bb5/1-baseline-1792903514070-2-test.log"
+}
+
+[2026-10-25T04:45:50.905Z] 20261025044507705-f6947bb5 — Check passed
+{
+  "iteration": 1,
+  "phase": "baseline",
+  "command": "npm run build",
+  "log": "/home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261025044507705-f6947bb5/1-baseline-1792903536312-3-build.log"
+}
+
+[2026-10-25T04:45:50.910Z] 20261025044507705-f6947bb5 — Run stopped; changes preserved
+{
+  "iteration": 1,
+  "pendingPhase": "baseline",
+  "repairs": 0,
+  "error": "Error: Baseline checks failed. Fix the environment or repository before starting a new run.\nError: npm run exited 1. See /home/leopard/development/jovis.ai/mastery-tutor/.ralph/20261025044507705-f6947bb5/1-baseline-1792903514070-2-test.log",
+  "resume": "ralph --resume 20261025044507705-f6947bb5"
+}

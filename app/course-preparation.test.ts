@@ -48,8 +48,15 @@ it("persists intent and selected agent, then publishes only the accepted plan an
 });
 
 it("keeps rejected plans unpublished and retries explicitly without duplicate jobs", async () => {
+  vi.useFakeTimers();
   const { courseId, job } = await pending();
   vi.mocked(runAgentObject).mockResolvedValue({});
+  expect(await processGenerationJob(claimGenerationJob(job.id, "worker")!, "worker")).toBe("pending");
+  expect(db.select().from(chapters).all()).toEqual([]);
+  expect(db.select().from(courses).get()?.preparationStatus).toBe("pending");
+  await vi.advanceTimersByTimeAsync(5_000);
+  expect(await processGenerationJob(claimGenerationJob(job.id, "worker")!, "worker")).toBe("pending");
+  await vi.advanceTimersByTimeAsync(10_000);
   expect(await processGenerationJob(claimGenerationJob(job.id, "worker")!, "worker")).toBe("failed");
   expect(db.select().from(chapters).all()).toEqual([]);
   expect(db.select().from(courses).get()?.preparationStatus).toBe("failed");

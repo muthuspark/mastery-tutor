@@ -15,6 +15,7 @@ it.each(["passed", "open"])("loads a %s lesson and only prefetches assessments f
   const fetch = vi.fn(async (url: string) => ({ ok: true, json: async () =>
     url === "/api/courses/course" ? { course: { topic: "Differential equations" }, chapters: [chapter, { id: "next", idx: 1, status: "open" }] }
       : url === "/api/chapters/chapter" ? chapterResponse
+        : url === "/api/chapters/chapter/socratic" ? { id: "session", question: { id: "question", prompt: "Which step separates the variables?", options: ["Divide by the dependent expression", "Add the variables", "Discard the constant"], hint: "Group each variable with its differential." }, turns: [], summary: null }
         : url === "/api/chapters/chapter/explanations" ? explanationResponse
           : { chapter: { ...chapter, pretest: null }, html: "Next chapter" },
   }));
@@ -25,6 +26,8 @@ it.each(["passed", "open"])("loads a %s lesson and only prefetches assessments f
   expect(title.compareDocumentPosition(screen.getByText("Saved separation lesson")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(screen.getByRole("link", { name: "Back to course" })).toHaveAttribute("href", "/course/course");
   expect(screen.getByRole("region", { name: "Chapter practice" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "Which step separates the variables?" })).toBeVisible();
+  expect(fetch).toHaveBeenCalledWith("/api/chapters/chapter/socratic", expect.objectContaining({ method: "POST", body: JSON.stringify({ action: "start", version: 1 }) }));
   expect(screen.getByRole("link", { name: "Check your understanding →" })).toHaveAttribute("href", "/course/course/ch/0/quiz");
   expect(await screen.findByText("Current explanation: Guided (2 of 6)")).toBeVisible();
   if (status === "passed") {

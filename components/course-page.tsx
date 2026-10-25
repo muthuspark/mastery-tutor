@@ -85,6 +85,7 @@ export function CoursePage() {
               <span className="ui text-xs font-bold" aria-hidden="true">{String(chapter.idx + 1).padStart(2, "0")}</span>
               <div>
                 <span className="chapter-title text-xl">{chapter.title}</span>
+                {chapter.status === "locked" ? <UnlockGuidance chapter={chapter} chapters={data.chapters} /> : null}
               </div>
               <span className="chapter-row-actions ui text-xs">
                 <span className="font-bold">{isOpen ? "Continue →" : "Locked"}</span>
@@ -104,4 +105,21 @@ export function CoursePage() {
       <RevisitDialog open={Boolean(revisitChapter)} chapterTitle={revisitChapter?.title ?? "this chapter"} isSubmitting={isRevisiting} error={revisitError} onCancel={() => { if (!isRevisiting) { setRevisitChapter(null); setRevisitError(""); } }} onConfirm={() => void confirmRevisit()} />
     </main>
   );
+}
+
+function UnlockGuidance({ chapter, chapters }: { chapter: Chapter; chapters: Chapter[] }) {
+  const previous = chapters.find(item => item.idx === chapter.idx - 1);
+  const required = new Set(chapter.prerequisites ?? []);
+  const prerequisites = chapters.filter(item => required.has(item.idx)).sort((a, b) => a.idx - b.idx);
+  const missing = [...required].some(idx => !chapters.some(item => item.idx === idx));
+  return <div className="ui mt-2 text-sm">
+    <p>{previous
+      ? `Unlocks when you pass the mastery check for “${previous.title}”${required.size ? " with all listed prerequisites mastered" : ""}.`
+      : "Chapters unlock in sequence after the previous chapter’s mastery check is passed."}</p>
+    {prerequisites.length ? <>
+      <p className="mt-2">Required prerequisites:</p>
+      <ul className="mt-1 space-y-1">{prerequisites.map(item => <li key={item.id}>{item.title}: {item.status === "passed" ? "Mastered" : "Not yet mastered"}</li>)}</ul>
+    </> : null}
+    {missing ? <p className="mt-2">A listed prerequisite is unavailable in this course. This chapter cannot unlock until all listed prerequisites are mastered.</p> : null}
+  </div>;
 }
