@@ -8,5 +8,5 @@ test("opens the existing app and navigates to settings without changing learner 
   await page.reload();
   await expect(page.getByLabel(/About me/)).toBeVisible();
   await page.getByRole("link", { name: "Back to learning" }).click();
-  await expect(page.getByRole("button", { name: "Begin" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create study →" })).toBeVisible();
 });

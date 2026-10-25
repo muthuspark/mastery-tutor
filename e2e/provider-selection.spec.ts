@@ -17,7 +17,7 @@ test("saves a profile agent, restores it, and shows the same agent across pages"
   await page.goto("/");
   await expect(page.getByRole("combobox")).toHaveCount(0);
   await expect(page.getByText(/Using Claude CLI/)).toBeVisible();
-  await page.getByRole("link", { name: "Change in profile settings" }).click();
+  await page.getByRole("link", { name: "Change learning agent in profile settings" }).click();
   const selector = page.getByRole("combobox", { name: "Learning agent" });
   await expect(selector).toHaveValue("claude");
   await expect(selector.locator("option")).toHaveText(["Claude CLI", "DeepSeek API"]);
@@ -38,8 +38,8 @@ test("saves a profile agent, restores it, and shows the same agent across pages"
   await page.getByRole("link", { name: "Back to learning" }).click();
   await expect(page.getByRole("combobox")).toHaveCount(0);
   await expect(page.getByText(/Using DeepSeek API/)).toBeVisible();
-  await page.getByLabel("I want to learn").fill("Linear algebra");
-  await page.getByRole("button", { name: "Begin" }).click();
+  await page.getByLabel("What do you want to learn?").fill("Linear algebra");
+  await page.getByRole("button", { name: "Create study →" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "Mock course received" })).toHaveText("Mock course received");
   expect(submission).toEqual({ topic: "Linear algebra" });
 });

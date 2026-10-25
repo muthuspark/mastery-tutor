@@ -18,11 +18,11 @@ describe("NewCourseForm", () => {
   it("shows one topic field and enables Begin once an agent is available", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ available: ["codex"], selected: "codex" }) }));
     render(<NewCourseForm />);
-    expect(screen.getByLabelText("I want to learn")).toBeVisible();
-    expect(screen.getByRole("button", { name: "Begin" })).toBeDisabled();
+    expect(screen.getByLabelText("What do you want to learn?")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Create study →" })).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent("Finding learning agents");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole("button", { name: "Begin" })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Create study →" })).toBeEnabled());
     expect(screen.queryByText("Beginner")).not.toBeInTheDocument();
   });
 
@@ -30,7 +30,7 @@ describe("NewCourseForm", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ available: [], selected: null }) }));
     render(<NewCourseForm />);
     expect(await screen.findByRole("alert")).toHaveTextContent("Configure a learning agent");
-    expect(screen.getByRole("button", { name: "Begin" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Create study →" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Retry agent discovery" })).not.toBeInTheDocument();
   });
 
@@ -44,7 +44,7 @@ describe("NewCourseForm", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Could not check for learning agents. Try again.");
     expect(screen.queryByText(/Install the Codex/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Retry agent discovery" })).toHaveClass("button-secondary");
-    expect(screen.getByRole("button", { name: "Begin" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Create study →" })).toBeDisabled();
     expect(fetchMock.mock.calls).toEqual([["/api/agents", { cache: "no-store" }]]);
   });
 
@@ -55,7 +55,7 @@ describe("NewCourseForm", () => {
       .mockImplementationOnce(() => new Promise((resolve) => { resolveDiscovery = resolve; }));
     vi.stubGlobal("fetch", fetchMock);
     render(<NewCourseForm />);
-    const topic = screen.getByLabelText("I want to learn");
+    const topic = screen.getByLabelText("What do you want to learn?");
     fireEvent.change(topic, { target: { value: "Linear algebra" } });
     const retry = await screen.findByRole("button", { name: "Retry agent discovery" });
     fireEvent.click(retry);
@@ -63,7 +63,7 @@ describe("NewCourseForm", () => {
 
     expect(await screen.findByRole("status")).toHaveTextContent("Finding learning agents…");
     expect(screen.queryByRole("button", { name: "Retry agent discovery" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Begin" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Create study →" })).toBeDisabled();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(topic).toHaveValue("Linear algebra");
     expect(topic).toBeEnabled();
@@ -72,7 +72,7 @@ describe("NewCourseForm", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
     await act(async () => resolveDiscovery({ ok: true, json: async () => ({ available: ["claude"], selected: "claude" }) }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Begin" })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Create study →" })).toBeEnabled());
     expect(screen.getByText(/Using Claude CLI/)).toBeVisible();
     expect(topic).toHaveValue("Linear algebra");
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
@@ -87,17 +87,17 @@ describe("NewCourseForm", () => {
       .mockResolvedValueOnce({ ok: true, json: async () => ({ available: [], selected: null }) });
     vi.stubGlobal("fetch", fetchMock);
     render(<NewCourseForm />);
-    fireEvent.change(screen.getByLabelText("I want to learn"), { target: { value: "Linear algebra" } });
+    fireEvent.change(screen.getByLabelText("What do you want to learn?"), { target: { value: "Linear algebra" } });
     fireEvent.click(await screen.findByRole("button", { name: "Retry agent discovery" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Retry agent discovery" })).toBeEnabled());
     expect(screen.getByRole("alert")).toHaveTextContent("Could not check for learning agents");
-    expect(screen.getByRole("button", { name: "Begin" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Create study →" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Retry agent discovery" }));
 
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Configure a learning agent in Profile settings to begin."));
     expect(screen.queryByRole("button", { name: "Retry agent discovery" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Begin" })).toBeDisabled();
-    expect(screen.getByLabelText("I want to learn")).toHaveValue("Linear algebra");
+    expect(screen.getByRole("button", { name: "Create study →" })).toBeDisabled();
+    expect(screen.getByLabelText("What do you want to learn?")).toHaveValue("Linear algebra");
     expect(fetchMock.mock.calls).toEqual([["/api/agents", { cache: "no-store" }], ["/api/agents", { cache: "no-store" }], ["/api/agents", { cache: "no-store" }]]);
   });
 });
@@ -125,11 +125,11 @@ describe("course generation modal", () => {
       .mockImplementationOnce(() => new Promise((res, rej) => { resolve = res; reject = rej; }));
     vi.stubGlobal("fetch", fetchMock);
     render(<NewCourseForm />);
-    const topic = screen.getByLabelText("I want to learn");
+    const topic = screen.getByLabelText("What do you want to learn?");
     fireEvent.change(topic, { target: { value: "Linear algebra" } });
-    await waitFor(() => expect(screen.getByRole("button", { name: "Begin" })).toBeEnabled());
-    screen.getByRole("button", { name: "Begin" }).focus();
-    fireEvent.click(screen.getByRole("button", { name: "Begin" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Create study →" })).toBeEnabled());
+    screen.getByRole("button", { name: "Create study →" }).focus();
+    fireEvent.click(screen.getByRole("button", { name: "Create study →" }));
     return { topic, fetchMock, resolve, reject };
   }
 
@@ -176,7 +176,7 @@ describe("course generation modal", () => {
     expect(topic).toBeEnabled();
     expect(topic).toHaveFocus();
     expect(screen.getByRole("alert")).toHaveTextContent(failure === "HTTP" ? "Please try again." : "Could not reach the tutor.");
-    expect(screen.getByRole("button", { name: "Begin" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Create study →" })).toBeEnabled();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(push).not.toHaveBeenCalled();
   });
@@ -204,8 +204,8 @@ describe("DeepSeek selection", () => {
     render(<NewCourseForm />);
     expect(await screen.findByText(/Using DeepSeek API/)).toBeVisible();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("I want to learn"), { target: { value: "Linear algebra" } });
-    fireEvent.click(screen.getByRole("button", { name: "Begin" }));
+    fireEvent.change(screen.getByLabelText("What do you want to learn?"), { target: { value: "Linear algebra" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create study →" }));
     expect(within(screen.getByRole("dialog")).getByText("DeepSeek API")).toBeVisible();
     expect(fetchMock).toHaveBeenLastCalledWith("/api/courses", expect.objectContaining({ body: JSON.stringify({ topic: "Linear algebra" }) }));
     cleanup();
@@ -218,13 +218,13 @@ describe("DeepSeek selection", () => {
     render(<NewCourseForm />);
     expect(await screen.findByText(/Using DeepSeek API/)).toBeVisible();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Change in profile settings" })).toHaveAttribute("href", "/settings");
+    expect(screen.getByRole("link", { name: "Change learning agent in profile settings" })).toHaveAttribute("href", "/settings");
   });
 
   it("shows an unavailable saved agent and prevents course creation", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ available: ["codex"], selected: "deepseek" }) }));
     render(<NewCourseForm />);
     expect(await screen.findByText(/Unavailable: DeepSeek API/)).toBeVisible();
-    expect(screen.getByRole("button", { name: "Begin" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Create study →" })).toBeDisabled();
   });
 });

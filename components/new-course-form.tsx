@@ -46,19 +46,19 @@ export function NewCourseForm() {
     <>
       {isSubmitting ? <GenerationOverlay stage={generationStage} agent={agent || availableAgents[0]} returnFocusRef={topicRef} /> : null}
       <form className="new-course-form" onSubmit={submit}>
-        <label className="sr-only" htmlFor="topic">I want to learn</label>
-        <textarea ref={topicRef} id="topic" name="topic" required rows={4} value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="the fundamentals of system design" className="field" disabled={isSubmitting} aria-invalid={error ? true : undefined} aria-describedby={error ? "course-form-error" : undefined} />
+        <label className="course-topic-label" htmlFor="topic">What do you want to learn?</label>
+        <textarea ref={topicRef} id="topic" name="topic" required rows={4} value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="e.g. the fundamentals of system design" className="field" disabled={isSubmitting} aria-invalid={error ? true : undefined} aria-describedby={error ? "course-form-error" : undefined} />
         <div className="course-form-actions">
+          <button type="submit" disabled={isSubmitting || isLoadingAgents || agentDiscoveryFailed || !agent || !availableAgents.includes(agent)} className="button-secondary course-begin">{isSubmitting ? "Building your path…" : "Create study →"}</button>
           <div className="agent-control">
             {isLoadingAgents ? <p className="ui text-sm text-[var(--muted)]" role="status">Finding learning agents…</p> : agentDiscoveryFailed ? (
               <p className="ui text-sm text-[var(--accent-dark)]" role="alert">Could not check for learning agents. Try again.</p>
             ) : agent ? (
-              <p className="ui text-sm text-[var(--muted)]">{availableAgents.includes(agent) ? "Using" : "Unavailable:"} {agentLabels[agent]}. <Link className="underline" href="/settings">Change in profile settings</Link></p>
+              <p className="ui text-sm text-[var(--muted)]">{availableAgents.includes(agent) ? "Using" : "Unavailable:"} {agentLabels[agent]} · <Link className="underline" href="/settings" aria-label="Change learning agent in profile settings">Change</Link></p>
             ) : <p className="ui text-sm text-[var(--accent-dark)]" role="alert">Configure a learning agent in <Link className="underline" href="/settings">Profile settings</Link> to begin.</p>}
 
             {agentDiscoveryFailed ? <button type="button" className="button-secondary mt-3" disabled={isLoadingAgents} onClick={retryAgentDiscovery}>{isLoadingAgents ? "Checking agents…" : "Retry agent discovery"}</button> : null}
           </div>
-          <button type="submit" disabled={isSubmitting || isLoadingAgents || agentDiscoveryFailed || !agent || !availableAgents.includes(agent)} className="button-primary course-begin">{isSubmitting ? "Building your path…" : "Begin"}</button>
         </div>
         {error ? <p id="course-form-error" className="ui mt-4 text-sm text-[var(--accent-dark)]" role="alert">{error}</p> : null}
       </form>

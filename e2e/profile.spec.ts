@@ -26,7 +26,7 @@ test("saves, reloads, edits, and clears a learner profile", async ({ page, reque
     await expect(page.getByRole("button", { name: "Save profile" })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.getByRole("link", { name: "Back to learning" }).click();
-    await expect(page.getByRole("button", { name: "Begin" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Create study →" })).toBeVisible();
   } finally {
     await request.put("/api/profile", { data: original });
   }
