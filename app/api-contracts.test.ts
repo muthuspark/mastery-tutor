@@ -1,3 +1,12 @@
+vi.mock("@/lib/db", async () => {
+  const { default: Database } = await import("better-sqlite3");
+  const { drizzle } = await import("drizzle-orm/better-sqlite3");
+  const { migrate } = await import("drizzle-orm/better-sqlite3/migrator");
+  const schema = await import("@/lib/db/schema");
+  const db = drizzle(new Database(":memory:"), { schema });
+  migrate(db, { migrationsFolder: "drizzle" }); return { db };
+});
+vi.mock("@/lib/access", () => ({ authorize: async () => ({ user: { id: "test-user" } }) }));
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));

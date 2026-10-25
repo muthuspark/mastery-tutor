@@ -11,6 +11,7 @@ vi.mock("./db", async () => {
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: "./drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 vi.mock("./agent", () => ({ agentForRequest: vi.fn(async () => "codex") }));
@@ -38,7 +39,7 @@ beforeEach(() => {
   db.delete(generationJobs).run();
   db.delete(chapters).run();
   db.delete(courses).run();
-  db.insert(courses).values({ id: "course-1", topic: "Probability", preparationVersion: 2, createdAt: now }).run();
+  db.insert(courses).values({ userId: "test-user", id: "course-1", topic: "Probability", preparationVersion: 2, createdAt: now }).run();
   db.insert(chapters).values({
     id: chapterId, courseId: "course-1", idx: 0, title: "Conditional probability", objectives: ["Calculate a conditional probability"],
     prerequisites: [], content: "Canonical lesson", pretest: "Predict", summary: "Summary", status: "open",

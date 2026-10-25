@@ -1,3 +1,5 @@
+import { recordAuthEvent } from "@/lib/auth-events";
+import { authorize } from "@/lib/access";
 import { and, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
@@ -105,10 +107,13 @@ async function regenerateChapterNow(id: string, agent?: Agent) {
 }
 
 export async function GET(_request: Request, context: RouteContext) {
+  const access = await authorize("chapter", await context.params);
+  if (access instanceof Response) return access;
   const { id } = await context.params;
   try {
     const chapter = await generateChapter(id);
     if (chapter instanceof NextResponse) return chapter;
+    recordAuthEvent("first_lesson", access.user.id);
     return NextResponse.json(await chapterResponse(chapter));
   } catch (error) {
     return codexErrorResponse(error);
@@ -116,6 +121,8 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function POST(request: Request, context: RouteContext) {
+  const access = await authorize("chapter", await context.params);
+  if (access instanceof Response) return access;
   const { id } = await context.params;
   const parsed = feedbackSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { noAgentError, runAgentObject, type Agent } from "./agent";
 import { db } from "./db";
 import { chapters, courses, socraticSessions } from "./db/schema";
-import { learnerProfilePrompt } from "./profile";
+import { chapterProfilePrompt } from "./profile";
 import { shouldFinishSocratic, socraticQuestionSchema, socraticSessionView, type SocraticRequest, type SocraticState, type SocraticTurn } from "./socratic-contracts";
 
 export class SocraticError extends Error {
@@ -20,7 +20,7 @@ const preparations = registry.__masterySocraticPreparationsV2 ??= new Map<string
 const PREPARATION_TTL_MS = 5 * 60_000;
 
 function preparationKey(chapter: typeof chapters.$inferSelect, session: typeof socraticSessions.$inferSelect, choiceIndex: number | null, usedHint: boolean, agent: Agent) {
-  const profile = createHash("sha256").update(learnerProfilePrompt()).digest("hex");
+  const profile = createHash("sha256").update(chapterProfilePrompt(chapter.id)).digest("hex");
   return JSON.stringify([chapter.id, chapter.contentGenerationVersion, session.id, session.state.question?.id, choiceIndex, usedHint, agent, profile]);
 }
 
@@ -60,7 +60,7 @@ function getReadyChapter(chapterId: string, version: number) {
 function teachingContext(chapter: typeof chapters.$inferSelect, turns: SocraticTurn[]) {
   const course = db.select().from(courses).where(eq(courses.id, chapter.courseId)).get();
   return [
-    TEACHING_PROMPT, learnerProfilePrompt(),
+    TEACHING_PROMPT, chapterProfilePrompt(chapter.id),
     `Course goal (JSON data): ${JSON.stringify(course?.brief ?? course?.learningRequest ?? course?.topic)}`,
     `Chapter (JSON data): ${JSON.stringify({ title: chapter.title, objectives: chapter.objectives, teachingPlan: chapter.teachingPlan, lesson: chapter.content })}`,
     `Conversation so far (JSON data): ${JSON.stringify(turns.map((turn) => ({ setup: turn.question.setup, prompt: turn.question.prompt, response: turn.choiceIndex === null ? "I'm not sure" : turn.question.options[turn.choiceIndex], correct: turn.correct, usedHint: turn.usedHint, feedback: turn.feedback })))}`,

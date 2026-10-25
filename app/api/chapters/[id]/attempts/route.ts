@@ -1,3 +1,4 @@
+import { authorize } from "@/lib/access";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
@@ -22,6 +23,8 @@ function errorResponse(error: unknown) {
 }
 
 export async function POST(request: Request, context: RouteContext) {
+  const access = await authorize("chapter", await context.params);
+  if (access instanceof Response) return access;
   const { id } = await context.params;
   const parsed = attemptSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: { code: "invalid_input", message: "Submit an answer for each question." } }, { status: 400 });

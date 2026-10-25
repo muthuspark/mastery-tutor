@@ -1,3 +1,4 @@
+vi.mock("@/lib/access", () => ({ authorize: async () => ({ user: { id: "test-user" } }) }));
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -9,6 +10,7 @@ vi.mock("@/lib/db", async () => {
   const schema = await import("@/lib/db/schema");
   const db = drizzle(new Database(":memory:"), { schema });
   migrate(db, { migrationsFolder: "drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 // Retain the request schema without launching CLIs.

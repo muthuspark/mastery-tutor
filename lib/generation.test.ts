@@ -25,6 +25,7 @@ vi.mock("./db", async () => {
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: "drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 
@@ -42,7 +43,7 @@ function fixture() {
   const courseId = randomUUID();
   const chapterId = randomUUID();
   const now = new Date();
-  db.insert(courses).values({ id: courseId, topic: "Coordinator test", level: "foundational", createdAt: now }).run();
+  db.insert(courses).values({ userId: "test-user", id: courseId, topic: "Coordinator test", level: "foundational", createdAt: now }).run();
   db.insert(chapters).values({
     id: chapterId,
     courseId,

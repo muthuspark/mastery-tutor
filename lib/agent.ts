@@ -11,7 +11,7 @@ import { z } from "zod";
 const execFileAsync = promisify(execFile);
 export { agentSchema, type Agent } from "./agent-contracts";
 import { type Agent } from "./agent-contracts";
-import { getProfile } from "./profile";
+
 
 async function commandAvailable(command: "codex" | "claude") {
   try {
@@ -27,12 +27,10 @@ export async function availableAgents(): Promise<Agent[]> {
   return [codex ? "codex" : null, claude ? "claude" : null, process.env.DEEPSEEK_API_KEY?.trim() ? "deepseek" : null].filter((agent): agent is Agent => agent !== null);
 }
 
-export async function agentForRequest(_request: Request, requested?: Agent) {
-  const available = await availableAgents();
-  const preferred = getProfile().learningAgent ?? requested ?? available[0];
-  if (preferred && !available.includes(preferred)) {
-    throw new CodexError("not_found", "Your saved learning agent is unavailable. Configure it on the server or choose another agent in Profile settings.", false);
-  }
+export async function agentForRequest(_request: Request, _requested?: Agent) {
+  void _request; void _requested;
+  const preferred = process.env.AI_PROVIDER as Agent | undefined;
+  if (!preferred || !(await availableAgents()).includes(preferred)) throw noAgentError();
   return preferred;
 }
 
@@ -49,5 +47,5 @@ export async function runAgentObject<T>(
 }
 
 export function noAgentError() {
-  return new CodexError("not_found", "Install Codex or Claude CLI, or configure DEEPSEEK_API_KEY on the server to generate course content.", false);
+  return new CodexError("not_found", "The tutor is temporarily unavailable. Please try again shortly.", true);
 }

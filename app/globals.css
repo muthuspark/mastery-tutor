@@ -125,7 +125,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); text-wrap: balance; }
 .footer-method { grid-column: 1 / -1; padding-top: 1.5rem; border-top: 1px solid color-mix(in oklch, var(--paper) 18%, transparent); color: var(--color-cloud-medium); font: 0.6875rem var(--sans); }
 
 /* Resume first, with the study index and creation form sharing a quiet workspace. */
-.home-page { --container-max: 70rem; --text-meta: 0.875rem; --text-body: 1rem; --text-input: 1rem; --text-title: 1.25rem; --text-section: 1.25rem; --text-heading: 1.375rem; }
+.home-page { --text-meta: 0.875rem; --text-body: 1rem; --text-input: 1rem; --text-title: 1.25rem; --text-section: 1.25rem; --text-heading: 1.375rem; }
 .home-intro { padding-block: 3rem 2rem; }
 .home-title { max-width: 18ch; font-family: var(--display); font-size: clamp(2.6rem, 1rem + 4.4vw, 4.5rem); font-weight: 400; line-height: 1.08; letter-spacing: -0.022em; }
 .home-intro-note { max-width: 36ch; padding-bottom: 0.25rem; font-size: 1.25rem; line-height: 1.5; }
@@ -363,3 +363,9 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); text-wrap: balance; }
 /* Guided practice follows the lesson’s reading rhythm and assessment controls. */
 .socratic-session { margin-bottom: 2.5rem; padding-block: 2rem; border-block: 1px solid var(--line); }
 .socratic-feedback { margin-top: 1.5rem; padding: 1rem 1.25rem; border-radius: var(--radius-control); background: var(--paper-deep); }
+
+.login-page { max-width: 38rem; padding-top: clamp(3rem, 10vh, 7rem); padding-bottom: 5rem; }
+.login-form { margin-top: 2rem; max-width: 28rem; }
+.login-code { font-variant-numeric: tabular-nums; letter-spacing: .3em; font-size: 1.5rem; }
+
+.course-hero h1, .chapter-row { overflow-wrap: anywhere; }

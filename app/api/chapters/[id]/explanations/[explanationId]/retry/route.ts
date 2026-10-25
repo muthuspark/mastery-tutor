@@ -1,3 +1,4 @@
+import { authorize } from "@/lib/access";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ChapterExplanationError, retryChapterExplanation } from "@/lib/chapter-explanations";
@@ -5,6 +6,8 @@ import { ChapterExplanationError, retryChapterExplanation } from "@/lib/chapter-
 const retrySchema = z.object({ requestId: z.string().uuid(), expectedJobVersion: z.number().int().positive() }).strict();
 
 export async function POST(request: Request, context: { params: Promise<{ id: string; explanationId: string }> }) {
+  const access = await authorize("chapter", await context.params);
+  if (access instanceof Response) return access;
   const parsed = retrySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: { code: "invalid_input", message: "Invalid explanation retry request.", retryable: false } }, { status: 400 });
   try {

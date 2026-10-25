@@ -2,9 +2,6 @@
 
 import { FormEvent, RefObject, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useLearningAgent } from "@/lib/use-learning-agent";
-import { agentLabels, type Agent } from "@/lib/agent-contracts";
 
 const generationStages = [
   { title: "Saving your request", detail: "Creating your saved course" },
@@ -15,21 +12,12 @@ export function NewCourseForm() {
   const [topic, setTopic] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const status = useLearningAgent();
-  const isLoadingAgents = status.isPending || status.isFetching;
-  const agentDiscoveryFailed = status.isError;
-  const availableAgents = status.data?.available ?? [];
-  const agent = status.data?.selected ?? "";
   const generationStage = 0;
   const topicRef = useRef<HTMLTextAreaElement>(null);
 
-  function retryAgentDiscovery() {
-    void status.refetch({ cancelRefetch: false });
-  }
-
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSubmitting || isLoadingAgents || agentDiscoveryFailed || !agent || !availableAgents.includes(agent)) return;
+    if (isSubmitting) return;
     setIsSubmitting(true); setError("");
     try {
       const response = await fetch("/api/courses", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ topic }) });
@@ -37,28 +25,20 @@ export function NewCourseForm() {
       if (!response.ok) { setError(body?.error?.message ?? "Could not create the course."); setIsSubmitting(false); return; }
       router.push(`/course/${body.courseId}`);
     } catch {
-      setError("Could not reach the tutor. Check the server and try again.");
+      setError("Could not reach the tutor. Please try again.");
       setIsSubmitting(false);
     }
   }
 
   return (
     <>
-      {isSubmitting ? <GenerationOverlay stage={generationStage} agent={agent || availableAgents[0]} returnFocusRef={topicRef} /> : null}
+      {isSubmitting ? <GenerationOverlay stage={generationStage} returnFocusRef={topicRef} /> : null}
       <form className="new-course-form" onSubmit={submit}>
         <label className="course-topic-label" htmlFor="topic">What do you want to learn?</label>
         <textarea ref={topicRef} id="topic" name="topic" required rows={4} value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="e.g. the fundamentals of system design" className="field" disabled={isSubmitting} aria-invalid={error ? true : undefined} aria-describedby={error ? "course-form-error" : undefined} />
         <div className="course-form-actions">
-          <button type="submit" disabled={isSubmitting || isLoadingAgents || agentDiscoveryFailed || !agent || !availableAgents.includes(agent)} className="button-secondary course-begin">{isSubmitting ? "Building your path…" : "Create study →"}</button>
-          <div className="agent-control">
-            {isLoadingAgents ? <p className="ui text-sm text-[var(--muted)]" role="status">Finding learning agents…</p> : agentDiscoveryFailed ? (
-              <p className="ui text-sm text-[var(--accent-dark)]" role="alert">Could not check for learning agents. Try again.</p>
-            ) : agent ? (
-              <p className="ui text-sm text-[var(--muted)]">{availableAgents.includes(agent) ? "Using" : "Unavailable:"} {agentLabels[agent]} · <Link className="underline" href="/settings" aria-label="Change learning agent in profile settings">Change</Link></p>
-            ) : <p className="ui text-sm text-[var(--accent-dark)]" role="alert">Configure a learning agent in <Link className="underline" href="/settings">Profile settings</Link> to begin.</p>}
+          <button type="submit" disabled={isSubmitting} className="button-secondary course-begin">{isSubmitting ? "Building your path…" : "Create study →"}</button>
 
-            {agentDiscoveryFailed ? <button type="button" className="button-secondary mt-3" disabled={isLoadingAgents} onClick={retryAgentDiscovery}>{isLoadingAgents ? "Checking agents…" : "Retry agent discovery"}</button> : null}
-          </div>
         </div>
         {error ? <p id="course-form-error" className="ui mt-4 text-sm text-[var(--accent-dark)]" role="alert">{error}</p> : null}
       </form>
@@ -66,7 +46,7 @@ export function NewCourseForm() {
   );
 }
 
-function GenerationOverlay({ stage, agent, returnFocusRef }: { stage: number; agent?: Agent; returnFocusRef: RefObject<HTMLTextAreaElement | null> }) {
+function GenerationOverlay({ stage, returnFocusRef }: { stage: number; returnFocusRef: RefObject<HTMLTextAreaElement | null> }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
 
@@ -93,7 +73,7 @@ function GenerationOverlay({ stage, agent, returnFocusRef }: { stage: number; ag
     }}>
       <header className="site-header">
         <span className="site-brand eyebrow">Mastery Tutor</span>
-        <span className="site-header-status ui text-sm text-[var(--muted)]">{agent ? agentLabels[agent] : "Learning agent"}</span>
+        <span className="site-header-status ui text-sm text-[var(--muted)]">Your learning workspace</span>
       </header>
       <div className="generation-overlay__inner">
 

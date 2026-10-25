@@ -7,7 +7,7 @@ import { QUIZ_PROMPT, GRADING_PROMPT } from "@/lib/prompts";
 import { gradeSchema, quizSchema } from "@/lib/schemas";
 import { balanceQuizOptions } from "@/lib/assessment-quality";
 import type { Quiz } from "@/lib/schemas";
-import { learnerProfilePrompt } from "@/lib/profile";
+import { chapterProfilePrompt } from "@/lib/profile";
 import { courseTeachingContext } from "./course-context";
 import { generateReviewedObject } from "./quality";
 
@@ -51,7 +51,7 @@ export async function generateQuiz(chapterId: string, agent: Agent = "codex", ge
   if (version !== chapter.contentGenerationVersion) throw new Error("Quiz generation is stale");
   const course = db.select().from(courses).where(eq(courses.id, chapter.courseId)).get();
   if (course?.qualityPolicyVersion && (!chapter.content || chapter.contentGenerationStatus !== "ready")) throw new Error("Quiz lesson is not ready or is stale");
-  const prompt = [QUIZ_PROMPT, learnerProfilePrompt(), `Chapter: ${chapter.title}`, `Objectives: ${chapter.objectives.join("; ")}`,
+  const prompt = [QUIZ_PROMPT, chapterProfilePrompt(chapterId), `Chapter: ${chapter.title}`, `Objectives: ${chapter.objectives.join("; ")}`,
     ...(course?.qualityPolicyVersion ? [courseTeachingContext(course), `Current teaching boundary (JSON data): ${JSON.stringify(chapter.teachingPlan)}`, `Accepted lesson (JSON data): ${JSON.stringify(chapter.content)}`, "Assess only this chapter's objectives and current teaching boundary. The full course outline is dependency context, not permission to assess other chapters. Every correct answer and explanation must be supported by the accepted lesson and stated prerequisites. Use reasoning and new-case applications without requiring outside facts, later material, or assumptions not stated in the question. State the definitions, units, assumptions, and exclusions needed to make each calculation or scenario unambiguous. Do not copy sentences merely to test recognition."] : [])].join("\n");
   const generated = course?.qualityPolicyVersion
     ? await generateReviewedObject(agent, "quiz", prompt, quizSchema, { targetId: chapterId, normalize: (quiz) => ({ ...quiz, questions: balanceQuizOptions(quiz.questions) }) })
@@ -123,7 +123,7 @@ export async function gradeAnswer(question: typeof questions.$inferSelect, respo
   return runAgentObject(
     agent,
     "grading",
-    `${GRADING_PROMPT}\n${learnerProfilePrompt()}\nQuestion: ${question.prompt}\nRubric: ${question.rubric}\nModel answer: ${question.modelAnswer}\nLearner response: ${response}`,
+    `${GRADING_PROMPT}\n${chapterProfilePrompt(question.chapterId)}\nQuestion: ${question.prompt}\nRubric: ${question.rubric}\nModel answer: ${question.modelAnswer}\nLearner response: ${response}`,
     gradeSchema,
   );
 }

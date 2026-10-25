@@ -1,3 +1,4 @@
+import { authorize } from "@/lib/access";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -7,6 +8,8 @@ import { enqueueGenerationJob } from "@/lib/generation";
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(_request: Request, context: RouteContext) {
+  const access = await authorize("chapter", await context.params);
+  if (access instanceof Response) return access;
   const { id } = await context.params;
   const chapter = db.select().from(chapters).where(eq(chapters.id, id)).get();
   if (!chapter) return NextResponse.json({ error: { code: "not_found", message: "Chapter not found." } }, { status: 404 });

@@ -2,7 +2,7 @@
 
 Mastery Tutor turns a learning intention into a focused, chapter-by-chapter path. You name what you want to understand, read a short lesson, answer a few retrieval questions, and unlock the next idea only when you have mastered the current one.
 
-It is deliberately small: one learner, one local SQLite database, and Codex CLI, Claude CLI, or DeepSeek API running server-side for structured course, lesson, quiz, and free-text grading generation.
+It is deliberately small: invited learners with private workspaces, one persistent SQLite database, and Codex CLI, Claude CLI, or DeepSeek API running server-side for structured course, lesson, quiz, and free-text grading generation.
 
 ## The experience
 
@@ -54,7 +54,7 @@ Most learning tools optimize for content consumption. Mastery Tutor is organized
 - npm
 - At least one provider: an authenticated Codex/Claude CLI for the same OS user running the server, or a DeepSeek API key
 
-The CLI path does not need an API key. DeepSeek uses a paid API key and requires no CLI installation. If the server runs as a different service user, in a container, or in a headless environment, configure authentication for the selected CLI in that process. Choose a configured learning agent in **Profile settings** and click **Save profile**. The choice is stored in SQLite and applies across browsers and all courses. The header and home form show the current agent. Before the first save, the default order is Codex, Claude, then DeepSeek.
+The CLI path does not need an API key. DeepSeek uses a paid API key and requires no CLI installation. If the server runs as a different service user, in a container, or in a headless environment, configure authentication for the selected CLI in that process. The operator selects the learning provider using `AI_PROVIDER=codex|claude|deepseek`. Learner settings contain only optional private background. Provider credentials stay on the server.
 
 ## Run locally
 
@@ -63,12 +63,41 @@ git clone https://github.com/muthuspark/mastery-tutor.git
 cd mastery-tutor
 npm install
 cp .env.example .env
+# Configure the authentication, owner, email, and AI settings below first.
 npm run dev
 ```
 
-Open [http://127.0.0.1:3000](http://127.0.0.1:3000).
+Open the exact origin configured in `BETTER_AUTH_URL` (default: [http://localhost:3000](http://localhost:3000)).
 
 The development command applies SQLite migrations automatically. The database is created at `data/tutor.db`.
+
+## Private beta login and migration
+
+Before starting, configure these values in this app’s own `.env`:
+
+```dotenv
+BETTER_AUTH_SECRET=generate-with-openssl-rand-base64-48
+BETTER_AUTH_URL=http://localhost:3000
+OWNER_EMAIL=owner@example.com
+INVITED_EMAILS=learner@example.com,another@example.com
+AI_PROVIDER=codex
+MAILTRAP_API_KEY=your-transactional-token
+FROM_EMAIL=tutor@your-verified-domain.com
+```
+
+Generate a fresh secret with `openssl rand -base64 48`. Production requires an HTTPS URL. The owner is automatically invited. Emails are trimmed and lowercased; plus aliases and address components are preserved. Removing an invite blocks both new sign-ins and existing sessions on their next request. Restart after changing deployment environment variables.
+
+`MAILTRAP_API_KEY` and `FROM_EMAIL` may be copied once from the existing `../agent/.env` configuration. This app never reads that sibling environment at runtime. Use a verified Mailtrap sending domain. Provider acceptance means the provider accepted the request, not confirmed inbox delivery. Verify actual receipt for the owner before inviting beta learners; controlled automated tests do not prove real delivery.
+
+`npm run db:migrate` requires the explicit owner email and backs up an existing database to `<database>.before-login-<timestamp>.bak` before the ownership upgrade. It assigns legacy courses and the existing profile to that owner, preserves learning records, and verifies counts and foreign keys. Reruns preserve existing assignments. Keep backups private and stop other writers during the upgrade. Never set the owner to whichever learner registers first. `DATABASE_URL` accepts a relative or absolute SQLite file path; default is `data/tutor.db`. Use a single persistent server for this milestone.
+
+Login uses Better Auth’s email OTP plugin and Drizzle adapter. Codes contain six digits, expire after five minutes, allow three incorrect attempts, are stored hashed, and are consumed once. Resending replaces the old code. SQLite enforces a 60-second resend cooldown, five requests per email per hour, and twenty per IP per hour; verification is capped at twenty per email and one hundred per IP per hour. Per-email database leases serialize concurrent send and verification operations. A failed or uncertain send invalidates its code. Sessions last seven days without sliding renewal; production cookies are secure and HTTP-only. Logout revokes the session and clears browser caches across open tabs.
+
+If deployed behind a proxy, set `AUTH_TRUSTED_IP_HEADER` only to a header that the proxy strips and replaces with a trustworthy client IP. With no trusted header, requests use one conservative shared IP bucket. Do not trust arbitrary incoming forwarding headers. The app exposes only the required auth endpoints; password, social login, email changes, and additional OTP endpoints are unavailable.
+
+The `auth_events` table tracks code requests, provider acceptance/failure, verification, first-course creation, and first-lesson opening. Codes, tokens, email addresses, and learning content are excluded from those events. Generation logs retain operational counts and identifiers rather than generated text.
+
+Run `npm run test:e2e:login` for an isolated database and a controlled Mailtrap transport. It never sends real mail or calls paid AI providers. Test mail is written only by an explicitly loaded test fixture, outside application code; it is not exposed through an HTTP endpoint.
 
 ## DeepSeek API setup
 
@@ -81,9 +110,9 @@ DEEPSEEK_MODEL=deepseek-flash
 DEEPSEEK_TIMEOUT_MS=180000
 ```
 
-Open **Profile settings**, select **DeepSeek API**, then click **Save profile**. It can run course planning, lesson and quiz writing, quality review, free-text grading, and Socratic practice without Codex or Claude installed. The key stays on the server. Do not use a `NEXT_PUBLIC_` variable or commit your `.env` file. Next.js uses normal environment precedence: process variables and more specific `.env` files can override `.env`.
+Set `AI_PROVIDER=deepseek` in the server environment. It can run course planning, lesson and quiz writing, quality review, free-text grading, and Socratic practice without Codex or Claude installed. The key stays on the server. Do not use a `NEXT_PUBLIC_` variable or commit your `.env` file. Next.js uses normal environment precedence: process variables and more specific `.env` files can override `.env`.
 
-DeepSeek appears when a nonempty key is configured. Discovery does not contact the API or verify authentication, model access, or account balance. Errors identify missing configuration, authentication, insufficient balance, or temporary service failure. After fixing configuration, restart and use the existing retry action. A saved profile agent is never silently replaced. If it is unavailable, configure it or choose another agent in Profile settings. Changing the profile agent applies to future generation, review, practice, and grading in every course, including existing courses. Calls already running finish with their starting agent; saved content and progress are unchanged.
+Provider availability checks configuration, not account access, model access, or balance. After fixing server configuration, restart and use the existing retry action. Learners receive a retry message without infrastructure details. Changing `AI_PROVIDER` applies to future generation, review, practice, and grading in every course. Calls already running finish with their starting provider; saved content and progress are unchanged.
 
 The default model is `deepseek-flash`. To select another supported model, set `DEEPSEEK_MODEL` (for example, `deepseek-v4-pro`). Task overrides take precedence: `DEEPSEEK_MODEL_SYLLABUS`, `DEEPSEEK_MODEL_CHAPTER`, `DEEPSEEK_MODEL_QUIZ`, `DEEPSEEK_MODEL_GRADING`, `DEEPSEEK_MODEL_REVIEW`, and `DEEPSEEK_MODEL_SOCRATIC`. Socratic practice checks its own override, then the chapter override, then the global model, then the default. Other tasks check their own override, the global model, then the default. Blank values are ignored.
 
@@ -99,7 +128,7 @@ npm run db:generate # Generate a migration after schema changes
 npm run lint        # ESLint
 npm run typecheck   # TypeScript
 npm test            # Unit, domain, route, and component tests
-npm run test:e2e    # Playwright browser smoke test
+npm run test:e2e:login # Isolated login, two-user study, and mobile browser tests
 npm run build       # Production build
 ```
 
@@ -119,7 +148,7 @@ Each provider call has a three-minute timeout, including individual planning, wr
 
 Interactive chapter practice uses a separate `socratic` task. Codex runs these short requests with low reasoning effort in a temporary working directory, using only the supplied lesson and conversation. Optional `CODEX_MODEL_SOCRATIC` and `CLAUDE_MODEL_SOCRATIC` overrides fall back to the chapter/global model settings. After displaying a question, the server prepares one likely next step in the background. It reuses that result only for the matching answer, hint usage, agent, learner profile, and lesson version; other choices receive a newly generated follow-up. Preparation never records an answer or changes progress. One speculative call may go unused if the learner chooses differently or leaves. The cache is bounded, expires after five minutes, and safely falls back to generation after a server restart.
 
-New-course planning, lessons, and quizzes run through the saved generation queue. A worker renews its lease every 30 seconds and checks ownership and generation versions before publication. Persistent review rejection requires explicit retry; transient provider failures have at most three job attempts. Requests do not wait for multi-call generation. Each course records its creation-time agent for reference; future AI work uses the current profile agent. The old browser preference cookie is ignored. Optional `CODEX_MODEL_REVIEW` and `CLAUDE_MODEL_REVIEW` overrides follow the existing per-task model configuration.
+New-course planning, lessons, and quizzes run through the saved generation queue. A worker renews its lease every 30 seconds and checks ownership and generation versions before publication. Persistent review rejection requires explicit retry; transient provider failures have at most three job attempts. Requests do not wait for multi-call generation. Each course records its creation-time agent for reference; future AI work uses the server-selected provider and that course owner’s private background. Client provider preferences are ignored. Optional `CODEX_MODEL_REVIEW` and `CLAUDE_MODEL_REVIEW` overrides follow the existing per-task model configuration.
 
 Apply migrations and restart all app processes sharing a database after this upgrade so each background worker recognizes course-preparation jobs. Keep a server process running while preparation is in progress. Profile edits affect future generated explanations without silently changing accepted course goals or saved progress.
 

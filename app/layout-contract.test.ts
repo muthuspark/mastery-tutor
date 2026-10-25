@@ -46,11 +46,10 @@ describe("page container CSS contract", () => {
     expect(css).toMatch(/@media \(max-width: 639px\)\s*\{\s*:root\s*\{/);
   });
 
-  it("uses explicit reading and home variants with shared page spacing", () => {
+  it("uses the shared wide container for home and a narrower reading measure", () => {
     const variants = rules.filter((rule) => "--container-max" in rule.declarations);
     expect(variants.map(({ selectors, declarations }) => ({ selectors, max: declarations["--container-max"] }))).toEqual([
       { selectors: [".reading-shell"], max: "var(--layout-max-reading)" },
-      { selectors: [".home-page"], max: "70rem" },
     ]);
     const pageSpacing = rules.filter((rule) => rule.selectors.includes(".page-shell") && "padding-block" in rule.declarations);
     expect(pageSpacing).toEqual([{ selectors: [".page-shell", ".reading-shell"], declarations: { "padding-block": "var(--layout-page-space)" } }]);

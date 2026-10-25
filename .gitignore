@@ -11,3 +11,8 @@ tutor.db
 *.tsbuildinfo
 .DS_Store
 .ralph/
+
+# Database migration backups and controlled login test mail
+data/*.bak
+data/login-e2e-outbox.jsonl
+data/login-e2e-state.json

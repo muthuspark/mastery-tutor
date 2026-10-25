@@ -8,7 +8,7 @@ import { agentForRequest, noAgentError, runAgentObject, type Agent } from "./age
 import { EXPLANATION_PROMPT } from "./prompts";
 import { explanationSchema, type Explanation } from "./schemas";
 import { explanationPromptContract, type ExplanationLevel } from "./explanation-levels";
-import { learnerProfilePrompt } from "./profile";
+import { courseProfilePrompt } from "./profile";
 import { findWikipediaImages } from "./wikipedia-images";
 import { filterChapterImages } from "./chapter-images";
 import { generateReviewedObject } from "./quality";
@@ -62,7 +62,7 @@ export async function generateExplanation(explanationId: string, agent?: Agent, 
   const prompt = [
     EXPLANATION_PROMPT,
     `Target level ${level} of 6 (${explanationPromptContract(level)}).`,
-    learnerProfilePrompt(),
+    courseProfilePrompt(course.id),
     `Course topic: ${course.topic}`,
     `Chapter: ${chapter.title}`,
     `Objectives: ${chapter.objectives.join("; ")}`,

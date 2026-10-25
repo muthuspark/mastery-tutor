@@ -1,3 +1,4 @@
+vi.mock("@/lib/access", () => ({ authorize: async () => ({ user: { id: "test-user" } }) }));
 import { randomUUID } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
@@ -13,6 +14,7 @@ vi.mock("@/lib/db", async () => {
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: "./drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 vi.mock("@/lib/agent", () => ({ agentForRequest: vi.fn().mockResolvedValue("codex"), noAgentError: vi.fn() }));
@@ -42,7 +44,7 @@ describe("quiz route cache validation", () => {
     const chapterId = randomUUID();
     const now = new Date();
     createdCourses.push(courseId);
-    db.insert(courses).values({ id: courseId, topic: "Differential equations", createdAt: now }).run();
+    db.insert(courses).values({ userId: "test-user", id: courseId, topic: "Differential equations", createdAt: now }).run();
     db.insert(chapters).values({ id: chapterId, courseId, idx: 1, title: "Separation", objectives: [], prerequisites: [], content: "Ready chapter", contentGenerationStatus: "ready", status: "open", createdAt: now }).run();
     const current = Array.from({ length: 10 }, (_, index) => ({
       id: randomUUID(), chapterId, type: "mcq" as const, prompt: `Solve equation ${index}`,
@@ -84,7 +86,7 @@ describe("quiz route cache validation", () => {
     const attemptId = randomUUID();
     createdCourses.push(courseId);
     const now = new Date();
-    db.insert(courses).values({ id: courseId, topic: "test topic", level: "foundational", createdAt: now }).run();
+    db.insert(courses).values({ userId: "test-user", id: courseId, topic: "test topic", level: "foundational", createdAt: now }).run();
     db.insert(chapters).values({ id: chapterId, courseId, idx: 0, title: "Test", objectives: ["Test"], prerequisites: [], content: "Ready chapter", summary: "Summary", status: "open", generatedAt: now, createdAt: now }).run();
     const invalid = { chapterId, type: "mcq" as const, prompt: "Invalid", options: ["Correct", "Wrong"], rubric: "Rule", modelAnswer: "Correct", conceptTag: "test", isReview: false, createdAt: now };
     db.insert(questions).values([{ ...invalid, id: attemptedId }, { ...invalid, id: staleId }]).run();

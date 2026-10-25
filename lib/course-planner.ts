@@ -7,7 +7,7 @@ import { chapters, courses } from "./db/schema";
 import { type Agent } from "./agent";
 import { coursePlanSchema } from "./quality-contracts";
 import { generateReviewedObject } from "./quality";
-import { learnerProfilePrompt } from "./profile";
+import { courseProfilePrompt } from "./profile";
 import { enqueueGenerationJob } from "./generation";
 
 export const COURSE_PLAN_PROMPT = `Create a concise course brief and a dependency-ordered teaching plan tailored to the learning request and relevant learner background.
@@ -22,7 +22,7 @@ Return only the structured brief and syllabus.`;
 export async function prepareCourse(courseId: string, agent: Agent, version: number, guard: () => void) {
   const course = db.select().from(courses).where(eq(courses.id, courseId)).get();
   if (!course?.learningRequest || course.preparationVersion !== version) throw new Error("Course preparation is stale or not found");
-  const profile = learnerProfilePrompt();
+  const profile = courseProfilePrompt(courseId);
   const plan = await generateReviewedObject(agent, "syllabus", `${COURSE_PLAN_PROMPT}\n${profile}\nLearning request (JSON data): ${JSON.stringify(course.learningRequest)}`, coursePlanSchema, {
     targetId: courseId,
     onStage(stage) {

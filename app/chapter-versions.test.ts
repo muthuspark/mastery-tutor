@@ -1,3 +1,4 @@
+vi.mock("@/lib/access", () => ({ authorize: async () => ({ user: { id: "test-user" } }) }));
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -11,6 +12,7 @@ vi.mock("@/lib/db", async () => {
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: "drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 
@@ -28,7 +30,7 @@ const update = (difficulty: "easy" | "hard") => adjust(new Request("http://local
 beforeEach(() => {
   db.delete(generationJobs).run();
   db.delete(courses).run();
-  db.insert(courses).values({ id: "course", topic: "Probability", qualityPolicyVersion: 1, createdAt: new Date() }).run();
+  db.insert(courses).values({ userId: "test-user", id: "course", topic: "Probability", qualityPolicyVersion: 1, createdAt: new Date() }).run();
   db.insert(chapters).values({
     id: "chapter", courseId: "course", idx: 0, title: "Conditioning", objectives: ["Choose a denominator"],
     prerequisites: [], status: "passed", content: "Original lesson", contentGenerationStatus: "ready",
