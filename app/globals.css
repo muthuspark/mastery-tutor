@@ -2,8 +2,7 @@
 @plugin "@tailwindcss/typography";
 @import "katex/dist/katex.min.css";
 
-/* Little Might reference: warm paper, fine ink rules, and orange emphasis.
-   Keep the app's selected Libre Baskerville and Source Sans Pro families. */
+/* Little Might reference: warm paper, fine ink rules, and orange emphasis. */
 :root {
   color-scheme: light;
   /* sRGB reference: paper #f5f4ed, inset #efeee5, ink #0b0d0b, orange #f7591f. */
@@ -41,10 +40,10 @@
   --success: var(--color-text-muted);
   --answer-correct: oklch(40% 0.10 150);
   --answer-incorrect: oklch(43% 0.15 25);
-  --sans: var(--font-source-sans-pro), Arial, Helvetica, sans-serif;
-  --serif: var(--font-libre-baskerville), Georgia, serif;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --display: var(--serif);
+  --sans: "Google Sans Flex", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --serif: var(--sans);
+  --mono: var(--sans);
+  --display: var(--sans);
   --radius-control: 6px;
   --radius-panel: 8px;
   --radius-dialog: 10px;
@@ -56,7 +55,7 @@
 
 * { box-sizing: border-box; }
 html { background: var(--paper); }
-body { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 1rem; line-height: 1.5; }
+body { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 1rem; line-height: 1.5; font-kerning: normal; }
 body > main { flex: 1; }
 body > .site-header, body > .site-footer { flex-shrink: 0; }
 button, textarea, input, select { font: inherit; }
@@ -114,7 +113,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); text-wrap: balance; }
 .site-brand { display: inline-flex; align-items: center; gap: 0.75rem; min-height: 2.75rem; color: var(--ink); font: 400 1.35rem/1.25 var(--display); letter-spacing: -0.025em; text-decoration: none; }
 .brand-mark { width: 1.6rem; height: 1.6rem; flex-shrink: 0; }
 .site-header-status { display: inline-flex; align-items: center; min-height: 2.75rem; }
-.home-settings { display: inline-flex; align-items: center; gap: 0.75rem; min-height: 2.75rem; padding: 0.75rem 1.25rem; border-radius: var(--radius-control); background: var(--surface); font: 0.8125rem var(--sans); text-decoration: none; }
+.home-settings { display: inline-flex; align-items: center; gap: 0.75rem; min-height: 2.75rem; padding: 0.75rem 1.25rem; border-radius: var(--radius-control); background: var(--surface); font: 600 1rem/1.5 var(--sans); text-decoration: none; }
 .home-settings:hover { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 4px; }
 .site-footer { margin-top: 5rem; padding: 3rem var(--layout-gutter); background: var(--color-footer); color: var(--paper); }
 .site-footer-inner { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2rem 4rem; max-width: var(--layout-max-wide); margin: auto; }
@@ -126,29 +125,33 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); text-wrap: balance; }
 .footer-method { grid-column: 1 / -1; padding-top: 1.5rem; border-top: 1px solid color-mix(in oklch, var(--paper) 18%, transparent); color: var(--color-cloud-medium); font: 0.6875rem var(--sans); }
 
 /* A warm writing surface followed by an open study index in one reading column. */
+.home-page { --text-meta: 0.875rem; --text-body: 1rem; --text-input: 1.125rem; --text-title: 1.375rem; --text-section: 1.5rem; --text-heading: 2rem; }
 .home-intro { padding-block: 3rem 2rem; }
 .home-title { max-width: 18ch; font-family: var(--display); font-size: clamp(2.6rem, 1rem + 4.4vw, 4.5rem); font-weight: 400; line-height: 1.08; letter-spacing: -0.022em; }
 .home-intro-note { max-width: 36ch; padding-bottom: 0.25rem; font-size: 1.25rem; line-height: 1.5; }
 .intro-method { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.75rem; color: var(--muted); font-size: 0.6875rem; }
 .learning-workspace { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
 .course-creation { min-width: 0; padding: 2rem; border-radius: var(--radius-panel); background: var(--color-manilla); }
-.course-creation h1 { margin-bottom: 1.5rem; font-size: 2.25rem; line-height: 1.2; }
+.course-creation h1 { max-width: 24ch; margin-bottom: 1.5rem; font-size: var(--text-heading, 2rem); line-height: 1.25; letter-spacing: -0.025em; }
 .creation-description { max-width: 38ch; margin-block: 1rem 1.5rem; font-size: 1.125rem; line-height: 1.5; }
-.new-course-form textarea { min-height: 10rem; }
+.new-course-form textarea { min-height: 10rem; font-size: var(--text-input, 1.125rem); line-height: 1.6; }
 .course-form-actions { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin-top: 1.25rem; }
 .agent-control { flex: 1; min-width: 0; }
-.agent-control p { line-height: 1.5; }
+.agent-control p { max-width: 55ch; font-size: var(--text-body, 1rem); line-height: 1.5; text-wrap: pretty; }
 .agent-control a { display: inline-block; text-decoration-thickness: 1px; }
 .new-course-form .agent-select { min-height: 2.75rem; padding: 0.6rem 0.75rem; font-family: var(--sans); font-size: 0.8125rem; line-height: 1.4; cursor: pointer; }
-.course-begin { flex-shrink: 0; min-width: 7.5rem; }
+.course-begin { flex-shrink: 0; min-width: 7.5rem; font-size: var(--text-body, 1rem); font-weight: 600; line-height: 1.5; }
 .studies-section { min-width: 0; padding-block: 3rem 1.5rem; }
 .studies-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 1rem; }
-.studies-heading h2 { font-size: 2rem; line-height: 1.25; }
-.subject-count { color: var(--muted); font-size: 0.875rem; }
-.studies-list { margin-top: 1.5rem; border-bottom: 1px solid var(--line); }
+.studies-heading h2 { font-size: var(--text-section, 1.5rem); line-height: 1.3; letter-spacing: -0.015em; }
+.subject-count { color: var(--muted); font-size: var(--text-meta, 0.875rem); font-weight: 600; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.studies-list { margin-top: 1.25rem; border-bottom: 1px solid var(--line); }
 .study-link { display: block; padding-block: 1.6rem; border-top: 1px solid var(--line); text-decoration: none; }
-.study-topic { font-family: var(--serif); font-size: clamp(1.35rem, 1.2rem + 0.6vw, 1.65rem); line-height: 1.2; letter-spacing: -0.008em; overflow-wrap: anywhere; }
-.study-action { color: var(--ink); font-size: 0.875rem; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.25em; }
+.study-heading { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 0.75rem 1.5rem; }
+.study-topic { min-width: 0; max-width: 40ch; margin: 0; font-family: var(--serif); font-size: var(--text-title, 1.375rem); font-weight: 400; line-height: 1.4; letter-spacing: -0.01em; text-wrap: pretty; overflow-wrap: anywhere; }
+.study-action { color: var(--ink); font-size: var(--text-body, 1rem); font-weight: 600; line-height: 1.5; white-space: nowrap; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.25em; }
+.study-meta { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-top: 0.5rem; color: var(--muted); font-size: var(--text-meta, 0.875rem); line-height: 1.5; font-variant-numeric: tabular-nums; }
+.study-percent { flex-shrink: 0; min-width: 4ch; text-align: right; }
 .empty-studies { margin-top: 1.5rem; font: 1rem/1.6 var(--sans); }
 .empty-studies__mark { display: block; margin-bottom: 1rem; color: var(--muted); font: 0.6875rem var(--sans); text-transform: uppercase; letter-spacing: 0.08em; }
 
@@ -273,14 +276,13 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); text-wrap: balance; }
   .site-header { min-height: 5rem; }
   .site-brand { font-size: 1.125rem; gap: 0.5rem; }
   .brand-mark { width: 1.35rem; height: 1.35rem; }
-  .home-settings { padding: 0.75rem; font-size: 0.875rem; }
+  .home-settings { padding: 0.75rem; }
   .home-intro { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; padding-block: 3rem 2.5rem; }
   .home-title { max-width: 16ch; }
   .home-intro-note { max-width: 42ch; }
   .intro-method { gap: 1.25rem; margin-top: 1.25rem; }
   .course-creation { padding: 1.5rem; }
-  .course-creation h1, .studies-heading h2 { font-size: 1.875rem; }
-  .studies-heading h2 { font-size: 1.625rem; }
+  .home-page { --text-heading: 1.75rem; --text-title: 1.25rem; }
   .course-hero { padding-block: 1rem 2rem; }
   .chapter-row { grid-template-columns: 1.5rem minmax(0, 1fr); gap: 0.5rem 1rem; padding: 1.25rem 0.5rem; }
   .chapter-row-actions { grid-column: 2; font-size: 0.75rem; }
@@ -302,7 +304,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); text-wrap: balance; }
 @media (max-width: 480px) {
   .course-form-actions { align-items: stretch; flex-direction: column; gap: 1rem; }
   .course-begin { width: 100%; }
-  .study-topic { font-size: 1.25rem; line-height: 1.5; }
+  .study-heading { column-gap: 1rem; }
   .revisit-dialog { inset: auto 0 0; width: 100%; max-width: 100%; max-height: 100dvh; margin: 0; padding: 1.5rem; border-radius: var(--radius-dialog) var(--radius-dialog) 0 0; }
   .revisit-dialog__actions { flex-direction: column-reverse; }
   .revisit-dialog__actions button { width: 100%; }
@@ -310,7 +312,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); text-wrap: balance; }
   .site-footer nav { flex-direction: row; flex-wrap: wrap; gap: 1.5rem; }
 }
 @media (max-width: 380px) {
-  .home-settings { padding-inline: 0.5rem; }
+  .home-settings { padding-inline: 0.5rem; font-size: 0.875rem; }
   .home-settings > span { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {

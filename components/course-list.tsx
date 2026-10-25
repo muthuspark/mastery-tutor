@@ -24,13 +24,13 @@ export function CourseList() {
             const preparing = course.preparationStatus && course.preparationStatus !== "ready";
             return (
               <Link className="study-link group" href={`/course/${course.id}`} key={course.id}>
-                <div className="flex items-baseline justify-between gap-4">
-                  <span className="study-topic min-w-0">{course.topic}</span>
-                  <span className="study-action ui shrink-0 text-sm">{preparing ? course.preparationStatus === "failed" ? "Try again" : "View status" : completed ? "Review" : "Continue"} →</span>
+                <div className="study-heading">
+                  <h3 className="study-topic">{course.topic}</h3>
+                  <span className="study-action ui">{preparing ? course.preparationStatus === "failed" ? "Try again" : "View status" : completed ? "Review" : "Continue"} →</span>
                 </div>
-                <div className="ui mt-3 flex justify-between gap-4 text-sm text-[var(--muted)]">
+                <div className="study-meta ui">
                   <span>{preparing ? course.preparationStatus === "failed" ? "Preparation needs attention" : "Preparing your course" : `${passed} of ${total} chapters mastered`}</span>
-                  {!preparing ? <span>{percent}%</span> : null}
+                  {!preparing ? <span className="study-percent">{percent}%</span> : null}
                 </div>
                 {!preparing ? <div className="mt-2.5 h-1 overflow-hidden bg-[var(--line)]" role="progressbar" aria-label={`${course.topic} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-valuetext={`${passed} of ${total} chapters mastered`}>
                   <div className={`h-full ${completed ? "bg-[var(--success)]" : "bg-[var(--accent)]"}`} style={{ width: `${percent}%` }} />
