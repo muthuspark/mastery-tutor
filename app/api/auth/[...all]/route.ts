@@ -1,9 +1,10 @@
+import { isInvited } from "@/lib/invitations";
 import { confirmLoginDelivery } from "@/lib/mailtrap";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { getAuth } from "@/lib/auth";
-import { authConfig, isInvited, normalizeEmail } from "@/lib/auth-config";
+import { authConfig, normalizeEmail } from "@/lib/auth-config";
 import { currentUser } from "@/lib/access";
 import { claimLoginLease, LoginLimitError, takeLoginLimits } from "@/lib/auth-limits";
 import { recordAuthEvent } from "@/lib/auth-events";

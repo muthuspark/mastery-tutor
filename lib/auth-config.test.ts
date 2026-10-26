@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { authConfig, isInvited, normalizeEmail, ownerEmail } from "./auth-config";
+import { authConfig, isConfiguredInvite as isInvited, normalizeEmail, ownerEmail } from "./auth-config";
 afterEach(() => vi.unstubAllEnvs());
 it("normalizes email case and whitespace without rewriting address components", () => {
   vi.stubEnv("OWNER_EMAIL", " Owner@Example.com "); vi.stubEnv("INVITED_EMAILS", " First.Last+beta@example.com,second@example.com");

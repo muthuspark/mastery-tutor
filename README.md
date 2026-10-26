@@ -85,7 +85,11 @@ MAILTRAP_API_KEY=your-transactional-token
 FROM_EMAIL=tutor@your-verified-domain.com
 ```
 
-Generate a fresh secret with `openssl rand -base64 48`. Production requires an HTTPS URL. The owner is automatically invited. Emails are trimmed and lowercased; plus aliases and address components are preserved. Removing an invite blocks both new sign-ins and existing sessions on their next request. Restart after changing deployment environment variables.
+Generate a fresh secret with `openssl rand -base64 48`. Production requires an HTTPS URL. The owner is automatically invited. Emails are trimmed and lowercased; plus aliases and address components are preserved. Removing an email from every invitation source blocks both new sign-ins and existing sessions on their next request. Restart after changing deployment environment variables.
+
+The owner can invite learners from **Profile settings → Invite a learner**. Invitations are saved in SQLite and enable access immediately, without editing `.env` or restarting. The app sends an invitation email with its sign-in URL; the recipient requests their own OTP when signing in. Only the signed-in `OWNER_EMAIL` can use this form or its API. If email delivery fails, access stays enabled and the owner can retry or share the app link directly. Repeated invitations reuse the same access record and resend the email.
+
+`INVITED_EMAILS` remains supported alongside database invitations. Removing an environment entry blocks access only if that email has no database invitation. Invitation removal is not available in the UI yet.
 
 `MAILTRAP_API_KEY` and `FROM_EMAIL` may be copied once from the existing `../agent/.env` configuration. This app never reads that sibling environment at runtime. Use a verified Mailtrap sending domain. Provider acceptance means the provider accepted the request, not confirmed inbox delivery. Verify actual receipt for the owner before inviting beta learners; controlled automated tests do not prove real delivery.
 
@@ -97,7 +101,7 @@ If deployed behind a proxy, set `AUTH_TRUSTED_IP_HEADER` only to a header that t
 
 The `auth_events` table tracks code requests, provider acceptance/failure, verification, first-course creation, and first-lesson opening. Codes, tokens, email addresses, and learning content are excluded from those events. Generation logs retain operational counts and identifiers rather than generated text.
 
-Run `npm run test:e2e:login` for an isolated database and a controlled Mailtrap transport. It never sends real mail or calls paid AI providers. Test mail is written only by an explicitly loaded test fixture, outside application code; it is not exposed through an HTTP endpoint.
+Run `npm run test:e2e:login` for an isolated database and a controlled Mailtrap transport. Browser tests use `.next-e2e` as a separate build directory so they can run alongside the development app. It never sends real mail or calls paid AI providers. Test mail is written only by an explicitly loaded test fixture, outside application code; it is not exposed through an HTTP endpoint.
 
 ## DeepSeek API setup
 

@@ -1,10 +1,11 @@
+import { isInvited } from "./invitations";
 import "server-only";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { getAuth } from "./auth";
-import { authConfig, isInvited } from "./auth-config";
+import { authConfig } from "./auth-config";
 import { db } from "./db";
 import { chapters, courses } from "./db/schema";
 

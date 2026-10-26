@@ -16,6 +16,11 @@ export const user = sqliteTable("user", {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });
+export const invitations = sqliteTable("invitations", {
+  email: text("email").primaryKey(),
+  invitedBy: text("invited_by").notNull().references(() => user.id),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
 export const session = sqliteTable("session", {
   id: text("id").primaryKey(),
   token: text("token").notNull().unique(),

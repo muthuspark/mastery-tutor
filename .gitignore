@@ -16,3 +16,9 @@ tutor.db
 data/*.bak
 data/login-e2e-outbox.jsonl
 data/login-e2e-state.json
+
+.next-e2e*/
+.xpo/issues.snapshot.json
+.xpo/git.lock
+.xpo/events.lock
+.xpo/worktrees/

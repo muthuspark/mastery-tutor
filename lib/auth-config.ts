@@ -6,7 +6,8 @@ export function ownerEmail() {
   if (!z.email().safeParse(email).success) throw new Error("Configure OWNER_EMAIL before migrating or starting Mastery Tutor.");
   return email;
 }
-export function isInvited(email: string) {
+export const isOwner = (email: string) => normalizeEmail(email) === ownerEmail();
+export function isConfiguredInvite(email: string) {
   const invited = (process.env.INVITED_EMAILS ?? "").split(/[;,\n]/).map(normalizeEmail).filter(Boolean);
   return new Set([ownerEmail(), ...invited]).has(normalizeEmail(email));
 }

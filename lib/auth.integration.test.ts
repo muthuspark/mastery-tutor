@@ -14,7 +14,7 @@ vi.mock("@/lib/db", async () => {
 });
 vi.mock("@/lib/agent", async (original) => ({ ...await original<typeof import("./agent")>(), agentForRequest: vi.fn().mockResolvedValue("codex"), runAgentObject: vi.fn() }));
 import { db } from "./db";
-import { authLimits, authEvents, verification, user, session, courses, chapters, learnerProfile, generationJobs } from "./db/schema";
+import { authLimits, authEvents, verification, user, session, courses, chapters, learnerProfile, generationJobs, invitations } from "./db/schema";
 import { POST, GET } from "@/app/api/auth/[...all]/route";
 import { GET as listCourses, POST as createCourse } from "@/app/api/courses/route";
 import { GET as getCourse, PATCH as patchCourse } from "@/app/api/courses/[id]/route";
@@ -30,6 +30,7 @@ import { POST as practice } from "@/app/api/chapters/[id]/socratic/route";
 import { GET as explanations, POST as explain } from "@/app/api/chapters/[id]/explanations/route";
 import { POST as retryExplanation } from "@/app/api/chapters/[id]/explanations/[explanationId]/retry/route";
 import { GET as getProfile, PUT as putProfile } from "@/app/api/profile/route";
+import { POST as invite } from "@/app/api/invitations/route";
 import { courseProfilePrompt } from "./profile";
 import { claimLoginLease, takeLoginLimits } from "./auth-limits";
 import { runAgentObject } from "./agent";
@@ -53,11 +54,11 @@ beforeEach(() => {
   vi.stubEnv("BETTER_AUTH_URL", "http://localhost:3100");
   vi.stubEnv("OWNER_EMAIL", " Owner@Example.com "); vi.stubEnv("INVITED_EMAILS", "second@example.com");
   vi.stubEnv("MAILTRAP_API_KEY", "sentinel-mailtrap-secret"); vi.stubEnv("FROM_EMAIL", "tutor@example.com"); vi.stubEnv("AI_PROVIDER", "codex");
-  db.delete(generationJobs).run(); db.delete(courses).run(); db.delete(learnerProfile).run(); db.delete(authEvents).run(); db.delete(session).run(); db.delete(user).run(); db.delete(verification).run(); clearLimits();
+  db.delete(invitations).run(); db.delete(generationJobs).run(); db.delete(courses).run(); db.delete(learnerProfile).run(); db.delete(authEvents).run(); db.delete(session).run(); db.delete(user).run(); db.delete(verification).run(); clearLimits();
   state.headers = new Headers(); state.codes.clear(); state.deliveryFailure = false;
   vi.stubGlobal("fetch", vi.fn(async (_url, options) => {
     const body = JSON.parse(options!.body as string);
-    state.codes.set(body.to[0].email, /code is (\d{6})/.exec(body.text)![1]);
+    if (body.category === "Login") state.codes.set(body.to[0].email, /code is (\d{6})/.exec(body.text)![1]);
     return state.deliveryFailure ? Response.json({ error: "sentinel-mailtrap-secret" }, { status: 500 }) : Response.json({ success: true, message_ids: ["accepted"] });
   }));
 });
@@ -167,4 +168,35 @@ it("protects every learning resource and isolates courses, profiles, and generat
   expect(await processGenerationJob(claimGenerationJob(job.id, "isolation-worker")!, "isolation-worker")).toBe("completed");
   expect(vi.mocked(runAgentObject).mock.calls[0][2]).toContain("Owner background");
   expect(db.select().from(learnerProfile).where(eq(learnerProfile.userId, second.id)).get()?.aboutMe).toBe("Second learner");
+});
+
+const invitationRequest = (email: string) => new Request("http://localhost:3100/api/invitations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+it("lets only the configured owner invite, normalizes duplicates, and enables immediate OTP login", async () => {
+  expect((await invite(invitationRequest("new@example.com"))).status).toBe(401);
+  const owner = await login();
+  expect((await invite(invitationRequest(" New+Beta@Example.com "))).status).toBe(200);
+  expect((await invite(invitationRequest("new+beta@example.com"))).status).toBe(200);
+  expect(db.select().from(invitations).all()).toEqual([expect.objectContaining({ email: "new+beta@example.com", invitedBy: owner.id })]);
+  expect((await invite(invitationRequest("bad address"))).status).toBe(400);
+  state.headers = new Headers(); const learner = await login("new+beta@example.com");
+  expect(learner.email).toBe("new+beta@example.com");
+  expect((await invite(invitationRequest("another@example.com"))).status).toBe(403);
+  expect(db.select().from(invitations).all()).toHaveLength(1);
+});
+it("retains access after uncertain invitation delivery and safely resends", async () => {
+  await login(); state.deliveryFailure = true;
+  const response = await invite(invitationRequest("new@example.com")); expect(response.status).toBe(503);
+  expect(await response.json()).toMatchObject({ error: { code: "delivery_failed", retryable: true } });
+  expect(db.select().from(invitations).all()).toHaveLength(1);
+  state.deliveryFailure = false;
+  expect((await invite(invitationRequest("new@example.com"))).status).toBe(200);
+  state.headers = new Headers(); await login("new@example.com");
+});
+it("checks the owner's email on every invitation request and rejects cross-origin writes", async () => {
+  await login();
+  vi.stubEnv("INVITED_EMAILS", "owner@example.com"); vi.stubEnv("OWNER_EMAIL", "changed@example.com");
+  expect((await invite(invitationRequest("new@example.com"))).status).toBe(403);
+  vi.stubEnv("OWNER_EMAIL", "owner@example.com"); state.headers.set("origin", "https://evil.example");
+  expect((await invite(invitationRequest("new@example.com"))).status).toBe(403);
+  expect(db.select().from(invitations).all()).toHaveLength(0);
 });

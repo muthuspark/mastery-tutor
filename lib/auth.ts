@@ -1,3 +1,4 @@
+import { isInvited } from "./invitations";
 import "server-only";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -5,7 +6,7 @@ import { emailOTP } from "better-auth/plugins";
 import { APIError } from "better-auth/api";
 import { db } from "./db";
 import * as schema from "./db/schema";
-import { authConfig, isInvited } from "./auth-config";
+import { authConfig } from "./auth-config";
 import { sendLoginCode } from "./mailtrap";
 
 function createAuth() {
