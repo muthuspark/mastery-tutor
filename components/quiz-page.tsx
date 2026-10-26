@@ -91,7 +91,7 @@ export function QuizPage() {
       const body = await response.json();
       if (!response.ok) { setError(body?.error?.message ?? "Could not submit the QnA."); return; }
       setResult(body);
-    } catch { setError("Could not reach the tutor. Check the server and try again."); }
+    } catch { setError("Could not reach the tutor. Please try again."); }
     finally { setIsSubmitting(false); }
   }
   if (reviewed && quiz.failureReason instanceof QuizLoadError && quiz.failureReason.status === 202 && !quiz.data) return <main id="main-content" tabIndex={-1} className="reading-shell"><h1 className="display text-4xl">QnA still preparing</h1><p role="status" className="ui mt-5 text-sm text-[var(--muted)]">Your questions are being written and reviewed. You can return to the chapter while preparation continues.</p><BackLink href={`/course/${params.id}/ch/${params.idx}`} className="mt-8">Back to chapter</BackLink></main>;

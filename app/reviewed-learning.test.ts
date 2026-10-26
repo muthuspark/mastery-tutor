@@ -1,3 +1,4 @@
+vi.mock("@/lib/access", () => ({ authorize: async () => ({ user: { id: "test-user" } }) }));
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -8,6 +9,7 @@ vi.mock("@/lib/db", async () => {
   const schema = await import("@/lib/db/schema");
   const db = drizzle(new Database(":memory:"), { schema });
   migrate(db, { migrationsFolder: "drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 vi.mock("@/lib/agent", async (original) => ({ ...await original<typeof import("@/lib/agent")>(), agentForRequest: vi.fn().mockResolvedValue("codex"), runAgentObject: vi.fn() }));
@@ -28,7 +30,7 @@ const context = { params: Promise.resolve({ id: chapterId }) };
 beforeEach(() => {
   vi.mocked(runAgentObject).mockReset();
   db.delete(generationJobs).run(); db.delete(questions).run(); db.delete(chapters).run(); db.delete(courses).run();
-  db.insert(courses).values({ id: "course", topic: "OS", learningRequest: "Explain isolation mechanisms", brief: samplePlan().brief, qualityPolicyVersion: 1, generationAgent: "codex", createdAt: new Date() }).run();
+  db.insert(courses).values({ userId: "test-user", id: "course", topic: "OS", learningRequest: "Explain isolation mechanisms", brief: samplePlan().brief, qualityPolicyVersion: 1, generationAgent: "codex", createdAt: new Date() }).run();
   db.insert(chapters).values({ ...samplePlan().chapters[0], id: chapterId, courseId: "course", idx: 0, status: "open", createdAt: new Date() }).run();
 });
 

@@ -1,3 +1,4 @@
+import { authorize } from "@/lib/access";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -5,6 +6,8 @@ import { chapters } from "@/lib/db/schema";
 import { enqueueGenerationJob } from "@/lib/generation";
 
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const access = await authorize("chapter", await context.params);
+  if (access instanceof Response) return access;
   const { id } = await context.params;
   return db.transaction((tx) => {
     const chapter = tx.select().from(chapters).where(eq(chapters.id, id)).get();

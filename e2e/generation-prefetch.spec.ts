@@ -53,7 +53,7 @@ test("keeps mastered chapters available for review", async ({ page }) => {
 
   await page.goto("/course/course-1");
 
-  const masteredChapter = page.getByRole("link", { name: /Foundations.*Mastered.*Revisit/ });
+  const masteredChapter = page.getByRole("link", { name: "Read → Foundations" });
   await expect(masteredChapter).toHaveAttribute("href", "/course/course-1/ch/0");
   await expect(page.getByRole("link", { name: /Locked idea/ })).toHaveCount(0);
 });
@@ -74,7 +74,7 @@ test("confirms before resetting a mastered chapter", async ({ page }) => {
     await route.fulfill({ json: { reset: true, chapterId: "chapter-0" } });
   });
   await page.goto("/course/course-1");
-  await page.getByRole("link", { name: /Foundations.*Mastered.*Revisit/ }).click();
+  await page.getByRole("button", { name: "Retake mastery check → Foundations" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText("mastery result and quiz questions will be cleared");
@@ -82,7 +82,7 @@ test("confirms before resetting a mastered chapter", async ({ page }) => {
   await expect(dialog).toBeHidden();
   await expect.poll(() => revisitRequested).toBe(false);
 
-  await page.getByRole("link", { name: /Foundations.*Mastered.*Revisit/ }).click();
-  await dialog.getByRole("button", { name: "Reset and revisit" }).click();
+  await page.getByRole("button", { name: "Retake mastery check → Foundations" }).click();
+  await dialog.getByRole("button", { name: "Reset and retake mastery check" }).click();
   await expect.poll(() => revisitRequested).toBe(true);
 });

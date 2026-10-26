@@ -12,7 +12,7 @@ test("preserves list semantics and contains dialog focus, then restores it", asy
   await page.goto("/course/audit");
   await expect(page.locator("main ol > li")).toHaveCount(3);
   await expect(page.locator("main ol > a")).toHaveCount(0);
-  await expect(page.getByRole("progressbar", { name: "Course mastery" })).toHaveAttribute("aria-valuenow", "33");
+  await expect(page.getByText("1 of 3 chapters mastered")).toBeVisible();
   const trigger = page.getByRole("button", { name: "Retake mastery check → Foundations" });
   await trigger.click();
   const dialog = page.getByRole("dialog");
@@ -57,7 +57,7 @@ test("handles empty and locked-only courses without announcing completion", asyn
   } }));
   await page.goto("/course/audit");
   await expect(page.getByText("This course has no chapters yet.")).toBeVisible();
-  await expect(page.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
+  await expect(page.getByText("0 of 0 chapters mastered")).toBeVisible();
   await expect(page.getByText("You completed this course.")).toHaveCount(0);
   await expect(page.getByText("NaN%")).toHaveCount(0);
   empty = false;

@@ -1,7 +1,9 @@
+import { requirePageUser } from "@/lib/access";
 import { CourseList } from "@/components/course-list";
 import { NewCourseForm } from "@/components/new-course-form";
 
-export default function HomePage() {
+export default async function HomePage() {
+  await requirePageUser();
   return (
     <main id="main-content" tabIndex={-1} className="page-shell home-page">
       <h1 className="sr-only">Your learning workspace</h1>

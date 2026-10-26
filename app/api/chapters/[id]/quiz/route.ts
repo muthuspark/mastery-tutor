@@ -1,3 +1,4 @@
+import { authorize } from "@/lib/access";
 import { desc, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
@@ -20,6 +21,8 @@ function errorResponse(error: unknown) {
 }
 
 export async function GET(request: Request, context: RouteContext) {
+  const access = await authorize("chapter", await context.params);
+  if (access instanceof Response) return access;
   const { id } = await context.params;
   const chapter = db.select().from(chapters).where(eq(chapters.id, id)).get();
   if (!chapter) return NextResponse.json({ error: { code: "not_found", message: "Chapter not found." } }, { status: 404 });

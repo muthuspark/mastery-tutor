@@ -27,6 +27,10 @@ for (const width of [1440, 390]) {
     await expect(list.getByText("Review →")).toBeVisible();
     const creation = page.getByRole("region", { name: "Start something new" });
     await expect(creation.getByRole("button", { name: "Create study →" })).toBeEnabled();
+    const headerBox = (await page.locator("body > .site-header").boundingBox())!;
+    const mainBox = (await page.getByRole("main").boundingBox())!;
+    expect(Math.abs(headerBox.x - mainBox.x)).toBeLessThan(1);
+    expect(Math.abs(headerBox.width - mainBox.width)).toBeLessThan(1);
     const listBox = (await list.boundingBox())!;
     const creationBox = (await creation.boundingBox())!;
     if (width > 767) expect(Math.abs(listBox.y - creationBox.y)).toBeLessThan(2);

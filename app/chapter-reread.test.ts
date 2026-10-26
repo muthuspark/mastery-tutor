@@ -1,3 +1,4 @@
+vi.mock("@/lib/access", () => ({ authorize: async () => ({ user: { id: "test-user" } }) }));
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -10,6 +11,7 @@ vi.mock("@/lib/db", async () => {
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: "drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 vi.mock("@/lib/agent", () => ({ agentForRequest: vi.fn() }));
@@ -30,7 +32,7 @@ it("rereads a completed lesson and returns to the course without changing persis
   vi.mocked(agentForRequest).mockRejectedValue(new Error("Saved agent unavailable"));
   // All records are in this test's isolated, migrated in-memory database.
   const now = new Date();
-  db.insert(courses).values({ id: "course", topic: "Differential equations", completedAt: now, createdAt: now }).run();
+  db.insert(courses).values({ userId: "test-user", id: "course", topic: "Differential equations", completedAt: now, createdAt: now }).run();
   db.insert(chapters).values({ id: "chapter", courseId: "course", idx: 0, title: "Separation", objectives: [], prerequisites: [],
     status: "passed", content: "# Separation\n\nThe saved lesson.", contentGenerationStatus: "ready", generatedAt: now, createdAt: now }).run();
   // A legacy short-answer question proves reading does not require rebuilding

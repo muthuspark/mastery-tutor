@@ -9,6 +9,7 @@ vi.mock("./db", async () => {
   const schema = await import("./db/schema");
   const db = drizzle(new Database(":memory:"), { schema });
   migrate(db, { migrationsFolder: "drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 vi.mock("./agent", () => ({ agentForRequest: vi.fn() }));
@@ -32,7 +33,7 @@ beforeEach(() => {
   db.delete(generationJobs).run();
   db.delete(chapters).run();
   db.delete(courses).run();
-  db.insert(courses).values({ id: "course", topic: "Probability", qualityPolicyVersion: 1, createdAt: new Date() }).run();
+  db.insert(courses).values({ userId: "test-user", id: "course", topic: "Probability", qualityPolicyVersion: 1, createdAt: new Date() }).run();
   db.insert(chapters).values({ id: "chapter", courseId: "course", idx: 0, title: "Independence", objectives: ["Explain independence"], prerequisites: [], status: "open", createdAt: new Date() }).run();
   vi.mocked(agentForRequest).mockResolvedValue("codex");
 });

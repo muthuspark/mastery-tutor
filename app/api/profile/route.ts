@@ -1,33 +1,17 @@
 import { NextResponse } from "next/server";
+import { authorize } from "@/lib/access";
 import { getProfile, saveProfile } from "@/lib/profile";
-import { availableAgents } from "@/lib/agent";
 import { profileSchema } from "@/lib/profile-schema";
-
-function databaseError() {
-  return NextResponse.json({ error: { code: "database_error", message: "Could not access your profile. Please try again.", retryable: true } }, { status: 500 });
-}
-
 export async function GET() {
-  try {
-    return NextResponse.json(getProfile(), { headers: { "Cache-Control": "no-store" } });
-  } catch {
-    return databaseError();
-  }
+  const access = await authorize();
+  if (access instanceof Response) return access;
+  return NextResponse.json(getProfile(access.user.id), { headers: { "Cache-Control": "no-store" } });
 }
-
 export async function PUT(request: Request) {
+  const access = await authorize();
+  if (access instanceof Response) return access;
   const parsed = profileSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) {
-    return NextResponse.json({ error: { code: "invalid_input", message: "Enter an About me description of up to 2,000 characters and choose a supported learning agent.", retryable: false } }, { status: 400 });
-  }
-  try {
-    const current = getProfile();
-    const selected = parsed.data.learningAgent;
-    if (selected && selected !== current.learningAgent && !(await availableAgents()).includes(selected)) {
-      return NextResponse.json({ error: { code: "agent_unavailable", message: "That learning agent is unavailable. Choose a configured agent.", retryable: false } }, { status: 503 });
-    }
-    return NextResponse.json(saveProfile(parsed.data.aboutMe, selected === undefined ? current.learningAgent : selected));
-  } catch {
-    return databaseError();
-  }
+  if (!parsed.success) return NextResponse.json({ error: { code: "invalid_input", message: "Enter an About me description of up to 2,000 characters.", retryable: false } }, { status: 400 });
+  try { return NextResponse.json(saveProfile(access.user.id, parsed.data.aboutMe)); }
+  catch { return NextResponse.json({ error: { code: "database_error", message: "Could not save your profile. Please try again.", retryable: true } }, { status: 500 }); }
 }

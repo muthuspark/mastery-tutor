@@ -29,7 +29,8 @@ describe("course quality contracts", () => {
     const sqlite = new Database(":memory:");
     const db = drizzle(sqlite);
     migrate(db, { migrationsFolder: "drizzle" });
-    db.insert(courses).values({ id: "legacy", topic: "Old course", createdAt: new Date() }).run();
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
+    db.insert(courses).values({ userId: "test-user", id: "legacy", topic: "Old course", createdAt: new Date() }).run();
     expect(db.select().from(courses).get()).toMatchObject({ preparationStatus: "ready", preparationVersion: 1, brief: null, learningRequest: null, qualityPolicyVersion: null });
     sqlite.close();
   });

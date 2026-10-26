@@ -1,3 +1,4 @@
+vi.mock("@/lib/access", () => ({ authorize: async () => ({ user: { id: "test-user" } }) }));
 import { beforeEach, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 
@@ -14,6 +15,7 @@ vi.mock("@/lib/db", async () => {
   const schema = await import("@/lib/db/schema");
   const db = drizzle(new Database(":memory:"), { schema });
   migrate(db, { migrationsFolder: "./drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 
@@ -53,9 +55,9 @@ it("returns current mastery counts for every course, including empty and reopene
   expect(await (await GET()).json()).toEqual({ courses: [] });
   const now = new Date();
   db.insert(courses).values([
-    { id: "empty", topic: "Empty", createdAt: now },
-    { id: "partial", topic: "Partial", createdAt: new Date(now.getTime() + 1) },
-    { id: "complete", topic: "Complete", completedAt: now, createdAt: new Date(now.getTime() + 2) },
+    { userId: "test-user", id: "empty", topic: "Empty", createdAt: now },
+    { userId: "test-user", id: "partial", topic: "Partial", createdAt: new Date(now.getTime() + 1) },
+    { userId: "test-user", id: "complete", topic: "Complete", completedAt: now, createdAt: new Date(now.getTime() + 2) },
   ]).run();
   for (const [courseId, statuses] of [
     ["partial", ["passed", "open", "locked"]],

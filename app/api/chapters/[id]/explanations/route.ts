@@ -1,3 +1,4 @@
+import { authorize } from "@/lib/access";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
@@ -15,6 +16,8 @@ const requestSchema = z.object({
 }).strict();
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const access = await authorize("chapter", await context.params);
+  if (access instanceof Response) return access;
   try {
     const timeline = readChapterExplanations((await context.params).id);
     const sections = await Promise.all(timeline.sections.map(async (section) => ({
@@ -31,6 +34,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 }
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
+  const access = await authorize("chapter", await context.params);
+  if (access instanceof Response) return access;
   const parsed = requestSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: { code: "invalid_input", message: "Invalid explanation request.", retryable: false } }, { status: 400 });
   try {

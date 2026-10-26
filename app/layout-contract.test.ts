@@ -37,21 +37,22 @@ describe("page container CSS contract", () => {
     const roots = rules.filter((rule) => rule.selectors.includes(":root"));
     expect(roots).toHaveLength(2);
     expect(roots[0].declarations).toMatchObject({
-      "--layout-max-wide": "80rem",
-      "--layout-max-reading": "48rem",
-      "--layout-gutter": "1.5rem",
+      "--layout-max-wide": "77.5rem",
+      "--layout-max-reading": "47.5rem",
+      "--layout-gutter": "2rem",
       "--layout-page-space": "3.5rem",
     });
-    expect(roots[1].declarations).toEqual({ "--layout-gutter": "1rem", "--layout-page-space": "2.5rem" });
-    expect(css).toMatch(/@media \(max-width: 767px\)\s*\{\s*:root\s*\{/);
+    expect(roots[1].declarations).toEqual({ "--layout-gutter": "1.25rem", "--layout-page-space": "2.5rem" });
+    expect(css).toMatch(/@media \(max-width: 639px\)\s*\{\s*:root\s*\{/);
   });
 
-  it("uses one explicit reading variant and shared page spacing with the home exception", () => {
+  it("uses the shared wide container for home and a narrower reading measure", () => {
     const variants = rules.filter((rule) => "--container-max" in rule.declarations);
-    expect(variants).toEqual([{ selectors: [".reading-shell"], declarations: { "--container-max": "var(--layout-max-reading)" } }]);
+    expect(variants.map(({ selectors, declarations }) => ({ selectors, max: declarations["--container-max"] }))).toEqual([
+      { selectors: [".reading-shell"], max: "var(--layout-max-reading)" },
+    ]);
     const pageSpacing = rules.filter((rule) => rule.selectors.includes(".page-shell") && "padding-block" in rule.declarations);
     expect(pageSpacing).toEqual([{ selectors: [".page-shell", ".reading-shell"], declarations: { "padding-block": "var(--layout-page-space)" } }]);
-    const home = rules.filter((rule) => rule.selectors.includes(".page-shell.home-page"));
-    expect(home).toEqual([{ selectors: [".page-shell.home-page"], declarations: { "padding-block": "0" } }]);
+    expect(rules.filter((rule) => rule.selectors.includes(".home-page") && "padding-block" in rule.declarations)).toEqual([]);
   });
 });

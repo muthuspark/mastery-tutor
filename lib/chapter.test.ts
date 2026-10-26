@@ -9,6 +9,7 @@ vi.mock("./db", async () => {
   const schema = await import("./db/schema");
   const db = drizzle(new Database(":memory:"), { schema });
   migrate(db, { migrationsFolder: "drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 vi.mock("./agent", () => ({ runAgentObject: vi.fn(), agentForRequest: vi.fn(), noAgentError: vi.fn() }));
@@ -28,7 +29,7 @@ beforeEach(() => {
   db.delete(chapters).run();
   db.delete(courses).run();
   const createdAt = new Date();
-  db.insert(courses).values({ id: "course", topic: "Biology", createdAt }).run();
+  db.insert(courses).values({ userId: "test-user", id: "course", topic: "Biology", createdAt }).run();
   db.insert(chapters).values({ id: "chapter", courseId: "course", idx: 0, title: "Neurons", objectives: ["Explain nerve cells"], prerequisites: [], status: "open", createdAt }).run();
   vi.mocked(findWikipediaImages).mockResolvedValue([candidate]);
 });

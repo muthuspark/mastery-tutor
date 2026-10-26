@@ -39,17 +39,18 @@ it("resolves trimmed task, chapter fallback, global and default DeepSeek models"
   expect(modelFor("review", "deepseek")).toBe("custom-model");
 });
 
-it("uses the profile across browsers, ignores old cookies, and never replaces an unavailable saved agent", async () => {
+it("uses server configuration and ignores requested providers and old cookies", async () => {
   const { agentForRequest } = await import("./agent");
   commands.add("codex");
   vi.stubEnv("DEEPSEEK_API_KEY", "key");
   const request = new Request("http://localhost", { headers: { cookie: "mastery-tutor-agent=claude" } });
+  vi.stubEnv("AI_PROVIDER", "codex");
   expect(await agentForRequest(request)).toBe("codex");
-  preference.learningAgent = "deepseek";
+  vi.stubEnv("AI_PROVIDER", "deepseek");
   expect(await agentForRequest(request)).toBe("deepseek");
   expect(await agentForRequest(new Request("http://localhost"), "codex")).toBe("deepseek");
   vi.stubEnv("DEEPSEEK_API_KEY", "");
-  await expect(agentForRequest(request)).rejects.toMatchObject({ code: "not_found", retryable: false });
+  await expect(agentForRequest(request)).rejects.toMatchObject({ code: "not_found", retryable: true });
 });
 
 it.each(["syllabus", "chapter", "quiz", "grading", "review", "socratic"] as const)("dispatches %s to DeepSeek with its output budget", async (task) => {

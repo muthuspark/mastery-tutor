@@ -1,3 +1,4 @@
+vi.mock("@/lib/access", () => ({ authorize: async () => ({ user: { id: "test-user" } }) }));
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -11,6 +12,7 @@ vi.mock("@/lib/db", async () => {
   const schema = await import("@/lib/db/schema");
   const db = drizzle(new Database(":memory:"), { schema });
   migrate(db, { migrationsFolder: "drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 import { db } from "@/lib/db";
@@ -18,7 +20,6 @@ import { chapters, courses, generationJobs, learnerProfile } from "@/lib/db/sche
 import { POST } from "./api/courses/route";
 import { claimGenerationJob } from "@/lib/generation";
 import { processGenerationJob } from "@/lib/generation-worker";
-import { saveProfile } from "@/lib/profile";
 import { samplePlan } from "../test/quality-fixtures";
 const mockFetch = vi.fn<typeof fetch>();
 const complete = (data: unknown) => Response.json({ choices: [{ finish_reason: "stop", message: { content: JSON.stringify(data) } }] });
@@ -27,7 +28,7 @@ beforeEach(() => {
   db.delete(learnerProfile).run();
   db.delete(generationJobs).run(); db.delete(chapters).run(); db.delete(courses).run();
   vi.stubEnv("DEEPSEEK_API_KEY", "sentinel-secret"); vi.stubGlobal("fetch", mockFetch); mockFetch.mockReset();
-  saveProfile("", "deepseek");
+  vi.stubEnv("AI_PROVIDER", "deepseek");
   vi.spyOn(console, "info").mockImplementation(() => {});
 });
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
@@ -62,7 +63,7 @@ it.each([0, 401, 402, 429])("retains provider on configuration/upstream failure 
   if (status === 0) vi.stubEnv("DEEPSEEK_API_KEY", "");
   else mockFetch.mockResolvedValue(new Response("sentinel-secret", { status }));
   const job = db.select().from(generationJobs).get()!;
-  expect(await processGenerationJob(claimGenerationJob(job.id, "worker")!, "worker")).toBe(status === 429 ? "pending" : "failed");
+  expect(await processGenerationJob(claimGenerationJob(job.id, "worker")!, "worker")).toBe(status === 429 || status === 0 ? "pending" : "failed");
   expect(db.select().from(chapters).all()).toEqual([]);
   expect(db.select().from(courses).get()?.generationAgent).toBe("deepseek");
   expect(mockFetch).toHaveBeenCalledTimes(status === 0 ? 0 : 1);
@@ -74,17 +75,17 @@ it("rejects an unavailable explicit provider before writing a course or job", as
   vi.stubEnv("DEEPSEEK_API_KEY", "");
   const response = await POST(request());
   expect(response.status).toBe(503);
-  expect(await response.json()).toMatchObject({ error: { code: "not_found", retryable: false } });
+  expect(await response.json()).toMatchObject({ error: { code: "not_found", retryable: true } });
   expect(db.select().from(courses).all()).toEqual([]);
   expect(db.select().from(generationJobs).all()).toEqual([]);
 });
 
 it("uses the latest profile agent for future work in an existing course", async () => {
   await POST(request());
-  saveProfile("", "claude");
+  vi.stubEnv("AI_PROVIDER", "claude");
   // No Claude executable is configured. It must fail instead of using the course's DeepSeek tag.
   const job = db.select().from(generationJobs).get()!;
-  expect(await processGenerationJob(claimGenerationJob(job.id, "worker")!, "worker")).toBe("failed");
+  expect(await processGenerationJob(claimGenerationJob(job.id, "worker")!, "worker")).toBe("pending");
   expect(mockFetch).not.toHaveBeenCalled();
   expect(db.select().from(courses).get()?.generationAgent).toBe("deepseek");
 });

@@ -1,3 +1,4 @@
+vi.mock("@/lib/access", () => ({ authorize: async () => ({ user: { id: "test-user" } }) }));
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -12,6 +13,7 @@ vi.mock("@/lib/db", async () => {
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: "drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 vi.mock("@/lib/agent", async (importOriginal) => ({
@@ -38,7 +40,7 @@ beforeEach(() => {
   chapterId = randomUUID();
   questionId = randomUUID();
   const now = new Date();
-  db.insert(courses).values({ id: courseId, topic: "Differential equations", createdAt: now }).run();
+  db.insert(courses).values({ userId: "test-user", id: courseId, topic: "Differential equations", createdAt: now }).run();
   db.insert(chapters).values({ id: chapterId, courseId, idx: 0, title: "Separation", objectives: [], prerequisites: [], status: "open", createdAt: now }).run();
   db.insert(questions).values({ id: questionId, chapterId, type: "mcq", prompt: "Solve y' = y", options: ["y = Ce^x", "y = x"], rubric: "Exponential solution", modelAnswer: "y = Ce^x", conceptTag: "separation", createdAt: now }).run();
 });
@@ -113,7 +115,7 @@ describe("attempt grading agent requirements", () => {
     db.insert(questions).values({ ...first, id: freeResponseId, type }).run();
     const response = await submit([{ questionId, response: "0" }, { questionId: freeResponseId, response: "An explanation" }]);
     expect(response.status).toBe(503);
-    expect(await response.json()).toMatchObject({ error: { code: "not_found", message: expect.stringContaining("Install Codex or Claude CLI, or configure DEEPSEEK_API_KEY"), retryable: false } });
+    expect(await response.json()).toMatchObject({ error: { code: "not_found", message: "The tutor is temporarily unavailable. Please try again shortly.", retryable: true } });
     expect(agentForRequest).toHaveBeenCalledTimes(1);
     expect(runAgentObject).not.toHaveBeenCalled();
     expect(db.select().from(attempts).all()).toEqual([]);
@@ -221,7 +223,7 @@ describe("concept gaps across attempt outcomes", () => {
     const quiz = tenQuestionQuiz();
     db.update(questions).set({ conceptTag: quiz[0].conceptTag }).where(eq(questions.id, quiz[1].id)).run();
     const otherCourseId = randomUUID();
-    db.insert(courses).values({ id: otherCourseId, topic: "Other test course", createdAt: new Date() }).run();
+    db.insert(courses).values({ userId: "test-user", id: otherCourseId, topic: "Other test course", createdAt: new Date() }).run();
     const unrelatedId = randomUUID();
     db.insert(reviewItems).values({ id: unrelatedId, courseId: otherCourseId, conceptTag: quiz[0].conceptTag, sourceQuestionId: questionId, misses: 4, dueAfterChapterIdx: 9, createdAt: new Date() }).run();
     const unrelated = db.select().from(reviewItems).where(eq(reviewItems.id, unrelatedId)).get();

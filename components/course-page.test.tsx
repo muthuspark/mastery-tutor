@@ -20,10 +20,10 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals();
     else Reflect.deleteProperty(HTMLDialogElement.prototype, method);
   } });
 
-it("announces loading inside the wide course overview landmark", () => {
+it("announces loading inside the reading course overview landmark", () => {
   vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
   render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
-  expect(screen.getByRole("main")).toHaveClass("page-shell");
+  expect(screen.getByRole("main")).toHaveClass("reading-shell");
   expect(screen.getByRole("status")).toHaveTextContent("Loading course…");
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 });
@@ -37,7 +37,7 @@ it("offers a local exit and retries only course reads while preserving mastered 
   render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><CoursePage /></QueryClientProvider>);
 
   expect(await screen.findByRole("heading", { level: 1, name: "Course unavailable" })).toBeInTheDocument();
-  expect(screen.getByRole("main")).toHaveClass("page-shell");
+  expect(screen.getByRole("main")).toHaveClass("reading-shell");
   expect(screen.getByRole("alert")).toHaveTextContent("Could not load this course.");
   const back = screen.getByRole("link", { name: "Back to learning" });
   expect(back).toHaveAttribute("href", "/");
@@ -57,7 +57,7 @@ it("offers a local exit and retries only course reads while preserving mastered 
     progress: { passed: 1, total: 1 },
   }) }));
   expect(await screen.findByRole("heading", { name: "Recovered course" })).toBeInTheDocument();
-  expect(screen.getByRole("main")).toHaveClass("page-shell");
+  expect(screen.getByRole("main")).toHaveClass("reading-shell");
   expect(screen.getByText("1 of 1 chapters mastered")).toBeInTheDocument();
   expect(screen.getByText("You completed this course.")).toBeInTheDocument();
   expect(screen.queryByText("Could not load this course.")).not.toBeInTheDocument();
@@ -70,7 +70,7 @@ it("gives an empty course a descriptive heading and focusable learning exit with
   }) }));
   render(<QueryClientProvider client={new QueryClient()}><CoursePage /></QueryClientProvider>);
   expect(await screen.findByRole("heading", { level: 2, name: "No chapters available" })).toBeInTheDocument();
-  expect(screen.getByRole("main")).toHaveClass("page-shell");
+  expect(screen.getByRole("main")).toHaveClass("reading-shell");
   expect(screen.getByRole("region", { name: "No chapters available" })).toHaveTextContent("This course has no chapters yet.");
   const back = screen.getByRole("link", { name: "Back to learning" });
   expect(back).toHaveAttribute("href", "/");

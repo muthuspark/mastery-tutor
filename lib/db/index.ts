@@ -1,6 +1,7 @@
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
+import { migrateOwnedDatabase } from "./migrate";
+import { ownerEmail } from "../auth-config";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import * as schema from "./schema";
@@ -9,15 +10,17 @@ function databasePath() {
   const configured = process.env.DATABASE_URL?.replace(/^file:/, "");
   const dataDirectory = path.join(process.cwd(), "data");
   mkdirSync(dataDirectory, { recursive: true });
-  return path.join(dataDirectory, configured ? path.basename(configured) : "tutor.db");
+  const filename = configured ? path.resolve(configured) : path.join(dataDirectory, "tutor.db");
+  mkdirSync(path.dirname(filename), { recursive: true });
+  return filename;
 }
 
-const sqlite = new Database(databasePath());
+export const sqlite = new Database(databasePath());
 sqlite.pragma("foreign_keys = ON");
 sqlite.pragma("busy_timeout = 5000");
 
 export const db = drizzle(sqlite, { schema });
 
-export function runMigrations() {
-  migrate(db, { migrationsFolder: path.resolve(process.cwd(), "drizzle") });
+export async function runMigrations() {
+  await migrateOwnedDatabase(sqlite, databasePath(), ownerEmail());
 }

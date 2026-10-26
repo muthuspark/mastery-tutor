@@ -1,3 +1,4 @@
+vi.mock("@/lib/access", () => ({ authorize: async () => ({ user: { id: "test-user" } }) }));
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -9,6 +10,7 @@ vi.mock("@/lib/db", async () => {
   const schema = await import("@/lib/db/schema");
   const db = drizzle(new Database(":memory:"), { schema });
   migrate(db, { migrationsFolder: "drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 // Retain the request schema without launching CLIs.
@@ -48,8 +50,15 @@ it("persists intent and selected agent, then publishes only the accepted plan an
 });
 
 it("keeps rejected plans unpublished and retries explicitly without duplicate jobs", async () => {
+  vi.useFakeTimers();
   const { courseId, job } = await pending();
   vi.mocked(runAgentObject).mockResolvedValue({});
+  expect(await processGenerationJob(claimGenerationJob(job.id, "worker")!, "worker")).toBe("pending");
+  expect(db.select().from(chapters).all()).toEqual([]);
+  expect(db.select().from(courses).get()?.preparationStatus).toBe("pending");
+  await vi.advanceTimersByTimeAsync(5_000);
+  expect(await processGenerationJob(claimGenerationJob(job.id, "worker")!, "worker")).toBe("pending");
+  await vi.advanceTimersByTimeAsync(10_000);
   expect(await processGenerationJob(claimGenerationJob(job.id, "worker")!, "worker")).toBe("failed");
   expect(db.select().from(chapters).all()).toEqual([]);
   expect(db.select().from(courses).get()?.preparationStatus).toBe("failed");

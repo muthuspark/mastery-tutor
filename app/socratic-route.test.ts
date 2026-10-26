@@ -1,3 +1,4 @@
+vi.mock("@/lib/access", () => ({ authorize: async () => ({ user: { id: "test-user" } }) }));
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
@@ -12,6 +13,7 @@ vi.mock("@/lib/db", async () => {
   sqlite.pragma("foreign_keys = ON");
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: "drizzle" });
+  db.run("INSERT OR IGNORE INTO user (id,name,email,email_verified,created_at,updated_at) VALUES ('test-user','','test@example.com',1,1,1)");
   return { db };
 });
 vi.mock("@/lib/agent", () => ({ runAgentObject: vi.fn(), agentForRequest: vi.fn(async () => "codex"), noAgentError: vi.fn() }));
@@ -40,7 +42,7 @@ beforeEach(() => {
     ? { summary: "An index reduces the records a search must examine. Review the trade-off of maintaining it." }
     : { ...question, prompt: `${question.prompt} Step ${vi.mocked(runAgentObject).mock.calls.length}` });
   const now = new Date();
-  db.insert(courses).values({ id: "course", topic: "Databases", createdAt: now }).run();
+  db.insert(courses).values({ userId: "test-user", id: "course", topic: "Databases", createdAt: now }).run();
   db.insert(chapters).values({ id: "chapter", courseId: "course", idx: 0, title: "Indexes", objectives: ["Explain search cost"], prerequisites: [], content: "Indexes help find records without scanning all rows. Maintaining them adds write cost.", status: "open", contentGenerationStatus: "ready", createdAt: now }).run();
 });
 

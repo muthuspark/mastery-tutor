@@ -1,3 +1,5 @@
+import { recordAuthEvent } from "@/lib/auth-events";
+import { authorize } from "@/lib/access";
 import { asc, count, eq, getTableColumns, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
@@ -29,12 +31,15 @@ function errorResponse(error: unknown) {
 }
 
 export async function GET() {
+  const access = await authorize();
+  if (access instanceof Response) return access;
   const result = db.select({
     ...getTableColumns(courses),
     passed: count(sql`case when ${chapters.status} = 'passed' then 1 end`),
     total: count(chapters.id),
   }).from(courses)
     .leftJoin(chapters, eq(chapters.courseId, courses.id))
+    .where(eq(courses.userId, access.user.id))
     .groupBy(courses.id)
     .orderBy(asc(courses.createdAt))
     .all();
@@ -42,6 +47,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const access = await authorize();
+  if (access instanceof Response) return access;
   const parsed = createCourseSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json(
@@ -57,10 +64,11 @@ export async function POST(request: Request) {
     const now = new Date();
     db.transaction((tx) => {
       tx.insert(courses)
-        .values({ id: courseId, topic: parsed.data.topic.slice(0, 100), learningRequest: parsed.data.topic, qualityPolicyVersion: QUALITY_POLICY_VERSION, generationAgent: agent, preparationStatus: "pending", preparationStage: "planning", preparationUpdatedAt: now, createdAt: now })
+        .values({ userId: access.user.id, id: courseId, topic: parsed.data.topic.slice(0, 100), learningRequest: parsed.data.topic, qualityPolicyVersion: QUALITY_POLICY_VERSION, generationAgent: agent, preparationStatus: "pending", preparationStage: "planning", preparationUpdatedAt: now, createdAt: now })
         .run();
       enqueueGenerationJob("course", courseId, 1, now);
     });
+    recordAuthEvent("first_course", access.user.id);
     const response = NextResponse.json({ courseId, status: "pending" }, { status: 202 });
     return response;
   } catch (error) {

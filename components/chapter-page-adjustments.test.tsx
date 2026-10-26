@@ -5,6 +5,8 @@ import { afterEach, expect, it, vi } from "vitest";
 import { ChapterPage } from "./chapter-page";
 
 vi.mock("next/navigation", () => ({ useParams: () => ({ id: "course", idx: "0" }) }));
+// Practice has its own request lifecycle, covered in socratic-session.test.tsx.
+vi.mock("./socratic-session", () => ({ SocraticSession: () => <section aria-label="Chapter practice" /> }));
 vi.mock("./mermaid-content", () => ({ MermaidContent: ({ html }: { html: string }) => <article>{html}</article> }));
 const clients: QueryClient[] = [];
 afterEach(() => { cleanup(); clients.forEach(client => client.clear()); clients.length = 0; vi.unstubAllGlobals(); });
@@ -106,7 +108,7 @@ it("shows boundaries and legacy depth without inventing a level", async () => {
     sections: [{ ...original, id: "legacy", kind: "legacy", level: null, label: null }],
   })));
   expect(screen.queryByText("Depth not recorded. Adjustments start from Guided (2 of 6).")).not.toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Explanation" })).toBeVisible();
+  expect(await screen.findByRole("heading", { name: "Explanation" })).toBeVisible();
 });
 
 it("offers explicit retry at the saved target and preserves the accepted history", async () => {

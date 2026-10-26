@@ -5,6 +5,8 @@ import { afterEach, expect, it, vi } from "vitest";
 import { ChapterPage } from "./chapter-page";
 
 vi.mock("next/navigation", () => ({ useParams: () => ({ id: "course", idx: "0" }) }));
+// Practice has its own request lifecycle, covered in socratic-session.test.tsx.
+vi.mock("./socratic-session", () => ({ SocraticSession: () => <section aria-label="Chapter practice" /> }));
 vi.mock("./mermaid-content", () => ({ MermaidContent: ({ html }: { html: string }) => <article>{html}</article> }));
 const clients: QueryClient[] = [];
 afterEach(() => { cleanup(); clients.forEach(client => client.clear()); clients.length = 0; vi.useRealTimers(); vi.unstubAllGlobals(); });

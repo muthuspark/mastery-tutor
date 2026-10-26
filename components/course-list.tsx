@@ -50,7 +50,7 @@ export function CourseList({ children }: { children?: ReactNode }) {
           </div>
         )}
       </section>
-      {!empty ? children : null}
+      {!empty && !isLoading ? children : null}
     </div>
   );
 }

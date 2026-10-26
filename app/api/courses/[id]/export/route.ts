@@ -1,3 +1,4 @@
+import { authorize } from "@/lib/access";
 import { asc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
@@ -7,6 +8,8 @@ import { courseToMarkdown } from "@/lib/export";
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(_request: Request, context: RouteContext) {
+  const access = await authorize("course", await context.params);
+  if (access instanceof Response) return access;
   const { id } = await context.params;
   const course = db.select().from(courses).where(eq(courses.id, id)).get();
   if (!course) return NextResponse.json({ error: { code: "not_found", message: "Course not found." } }, { status: 404 });

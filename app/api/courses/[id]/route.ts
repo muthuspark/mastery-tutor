@@ -1,3 +1,4 @@
+import { authorize } from "@/lib/access";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -6,7 +7,7 @@ import { chapters, courses } from "@/lib/db/schema";
 import { coursePlanSchema, QualityError, reviewSchema, syllabusGraphIssues } from "@/lib/quality-contracts";
 import { agentForRequest, noAgentError, runAgentObject } from "@/lib/agent";
 import { REVIEW_PROMPT } from "@/lib/quality";
-import { learnerProfilePrompt } from "@/lib/profile";
+import { courseProfilePrompt } from "@/lib/profile";
 import { enqueueGenerationJob, invalidateChapterGeneration } from "@/lib/generation";
 
 const syllabusUpdateSchema = z.object({
@@ -23,6 +24,8 @@ const syllabusUpdateSchema = z.object({
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(_request: Request, context: RouteContext) {
+  const access = await authorize("course", await context.params);
+  if (access instanceof Response) return access;
   const { id } = await context.params;
   const course = db.select().from(courses).where(eq(courses.id, id)).get();
   if (!course) return NextResponse.json({ error: { code: "not_found", message: "Course not found." } }, { status: 404 });
@@ -39,6 +42,8 @@ export async function GET(_request: Request, context: RouteContext) {
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
+  const access = await authorize("course", await context.params);
+  if (access instanceof Response) return access;
   const { id } = await context.params;
   const body = syllabusUpdateSchema.safeParse(await request.json().catch(() => null));
   if (!body.success) {
@@ -76,7 +81,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     try {
       const agent = await agentForRequest(request);
       if (!agent) throw noAgentError();
-      const review = reviewSchema.parse(await runAgentObject(agent, "review", `${REVIEW_PROMPT}\n${learnerProfilePrompt()}\nLearning request: ${JSON.stringify(course.learningRequest)}\nArtifact: syllabus\nDraft: ${JSON.stringify(plan.data)}`, reviewSchema));
+      const review = reviewSchema.parse(await runAgentObject(agent, "review", `${REVIEW_PROMPT}\n${courseProfilePrompt(course.id)}\nLearning request: ${JSON.stringify(course.learningRequest)}\nArtifact: syllabus\nDraft: ${JSON.stringify(plan.data)}`, reviewSchema));
       if (review.issues.some((issue) => issue.severity === "blocking")) throw new QualityError();
     } catch (error) {
       return NextResponse.json({ error: { code: error instanceof QualityError ? "quality_rejected" : "review_failed", message: error instanceof QualityError ? "The edited outline needs revision to fit the course goal and chapter coverage." : "Could not review these edits. Try again.", retryable: true } }, { status: error instanceof QualityError ? 422 : 502 });

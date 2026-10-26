@@ -9,7 +9,7 @@ import { agentForRequest, noAgentError, runAgentObject, type Agent } from "./age
 import { CHAPTER_PROMPT } from "./prompts";
 import { chapterSchema } from "./schemas";
 import { DEFAULT_EXPLANATION_LEVEL, originalExplanationPromptContract } from "./explanation-levels";
-import { learnerProfilePrompt } from "@/lib/profile";
+import { courseProfilePrompt } from "@/lib/profile";
 import { findWikipediaImages } from "./wikipedia-images";
 import { filterChapterImages } from "./chapter-images";
 import { generateReviewedObject } from "./quality";
@@ -56,7 +56,7 @@ export async function generateChapterContent(
   const prompt = [
     CHAPTER_PROMPT,
     `Requested explanation level: ${originalExplanationPromptContract()} Original explanations target Guided (${DEFAULT_EXPLANATION_LEVEL} of 6).`,
-    learnerProfilePrompt(),
+    courseProfilePrompt(course.id),
     `Course topic: ${course.topic}`,
     `Chapter: ${chapter.title}`,
     `Objectives: ${chapter.objectives.join("; ")}`,

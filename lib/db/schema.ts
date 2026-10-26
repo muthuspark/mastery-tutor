@@ -7,8 +7,58 @@ const timestamps = {
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 };
 
+export const user = sqliteTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
+  image: text("image"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});
+export const invitations = sqliteTable("invitations", {
+  email: text("email").primaryKey(),
+  invitedBy: text("invited_by").notNull().references(() => user.id),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
+export const session = sqliteTable("session", {
+  id: text("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  ipAddress: text("ip_address"), userAgent: text("user_agent"),
+}, (t) => [index("session_user_idx").on(t.userId)]);
+export const account = sqliteTable("account", {
+  id: text("id").primaryKey(), accountId: text("account_id").notNull(), providerId: text("provider_id").notNull(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  accessToken: text("access_token"), refreshToken: text("refresh_token"), idToken: text("id_token"),
+  accessTokenExpiresAt: integer("access_token_expires_at", { mode: "timestamp_ms" }),
+  refreshTokenExpiresAt: integer("refresh_token_expires_at", { mode: "timestamp_ms" }),
+  scope: text("scope"), password: text("password"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+}, (t) => [index("account_user_idx").on(t.userId)]);
+export const verification = sqliteTable("verification", {
+  id: text("id").primaryKey(), identifier: text("identifier").notNull(), value: text("value").notNull(),
+  expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+}, (t) => [index("verification_identifier_idx").on(t.identifier)]);
+// Fixed windows, cooldowns, and a database lease persist across process restarts.
+export const authLimits = sqliteTable("auth_limits", {
+  key: text("key").primaryKey(), count: integer("count").notNull(), resetAt: integer("reset_at").notNull(),
+});
+export const authEvents = sqliteTable("auth_events", {
+  id: text("id").primaryKey(), event: text("event").notNull(),
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+}, (t) => [uniqueIndex("auth_event_user_unique").on(t.userId, t.event).where(sql`${t.event} IN ('first_course', 'first_lesson')`)]);
+
 export const learnerProfile = sqliteTable("learner_profile", {
   id: integer("id").primaryKey(),
+  userId: text("user_id").references(() => user.id).unique(),
   aboutMe: text("about_me").notNull().default(""),
   learningAgent: text("learning_agent", { enum: ["codex", "claude", "deepseek"] }),
   updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
@@ -16,6 +66,7 @@ export const learnerProfile = sqliteTable("learner_profile", {
 
 export const courses = sqliteTable("courses", {
   id: text("id").primaryKey(),
+  userId: text("user_id").references(() => user.id),
   topic: text("topic").notNull(),
   level: text("level").notNull().default("foundational"),
   learningRequest: text("learning_request"),
@@ -30,7 +81,7 @@ export const courses = sqliteTable("courses", {
   startedAt: integer("started_at", { mode: "timestamp_ms" }),
   completedAt: integer("completed_at", { mode: "timestamp_ms" }),
   ...timestamps,
-});
+}, (t) => [index("courses_user_idx").on(t.userId)]);
 
 export const chapters = sqliteTable(
   "chapters",

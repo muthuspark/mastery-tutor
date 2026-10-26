@@ -14,5 +14,6 @@ export type GenerationEvent =
   | "artifact_stale";
 
 export function recordGenerationEvent(event: GenerationEvent, fields: Record<string, string | number | boolean | null | undefined> = {}) {
-  console.info(JSON.stringify({ scope: "generation", event, at: new Date().toISOString(), ...fields }));
+  const operational = Object.fromEntries(Object.entries(fields).filter(([key]) => !["findings", "details"].includes(key)));
+  console.info(JSON.stringify({ scope: "generation", event, at: new Date().toISOString(), ...operational }));
 }
