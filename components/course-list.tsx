@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 
 type Course = { id: string; topic: string; createdAt: string; startedAt?: string | null; preparationStatus?: string; progress: { passed: number; total: number } };
@@ -67,6 +68,7 @@ function FeaturedStudy({ course }: { course: Course }) {
         <div className="featured-study-progress"><StudyProgress course={course} /><span className="ui">{percent}%</span></div>
       </div>
       <Link className="button-primary" href={`/course/${course.id}`}>{started ? "Continue studying" : "Start studying"} →</Link>
+      <Image className="featured-study-art" src="/images/newton-under-apple-tree.webp" width={1254} height={1254} sizes="(max-width: 767px) 110px, 176px" alt="" aria-hidden="true" preload />
     </section>
   );
 }

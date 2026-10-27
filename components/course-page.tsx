@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { RevisitDialog } from "@/components/revisit-dialog";
@@ -50,13 +51,20 @@ export function CoursePage() {
     }
   }
   return (
-    <main id="main-content" tabIndex={-1} className="reading-shell">
+    <main id="main-content" tabIndex={-1} className="reading-shell course-index">
       <BackToLearning />
       <header className="course-hero">
+        <div className="course-hero-copy">
+        <p className="course-index-label">Your learning path</p>
         <h1 className="display max-w-3xl text-4xl leading-none">{data.course.topic}</h1>
+        </div>
+        <Image className="course-index-art" src="/images/newton-under-apple-tree.webp" width={1254} height={1254} sizes="(max-width: 767px) 100px, 176px" alt="" aria-hidden="true" preload />
       </header>
       <div className="course-toolbar">
+        <div className="course-index-progress">
         <p className="text-lg text-[var(--muted)]">{passed} of {total} chapters mastered</p>
+        {total > 0 ? <div className="course-index-segments" aria-hidden="true">{data.chapters.map((chapter) => <span key={chapter.id} className={chapter.status === "passed" ? "is-mastered" : ""} />)}</div> : null}
+        </div>
         <a className="button-secondary ui shrink-0" href={`/api/courses/${params.id}/export`}>Export notes</a>
       </div>
       {total === 0 ? (
@@ -65,6 +73,8 @@ export function CoursePage() {
           <p className="mt-3 text-lg text-[var(--muted)]">This course has no chapters yet.</p>
         </section>
       ) : (
+        <section aria-labelledby="course-chapters-title" className="course-index-outline">
+        <h2 id="course-chapters-title">Chapters</h2>
         <ol className="chapter-list divide-y divide-[var(--line)]">
           {data.chapters.map((chapter) => {
             const isOpen = chapter.status === "open";
@@ -72,8 +82,8 @@ export function CoursePage() {
             if (isPassed) return (
               <li key={chapter.id}>
                 <div className="chapter-row chapter-row--mastered">
-                  <span className="ui text-xs font-bold" role="img" aria-label="Completed">✓</span>
-                  <span className="chapter-title text-xl">{chapter.title}</span>
+                  <span className="chapter-index-number ui text-xs font-bold" role="img" aria-label="Completed">✓</span>
+                  <div className="chapter-row-copy"><span className="chapter-title text-xl">{chapter.title}</span><span className="chapter-mastered-label">Mastered</span></div>
                   <span className="chapter-row-actions ui text-xs">
                     <Link className="chapter-read" href={`/course/${params.id}/ch/${chapter.idx}`} aria-label={`Read → ${chapter.title}`}>Read →</Link>
                     <button type="button" className="text-button chapter-retake" aria-label={`Retake mastery check → ${chapter.title}`} aria-haspopup="dialog" onClick={() => openRevisitDialog(chapter)}>Retake →</button>
@@ -82,8 +92,8 @@ export function CoursePage() {
               </li>
             );
             const content = <>
-              <span className="ui text-xs font-bold" aria-hidden="true">{String(chapter.idx + 1).padStart(2, "0")}</span>
-              <div>
+              <span className="chapter-index-number ui text-xs font-bold" aria-hidden="true">{String(chapter.idx + 1).padStart(2, "0")}</span>
+              <div className="chapter-row-copy">
                 <span className="chapter-title text-xl">{chapter.title}</span>
                 {chapter.status === "locked" ? <UnlockGuidance chapter={chapter} chapters={data.chapters} /> : null}
               </div>
@@ -100,6 +110,7 @@ export function CoursePage() {
             );
           })}
         </ol>
+        </section>
       )}
       {completed ? <p className="mt-8 text-xl text-[var(--success)]" role="status">You completed this course.</p> : null}
       <RevisitDialog open={Boolean(revisitChapter)} chapterTitle={revisitChapter?.title ?? "this chapter"} isSubmitting={isRevisiting} error={revisitError} onCancel={() => { if (!isRevisiting) { setRevisitChapter(null); setRevisitError(""); } }} onConfirm={() => void confirmRevisit()} />

@@ -2,12 +2,12 @@
 @plugin "@tailwindcss/typography";
 @import "katex/dist/katex.min.css";
 
-/* Little Might reference: warm paper, fine ink rules, and orange emphasis. */
+/* White surfaces, fine ink rules, and orange emphasis. */
 :root {
   color-scheme: light;
-  /* sRGB reference: paper #f5f4ed, inset #efeee5, ink #0b0d0b, orange #f7591f. */
-  --color-paper: oklch(0.965992 0.009326 99.984);
-  --color-paper-2: oklch(0.947413 0.012002 101.486);
+  /* White page background and neutral inset surfaces. */
+  --color-paper: #fff;
+  --color-paper-2: oklch(0.97 0 0);
   --color-ink: oklch(0.155892 0.005324 145.314);
   --color-text-muted: oklch(0.439676 0.008126 115.917);
   --color-text-soft: oklch(0.503938 0.013914 106.889);
@@ -364,7 +364,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); text-wrap: balance; }
 .socratic-session { margin-bottom: 2.5rem; padding-block: 2rem; border-block: 1px solid var(--line); }
 .socratic-feedback { margin-top: 1.5rem; padding: 1rem 1.25rem; border-radius: var(--radius-control); background: var(--paper-deep); }
 
-.login-page { max-width: 38rem; padding-top: clamp(3rem, 10vh, 7rem); padding-bottom: 5rem; }
+.login-brand-mark, .login-footer-inner, .reader-footer-method { display: none; }
 .login-form { margin-top: 2rem; max-width: 28rem; }
 .login-code { font-variant-numeric: tabular-nums; letter-spacing: .3em; font-size: 1.5rem; }
 

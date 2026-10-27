@@ -49,20 +49,23 @@ export function LoginForm() {
   }
   return <form onSubmit={submit} className="login-form" aria-busy={busy}>
     {sent ? <>
-      <p id="code-help" className="text-[var(--muted)]">We requested a login code for <strong className="break-all">{email.trim().toLowerCase()}</strong>. Check your inbox and spam folder. It expires in five minutes.</p>
+      <p id="code-help" className="login-description text-[var(--muted)]">Check <strong className="break-all">{email.trim().toLowerCase()}</strong> for your code. It expires in five minutes.</p>
       <label className="ui mt-6 block text-sm font-bold" htmlFor="login-code">Login code</label>
-      <input ref={codeRef} id="login-code" className="field mt-2 login-code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} disabled={busy} aria-describedby={error ? "code-help login-error" : "code-help"} />
+      <input ref={codeRef} id="login-code" className="field mt-2 login-code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} disabled={busy} aria-invalid={!!error} aria-describedby={error ? "code-help login-error" : "code-help"} />
     </> : <>
-      <p className="text-[var(--muted)]">Use your invited email to enter your private learning workspace.</p>
+      <p className="login-description text-[var(--muted)]">Your private space to keep learning.</p>
       <label className="ui mt-6 block text-sm font-bold" htmlFor="login-email">Email address</label>
-      <input ref={emailRef} id="login-email" className="field mt-2" type="email" autoComplete="email" required maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} disabled={busy} aria-describedby={error ? "login-error" : undefined} />
+      <input ref={emailRef} id="login-email" className="field mt-2" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} disabled={busy} aria-invalid={!!error} aria-describedby={error ? "login-error" : undefined} />
     </>}
     {error ? <p id="login-error" role="alert" className="ui mt-4 text-sm text-[var(--accent-dark)]">{error}</p> : null}
-    <button type="submit" className="button-primary mt-4 w-full" disabled={busy || (!sent && cooldown > 0)}>{busy ? (sent ? "Signing in…" : "Sending code…") : sent ? "Sign in" : cooldown ? `Try again in ${cooldown}s` : "Email me a code"}</button>
+    <button type="submit" className="button-primary mt-4 w-full" disabled={busy || (!sent && cooldown > 0)}>
+      <span>{busy ? (sent ? "Signing in…" : "Sending code…") : sent ? "Sign in" : cooldown ? `Try again in ${cooldown}s` : "Email me a code"}</span>
+      <svg className="login-submit-arrow" aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none"><path d="M4 12h15M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" /></svg>
+    </button>
     {sent ? <div className="ui mt-5 flex flex-wrap justify-between gap-4 text-sm">
       <button type="button" className="underline disabled:opacity-50" disabled={busy || cooldown > 0} onClick={() => void requestCode()}>{cooldown ? `Resend in ${cooldown}s` : "Resend code"}</button>
       <button type="button" className="underline" disabled={busy} onClick={() => { setSent(false); setCode(""); setError(""); setCooldown(0); setTimeout(() => emailRef.current?.focus(), 0); }}>Change email</button>
     </div> : null}
-    <p className="ui mt-8 text-sm text-[var(--muted)]">Private beta. Access is by invitation.</p>
+    {!sent ? <p className="login-invitation ui mt-8 text-sm text-[var(--muted)]">Access is by invitation.</p> : null}
   </form>;
 }

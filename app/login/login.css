@@ -1,0 +1,204 @@
+@font-face {
+  font-family: "Newton Pixel";
+  src: url("/fonts/pixelify-sans-semibold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Newton Mono";
+  src: url("/fonts/dm-mono-regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Newton Mono";
+  src: url("/fonts/dm-mono-medium.ttf") format("truetype");
+  font-weight: 500 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Scope the single-screen composition to the public entrance. */
+body:has(.login-page) {
+  --ink: oklch(0.23 0.009 145);
+  --muted: oklch(0.47 0.012 86);
+  --line: oklch(0.72 0.018 88 / 65%);
+  --sans: "Newton Mono", "Courier New", monospace;
+  --display: "Newton Pixel", monospace;
+  --layout-max-wide: 94rem;
+  --layout-gutter: clamp(1.25rem, 3vw, 3rem);
+  min-height: 100svh;
+  font-family: var(--sans);
+}
+
+body:has(.login-page) .site-header {
+  min-height: 4.5rem;
+  padding-block: 0.75rem;
+}
+
+body:has(.login-page) .site-brand {
+  gap: 0.75rem;
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+body:has(.login-page) .brand-mark { display: none; }
+body:has(.login-page) .login-brand-mark { display: block; width: 1.75rem; height: 1.925rem; }
+.login-beta { color: var(--muted); font-size: 0.875rem; }
+
+.login-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.96fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5.5rem);
+  width: min(calc(100% - 2 * var(--layout-gutter)), var(--layout-max-wide));
+  margin-inline: auto;
+  padding-block: 1.5rem;
+  outline: none;
+}
+
+.login-illustration { display: flex; align-items: center; justify-content: center; min-width: 0; }
+.login-illustration img {
+  display: block;
+  width: 100%;
+  height: min(75svh, 47rem);
+  max-height: calc(100svh - 11rem);
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.login-welcome { min-width: 0; padding-block: 1rem; }
+.login-welcome h1 {
+  margin: 0;
+  font: 600 clamp(2.25rem, 3.9vw, 4.25rem)/1.12 var(--display);
+  letter-spacing: -0.035em;
+  text-wrap: initial;
+}
+.login-welcome h1 span { display: block; }
+.login-page .login-form { max-width: none; margin-top: 1.5rem; }
+.login-description { font-size: clamp(1rem, 1.5vw, 1.35rem); line-height: 1.6; }
+.login-page .login-form label { margin-top: clamp(1.75rem, 5svh, 3.5rem); font-size: 1rem; font-weight: 400; }
+.login-page .field {
+  min-height: 3.5rem;
+  padding: 0.875rem 1.25rem;
+  border: 2px solid oklch(0.65 0.022 90);
+  border-radius: 0;
+  background: transparent;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  box-shadow: 3px 0 0 -1px var(--paper), -3px 0 0 -1px var(--paper);
+}
+.login-page .field::placeholder { color: oklch(0.53 0.014 88); }
+.login-page .field:focus { border-color: var(--ink); }
+.login-page .field[aria-invalid="true"] { border-color: oklch(0.48 0.15 35); }
+.login-page .login-code { letter-spacing: 0.35em; font-size: 1.25rem; }
+.login-page .button-primary {
+  position: relative;
+  min-height: 3.5rem;
+  margin-top: 1.25rem;
+  padding: 0.875rem 3.25rem;
+  border: 0;
+  border-radius: 0;
+  background: oklch(0.62 0.19 42);
+  color: oklch(0.99 0.008 88);
+  font-size: 1rem;
+  box-shadow: 0 3px 0 oklch(0.47 0.15 40), 3px 0 0 -1px oklch(0.62 0.19 42), -3px 0 0 -1px oklch(0.62 0.19 42);
+}
+.login-page .button-primary:hover:not(:disabled) { background: oklch(0.56 0.18 42); }
+.login-page .button-primary:active:not(:disabled) { background: oklch(0.51 0.16 42); box-shadow: 0 1px 0 oklch(0.47 0.15 40); }
+.login-submit-arrow { position: absolute; right: 1.25rem; }
+.login-page .login-invitation { margin-top: 1.5rem; font-size: 0.875rem; }
+.login-page [role="alert"] { margin-top: 1rem; padding: 0.625rem 0.875rem; font-size: 0.875rem; }
+.login-page:has(.login-code) .login-form label { margin-top: 1.5rem; }
+.login-page:has(.login-code) .login-description { font-size: 1rem; }
+
+body:has(.login-page) .site-footer {
+  width: min(calc(100% - 2 * var(--layout-gutter)), var(--layout-max-wide));
+  margin: 0 auto;
+  padding: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+}
+body:has(.login-page) .site-footer-inner { display: none; }
+body:has(.login-page) .login-footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3.5rem;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 1023px) and (min-width: 768px) {
+  .login-page { gap: 2rem; }
+  .login-welcome h1 { font-size: 2.5rem; }
+  .login-description { font-size: 1rem; }
+}
+
+@media (max-width: 767px) {
+  body:has(.login-page) .site-header { min-height: 3.75rem; padding-block: 0.5rem; }
+  body:has(.login-page) .site-brand { font-size: 1.65rem; }
+  body:has(.login-page) .login-brand-mark { width: 1.4rem; height: 1.54rem; }
+  .login-beta { font-size: 0.75rem; }
+  .login-page { display: flex; flex-direction: column; justify-content: center; gap: 0.75rem; padding-block: 1rem; }
+  .login-illustration { flex: 0 1 auto; }
+  .login-illustration img { width: auto; height: clamp(8rem, 26svh, 15rem); max-width: 100%; }
+  .login-welcome { width: min(100%, 28rem); padding: 0; }
+  .login-welcome h1 { font-size: clamp(1.85rem, 7.4vw, 2.75rem); line-height: 1.1; }
+  .login-page .login-form { margin-top: 0.75rem; }
+  .login-description { font-size: 0.9375rem; }
+  .login-page .login-form label { margin-top: 1.25rem; font-size: 0.875rem; }
+  .login-page .field { min-height: 3rem; padding: 0.625rem 1rem; font-size: 1rem; }
+  .login-page .button-primary { min-height: 3rem; margin-top: 1rem; font-size: 0.9375rem; }
+  .login-page .login-invitation { margin-top: 1.125rem; font-size: 0.75rem; }
+  .login-page:has(.login-code) .login-illustration img { height: min(17svh, 9rem); }
+  .login-page:has([role="alert"]) .login-illustration img { height: min(16svh, 8rem); }
+  .login-page:has(.login-code) .login-description { font-size: 0.875rem; }
+  .login-page:has(.login-code) .login-form label { margin-top: 0.75rem; }
+  .login-page .login-form > div { margin-top: 1rem; }
+  .login-page [role="alert"] { padding: 0.5rem 0.75rem; }
+  body:has(.login-page) .login-footer-inner { min-height: 2.75rem; font-size: 0.625rem; }
+}
+
+/* Reclaim decorative space when a phone keyboard or a short window needs it.
+   Content may still scroll at high zoom, rather than ever clipping controls. */
+@media (max-height: 700px) and (max-width: 767px) {
+  .login-illustration img { height: 18svh; }
+  .login-page { gap: 0.5rem; padding-block: 0.75rem; }
+  .login-page:has(.login-code) .login-illustration { display: none; }
+}
+@media (max-height: 500px) and (max-width: 767px) {
+  .login-illustration { display: none; }
+  body:has(.login-page) .site-footer { display: none; }
+}
+@media (max-height: 600px) and (min-width: 768px) {
+  body:has(.login-page) .site-header { min-height: 3.5rem; padding-block: 0.25rem; }
+  .login-page { gap: 2rem; padding-block: 0.75rem; }
+  .login-illustration img { height: calc(100svh - 8rem); }
+  .login-welcome { padding-block: 0; }
+  .login-welcome h1 { font-size: 2rem; line-height: 1.05; }
+  .login-page .login-form { margin-top: 0.5rem; }
+  .login-description, .login-page:has(.login-code) .login-description { font-size: 0.8125rem; line-height: 1.5; }
+  .login-page .login-form label { margin-top: 0.75rem; font-size: 0.8125rem; }
+  .login-page:has(.login-code) .login-form label { margin-top: 0.5rem; }
+  .login-page:has(.login-code) h1 { font-size: 1.75rem; }
+  .login-page .field { min-height: 2.75rem; padding: 0.5rem 1rem; font-size: 1rem; }
+  .login-page .button-primary { min-height: 2.75rem; margin-top: 0.75rem; padding-block: 0.5rem; font-size: 0.875rem; }
+  .login-page .login-invitation { margin-top: 0.75rem; font-size: 0.6875rem; }
+  .login-page [role="alert"] { margin-top: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+  .login-page .login-form > div { margin-top: 0.5rem; font-size: 0.75rem; }
+  body:has(.login-page) .login-footer-inner { min-height: 2.5rem; font-size: 0.625rem; }
+}
+@media (max-width: 380px) {
+  .login-footer-inner > p:nth-child(2) { display: none; }
+}
+@media (max-height: 450px) and (min-width: 768px) {
+  body:has(.login-page .login-code) .site-footer { display: none; }
+}

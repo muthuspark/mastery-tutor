@@ -8,7 +8,7 @@ export function AccountControls() {
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  if (pathname === "/login") return null;
+  if (pathname === "/login") return <span className="login-beta">Private beta</span>;
   async function logout() {
     setBusy(true); setError("");
     try {

@@ -3,6 +3,36 @@ import { readFileSync } from "node:fs";
 import Database from "better-sqlite3";
 test.use({ storageState: { cookies: [], origins: [] } });
 
+test("landing page fits the viewport and keeps code-entry and errors usable", async ({ page }) => {
+  await page.goto("/login");
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.getByRole("img", { name: /Isaac Newton/ })).toBeVisible();
+  for (const [width, height] of [[1440, 900], [1366, 768], [768, 1024], [390, 844], [375, 667], [320, 568], [844, 390]]) {
+    await page.setViewportSize({ width, height });
+    expect(await page.evaluate(() => ({
+      horizontal: document.documentElement.scrollWidth > innerWidth,
+      vertical: document.documentElement.scrollHeight > innerHeight,
+    })), `${width} × ${height}`).toEqual({ horizontal: false, vertical: false });
+    await expect(page.getByRole("button", { name: "Email me a code" })).toBeInViewport();
+  }
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.route("**/api/auth/email-otp/send-verification-otp", route => route.fulfill({ json: { success: true } }));
+  await page.route("**/api/auth/sign-in/email-otp", route => route.fulfill({ status: 400, json: { error: { message: "This code is incorrect. Please try again." } } }));
+  await page.getByLabel("Email address").fill("mobile@example.com");
+  await page.getByRole("button", { name: "Email me a code" }).click();
+  await expect(page.getByLabel("Login code")).toBeFocused();
+  await page.getByLabel("Login code").fill("123456");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.locator("#login-error")).toContainText("This code is incorrect");
+  for (const [width, height] of [[375, 667], [320, 568], [844, 390]]) {
+    await page.setViewportSize({ width, height });
+    expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight), `Code error at ${width} × ${height}`).toBe(true);
+    await expect(page.getByRole("button", { name: "Change email" })).toBeInViewport();
+  }
+  await page.getByRole("button", { name: "Change email" }).click();
+  await expect(page.getByLabel("Email address")).toBeFocused();
+});
+
 async function signIn(page: Page, email: string) {
   await page.goto("/login"); await expect(page).toHaveURL(/\/login$/);
   await page.getByLabel("Email address").fill(email);

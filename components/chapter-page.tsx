@@ -205,9 +205,44 @@ export function ChapterPage() {
   const retryAccepted = retryExplanation.isSuccess && sections.some((section) => section.id === retryExplanation.data.id);
   const showRetryButton = Boolean(timeline?.failedRequest || retryExplanation.isPending || (retryExplanation.isSuccess && !retryAccepted));
 
-  return <><main id="main-content" tabIndex={-1} className="reading-shell">
-    <nav aria-label="Back navigation" className="mb-6"><BackLink href={`/course/${params.id}`}>Back to course</BackLink></nav>
-    <h1 className="display lesson-title">{chapterQuery.data.chapter.title}</h1>
+  const courseChapters = courseQuery.data?.chapters ?? [];
+  const mastered = courseChapters.filter((item) => item.status === "passed").length;
+
+  return <><main id="main-content" tabIndex={-1} className="reading-shell chapter-reader">
+    <nav aria-label="Back navigation" className="reader-back"><BackLink href={`/course/${params.id}`}>Back to course</BackLink></nav>
+    <div className="reader-layout">
+    <aside className="reader-outline" aria-label="Course outline">
+      <p className="reader-label">Your course</p>
+      <h2 className="reader-course-title">{courseQuery.data?.course.topic}</h2>
+      <p className="reader-progress-label">{mastered} of {courseChapters.length} chapters mastered</p>
+      <div className="reader-progress" role="progressbar" aria-label="Course progress" aria-valuemin={0} aria-valuemax={courseChapters.length} aria-valuenow={mastered} aria-valuetext={`${mastered} of ${courseChapters.length} chapters mastered`}>
+        {courseChapters.map((item) => <span key={item.id} className={item.status === "passed" ? "is-mastered" : ""} />)}
+      </div>
+      <nav aria-label="Course chapters">
+        <ol className="reader-chapters">
+          {courseChapters.map((item) => <li key={item.id}>
+            {item.status === "locked" ? <span className="reader-chapter reader-chapter--locked">
+              <span className="reader-chapter-number" aria-hidden="true">{String(item.idx + 1).padStart(2, "0")}</span>
+              <span>{item.title}<span className="reader-locked-label">Locked</span></span>
+            </span> : <Link className="reader-chapter" href={`/course/${params.id}/ch/${item.idx}`} aria-current={item.idx === Number(params.idx) ? "page" : undefined}>
+              <span className="reader-chapter-number" aria-hidden="true">{item.status === "passed" ? "✓" : String(item.idx + 1).padStart(2, "0")}</span>
+              <span>{item.title}</span>
+              {item.status === "passed" ? <span className="sr-only"> (mastered)</span> : null}
+            </Link>}
+          </li>)}
+        </ol>
+      </nav>
+      <p className="reader-outline-note">A little progress,<br />one chapter at a time.</p>
+    </aside>
+    <div className="reader-content">
+    <header className="reader-heading">
+      <div className="reader-chapter-meta">
+        <p>Chapter {Number(params.idx) + 1} of {courseChapters.length}</p>
+        <span className={`reader-status${chapter?.status === "passed" ? " reader-status--mastered" : ""}`}>{chapter?.status === "passed" ? "Mastered" : "In progress"}</span>
+      </div>
+      <h1 className="display lesson-title">{chapterQuery.data.chapter.title}</h1>
+      <p className="reader-heading-note">Explore the idea. Put your understanding into practice.</p>
+    </header>
     {!preparingVersion && !failedVersion ? <SocraticSession key={`${chapterQuery.data.chapter.id}:${chapterQuery.data.chapter.contentGenerationVersion ?? 1}`} chapterId={chapterQuery.data.chapter.id} version={chapterQuery.data.chapter.contentGenerationVersion ?? 1} /> : null}
 
     {sections.length ? sections.map((section) => (
@@ -220,7 +255,7 @@ export function ChapterPage() {
     {preparingVersion ? <p role="status" className="ui mt-8 text-sm text-[var(--muted)]">Preparing the original explanation. Earlier accepted explanations remain available above.</p> : failedVersion ? <p role="alert" className="ui mt-8 text-sm">Could not prepare the new chapter version. Your earlier explanations remain available above.</p> : null}
     {chapterQuery.data.chapter.pretest ? <p className="mt-12 border-t border-[var(--line)] pt-5 text-lg text-[var(--brown)]"><span className="font-bold text-[var(--ink)]">Before you continue.</span> {chapterQuery.data.chapter.pretest}</p> : null}
 
-    <section aria-label="Explanation controls" className="ui mt-7 border-t border-[var(--line)] pt-5">
+    <section aria-label="Explanation controls" className="reader-controls ui mt-7 border-t border-[var(--line)] pt-5">
       {currentSection && currentSection.level !== null && currentSection.label
         ? <p className="mb-3 text-sm text-[var(--muted)]">Current explanation: {currentSection.label} ({currentSection.level} of 6)</p>
         : !timeline?.legacyBaseline
@@ -249,5 +284,7 @@ export function ChapterPage() {
       </div> : null}
     </section>
 
+    </div>
+    </div>
   </main></>;
 }

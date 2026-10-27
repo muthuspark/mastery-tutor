@@ -1,0 +1,7 @@
+{
+  "tool": "image_gen.imagegen",
+  "prompt": "Create a single small production website illustration asset: a charming stack of three old books beside a warm orange apple, in crisp sophisticated 16-bit pixel art. Stack books horizontally, covers moss green, ochre tan, and dark olive; visible warm ivory page edges; a small orange apple with two green leaves beside the stack at the right. A few tiny green pixel grass tufts at the base only. Warm, thoughtful learning-workspace mood, muted natural colors, clearly visible square pixels, hard pixel edges, limited palette, no blur, no photorealistic texture, no smooth vector look. Wide low composition, isolated with generous transparent space above, entire illustration uncropped. Genuinely transparent background. No text, no letters or numbers on book spines, no border, no shadow, no website elements. Match an ivory-and-orange Newton learning dashboard with pixel art apple-tree illustrations.",
+  "transparent_background": true,
+  "asset": "studies-books.webp",
+  "encoding": "Lossless WebP conversion from generated PNG."
+}

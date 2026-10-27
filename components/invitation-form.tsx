@@ -18,7 +18,7 @@ export function InvitationForm() {
     } catch (err) { setError(err instanceof Error ? err.message : "Could not send this invitation. Please try again."); }
     finally { setBusy(false); }
   }
-  return <section className="mt-12 border-t border-[var(--line)] pt-8" aria-labelledby="invitation-heading">
+  return <section className="invitation-section mt-12 border-t border-[var(--line)] pt-8" aria-labelledby="invitation-heading">
     <h2 id="invitation-heading" className="display text-2xl">Invite a learner</h2>
     <p id="invitation-help" className="mt-3 text-[var(--muted)]">Send an invitation to the private beta. They’ll sign in with an email code and get their own learning workspace.</p>
     <form className="mt-6" onSubmit={submit} aria-busy={busy}>

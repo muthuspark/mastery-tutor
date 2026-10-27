@@ -7,6 +7,27 @@ const chapters = [
 ];
 const course = { course: { topic: "Operating Systems" }, chapters, progress: { passed: 1, total: 3 } };
 
+test("course index presents progress and all chapter states on desktop and mobile", async ({ page }) => {
+  const titles = ["Conditioning as a Restricted Sample Space", "Independence and Information", "Partitions and Total Probability", "Bayes’ Theorem and Base Rates", "Conditional Distributions", "Expectation and Conditioning", "Putting It All Together"];
+  await page.route("**/api/courses/course-index", route => route.fulfill({ json: {
+    course: { topic: "Conditional Probability" },
+    chapters: titles.map((title, idx) => ({ id: `index-${idx}`, idx, title, status: idx === 0 ? "passed" : idx === 1 ? "open" : "locked", prerequisites: idx > 1 ? [0] : [] })),
+    progress: { passed: 1, total: 7 },
+  } }));
+  await page.goto("/course/course-index");
+  await expect(page.getByText("1 of 7 chapters mastered")).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  await expect.poll(() => page.locator(".course-index-art").evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+  await expect(page.getByRole("link", { name: "Export notes" })).toHaveAttribute("href", "/api/courses/course-index/export");
+  await expect(page.locator(".chapter-link[aria-current='step']")).toHaveAttribute("href", "/course/course-index/ch/1");
+  for (const [width, height] of [[1440, 1000], [390, 844]]) {
+    await page.setViewportSize({ width, height });
+    await expect(page.locator(".chapter-list > li")).toHaveCount(7);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: `test-results/course-index-${width}.png`, fullPage: true });
+  }
+});
+
 test("preserves list semantics and contains dialog focus, then restores it", async ({ page }) => {
   await page.route("**/api/courses/audit", route => route.fulfill({ json: course }));
   await page.goto("/course/audit");

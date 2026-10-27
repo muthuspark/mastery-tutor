@@ -14,7 +14,7 @@ Newton provides course creation, lessons, assessment, feedback, and progress tra
 
 ## Brand Personality
 
-Editorial, literary, thoughtful. The existing Paper & Ink system uses a calm reading rhythm, warm paper, charcoal text, and restrained crimson actions. Preserve the established interface rather than introducing a new aesthetic. Visual details are documented in `DESIGN.md` and implemented in the existing components and tokens.
+Thoughtful, approachable, and focused. The approved interface uses white backgrounds, charcoal text, orange actions, Sora headings, Manrope body text, and restrained pixel-art illustrations. The landing page retains its approved pixel typography. Visual details and page-specific conventions are documented in DESIGN.md and implemented in the existing components and tokens.
 
 ## Anti-references
 
@@ -32,4 +32,4 @@ The established design guide rejects generic AI marketing copy, emoji-based UI d
 
 Accessibility and mobile usability are existing product requirements. Preserve keyboard navigation, visible focus, readable hierarchy, and meaningful loading, error, and disabled states. No additional numerical accessibility conformance target is established here.
 
-This context records the existing direction from `loop-prd.md`, `README.md`, and `DESIGN.md`; it does not introduce a redesign.
+Product requirements come from loop-prd.md and README.md. DESIGN.md records the user-approved visual direction.
