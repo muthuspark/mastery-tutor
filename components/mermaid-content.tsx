@@ -45,7 +45,7 @@ export function MermaidContent({ html }: MermaidContentProps) {
       mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "base", themeVariables: { primaryColor: "#faf9f5", primaryTextColor: "#141413", primaryBorderColor: "#87867f", lineColor: "#3d3d3a", secondaryColor: "#e3dacc", tertiaryColor: "#f5e3c7", fontFamily: "Arial, sans-serif" } });
       await Promise.all(Array.from(blocks).map(async (block, index) => {
         try {
-          const { svg } = await mermaid.render(`mastery-tutor-diagram-${diagramId}-${Date.now()}-${index}`, block.dataset.chart ?? "");
+          const { svg } = await mermaid.render(`newton-diagram-${diagramId}-${Date.now()}-${index}`, block.dataset.chart ?? "");
           if (!cancelled) { block.innerHTML = svg; block.setAttribute("role", "img"); block.setAttribute("aria-label", "Learning diagram"); }
         } catch {
           if (!cancelled) { block.textContent = "This diagram could not be rendered."; block.classList.add("mermaid-error"); }

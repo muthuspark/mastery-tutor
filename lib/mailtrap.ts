@@ -17,7 +17,7 @@ async function sendEmail(email: string, subject: string, text: string, category:
       method: "POST",
       headers: { Authorization: `Bearer ${process.env.MAILTRAP_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: { email: process.env.FROM_EMAIL, name: "Mastery Tutor" },
+        from: { email: process.env.FROM_EMAIL, name: "Newton" },
         to: [{ email }], subject, text, category,
       }),
       signal: AbortSignal.timeout(15_000),
@@ -27,12 +27,12 @@ async function sendEmail(email: string, subject: string, text: string, category:
   } catch { throw new DeliveryError(); }
 }
 export async function sendLoginCode(email: string, otp: string) {
-  await sendEmail(email, "Your Mastery Tutor login code",
-    `Your Mastery Tutor login code is ${otp}.\n\nIt expires in five minutes and can only be used once.\nIf you did not request this code, ignore this email.`, "Login");
+  await sendEmail(email, "Your Newton login code",
+    `Your Newton login code is ${otp}.\n\nIt expires in five minutes and can only be used once.\nIf you did not request this code, ignore this email.`, "Login");
   const state = delivery.getStore();
   if (state) state.accepted = true;
 }
 export async function sendInvitationEmail(email: string, appURL: string) {
-  await sendEmail(email, "You’re invited to Mastery Tutor",
-    `You’re invited to the Mastery Tutor private beta.\n\nOpen ${appURL} and sign in with this email address. We’ll email you a six-digit login code when you sign in.\n\nCreate a course, study at your own pace, and return to your private learning workspace anytime.\n\nIf you weren’t expecting this invitation, you can ignore this email.`, "Invitation");
+  await sendEmail(email, "You’re invited to Newton",
+    `You’re invited to the Newton private beta.\n\nOpen ${appURL} and sign in with this email address. We’ll email you a six-digit login code when you sign in.\n\nCreate a course, study at your own pace, and return to your private learning workspace anytime.\n\nIf you weren’t expecting this invitation, you can ignore this email.`, "Invitation");
 }

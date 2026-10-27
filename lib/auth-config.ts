@@ -3,7 +3,7 @@ import { z } from "zod";
 export const normalizeEmail = (email: string) => email.trim().toLowerCase();
 export function ownerEmail() {
   const email = normalizeEmail(process.env.OWNER_EMAIL ?? "");
-  if (!z.email().safeParse(email).success) throw new Error("Configure OWNER_EMAIL before migrating or starting Mastery Tutor.");
+  if (!z.email().safeParse(email).success) throw new Error("Configure OWNER_EMAIL before migrating or starting Newton.");
   return email;
 }
 export const isOwner = (email: string) => normalizeEmail(email) === ownerEmail();

@@ -22,7 +22,7 @@ This document records exploration and recommendations only. It does not authoriz
 
 ### Existing contracts to account for
 
-- The original Mastery Tutor spec requires one-field onboarding, short chapters, and no level/difficulty questionnaire. Later profile support explicitly personalizes future generation. Keep the single-input experience; reconcile the old foundational-default language with subject-specific calibration when specifying this feature.
+- The original Newton spec requires one-field onboarding, short chapters, and no level/difficulty questionnaire. Later profile support explicitly personalizes future generation. Keep the single-input experience; reconcile the old foundational-default language with subject-specific calibration when specifying this feature.
 - `lib/profile.test.ts` requires latest profile changes to affect future generation while leaving saved content and progress intact. A frozen profile snapshot for an entire course would conflict with that behavior. A stored course goal can stay stable while later explanations use the current profile.
 - Pre-study syllabus PATCH accepts partial chapter updates and checks IDs, but does not validate the resulting complete graph or coordinate teaching metadata. Any new-course quality guarantee must also consider this entry point. Chapter warm-up can begin before edits; edits need to keep accepted plans and generated artifacts consistent.
 - Generation jobs already support persistence, versions, coalescing, retries, stale-output checks, and chapter-to-quiz sequencing. Jobs cover chapters and quizzes, not course planning.

@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const email = normalizeEmail(typeof body?.email === "string" ? body.email : "");
   if (!z.email().safeParse(email).success || (sending && body?.type !== "sign-in") || (verifying && (typeof body?.otp !== "string" || !/^\d{6}$/.test(body.otp)))) return failure("invalid_input", "Enter a valid email and six-digit code.", 400);
-  if (!isInvited(email)) return failure("invitation_only", "Mastery Tutor is invitation-only. Use your invited email address.", 403);
+  if (!isInvited(email)) return failure("invitation_only", "Newton is invitation-only. Use your invited email address.", 403);
   let release: (() => void) | undefined;
   try {
     // Only trust a forwarding header explicitly configured by an operator whose proxy

@@ -1,4 +1,4 @@
-Make the UI consistent across all pages of Mastery Tutor, including container widths, page gutters, spacing, typography, colors, borders, buttons, forms, and loading, empty, and error states.
+Make the UI consistent across all pages of Newton, including container widths, page gutters, spacing, typography, colors, borders, buttons, forms, and loading, empty, and error states.
 
 First inspect all routes and shared components to identify inconsistencies. Use the existing design language to establish reusable layout primitives and design tokens. Define a standard page container with a consistent maximum width, responsive horizontal padding, and alignment between headers and page content. Allow narrower reading or form layouts where useful, with explicit, reusable variants.
 

@@ -1,6 +1,6 @@
-# Mastery Tutor
+# Newton
 
-Mastery Tutor turns a learning intention into a focused, chapter-by-chapter path. You name what you want to understand, read a short lesson, answer a few retrieval questions, and unlock the next idea only when you have mastered the current one.
+Newton turns a learning intention into a focused, chapter-by-chapter path. You name what you want to understand, read a short lesson, answer a few retrieval questions, and unlock the next idea only when you have mastered the current one.
 
 It is deliberately small: invited learners with private workspaces, one persistent SQLite database, and Codex CLI, Claude CLI, or DeepSeek API running server-side for structured course, lesson, quiz, and free-text grading generation.
 
@@ -30,7 +30,7 @@ Each quiz has ten multiple-choice questions with four options each, plus up to t
 
 ## Why it exists
 
-Most learning tools optimize for content consumption. Mastery Tutor is organized around retrieval, feedback, prerequisite order, and deliberate progression instead:
+Most learning tools optimize for content consumption. Newton is organized around retrieval, feedback, prerequisite order, and deliberate progression instead:
 
 - Generate a dependency-aware syllabus from a plain-language topic.
 - Prepare the first lesson after accepting the course plan, then warm newly unlocked lessons through saved generation jobs.
@@ -59,8 +59,8 @@ The CLI path does not need an API key. DeepSeek uses a paid API key and requires
 ## Run locally
 
 ```bash
-git clone https://github.com/muthuspark/mastery-tutor.git
-cd mastery-tutor
+git clone https://github.com/muthuspark/mastery-tutor.git newton
+cd newton
 npm install
 cp .env.example .env
 # Configure the authentication, owner, email, and AI settings below first.
@@ -168,7 +168,7 @@ lib/gating.ts         Mastery and chapter progression rules
 lib/review.ts         Missed-concept scheduling
 lib/export.ts         Deterministic Markdown export
 drizzle/              SQLite migrations
-specs/mastery-tutor/  MSDD exploration, specification, tasks, and mockups
+specs/newton/         MSDD exploration, specification, tasks, and mockups
 docs/screenshots/     README screenshots captured from the local app
 ```
 

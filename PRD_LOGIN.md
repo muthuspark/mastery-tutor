@@ -2,7 +2,7 @@
 
 ## Summary
 
-Convert Mastery Tutor from a single-learner app into an invite-only service where each learner signs in with an email OTP and has a private learning workspace.
+Convert Newton from a single-learner app into an invite-only service where each learner signs in with an email OTP and has a private learning workspace.
 
 After verifying their email, new learners go directly to course creation. Returning learners see their saved courses and progress. Existing courses and progress transfer to the owner’s account.
 
@@ -65,7 +65,7 @@ Proposed defaults:
 - Use Mailtrap’s transactional HTTP API for login emails.
 - Configure `MAILTRAP_API_KEY` and `FROM_EMAIL` in this app’s own server environment, using the existing setup in `../agent/.env` as the configuration source.
 - Do not make this app depend on reading the sibling app’s environment at runtime.
-- Send emails branded as Mastery Tutor, with the code, expiry, and instructions for ignoring an unsolicited request.
+- Send emails branded as Newton, with the code, expiry, and instructions for ignoring an unsolicited request.
 - If Mailtrap rejects or cannot confirm a send, show a retryable delivery error. Provider acceptance must not be described as confirmed inbox delivery.
 - Keep credentials and raw provider errors out of browser responses.
 

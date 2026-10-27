@@ -45,7 +45,7 @@ export async function findWikipediaImages(
   const request = (url: string, init?: RequestInit) => fetchImpl(url, {
     ...init,
     signal: controller.signal,
-    headers: { "User-Agent": "MasteryTutor/0.1 (educational chapter images)", ...init?.headers },
+    headers: { "User-Agent": "Newton/0.1 (educational chapter images)", ...init?.headers },
   });
 
   async function firstPage(host: string, params: Record<string, string>) {

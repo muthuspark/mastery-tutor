@@ -24,7 +24,7 @@ import { ownedJob, renewGenerationLease } from "./generation";
 
 const DEFAULT_POLL_INTERVAL_MS = 1_000;
 const workerRegistry = globalThis as typeof globalThis & {
-  __masteryTutorGenerationWorker?: { stop: () => void };
+  __newtonGenerationWorker?: { stop: () => void };
 };
 
 function workerError(error: unknown) {
@@ -93,7 +93,7 @@ export async function processGenerationJob(job: GenerationJob, workerId: string,
 }
 
 export function startGenerationWorker(options: { pollIntervalMs?: number; workerId?: string } = {}) {
-  if (workerRegistry.__masteryTutorGenerationWorker) return workerRegistry.__masteryTutorGenerationWorker.stop;
+  if (workerRegistry.__newtonGenerationWorker) return workerRegistry.__newtonGenerationWorker.stop;
   const pollIntervalMs = options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
   const workerId = options.workerId ?? `generation-worker-${process.pid}`;
   let stopped = false;
@@ -117,9 +117,9 @@ export function startGenerationWorker(options: { pollIntervalMs?: number; worker
   const stop = () => {
     stopped = true;
     if (timer) clearTimeout(timer);
-    if (workerRegistry.__masteryTutorGenerationWorker?.stop === stop) delete workerRegistry.__masteryTutorGenerationWorker;
+    if (workerRegistry.__newtonGenerationWorker?.stop === stop) delete workerRegistry.__newtonGenerationWorker;
   };
-  workerRegistry.__masteryTutorGenerationWorker = { stop };
+  workerRegistry.__newtonGenerationWorker = { stop };
   void tick();
   return stop;
 }

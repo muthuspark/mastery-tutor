@@ -46,7 +46,7 @@ export async function runClaudeObject<T>(
   options: ClaudeOptions = {},
   runner: ClaudeRunner = defaultRunner,
 ): Promise<T> {
-  const workDir = await mkdtemp(path.join(tmpdir(), "mastery-tutor-claude-"));
+  const workDir = await mkdtemp(path.join(tmpdir(), "newton-claude-"));
   const timeoutMs = options.timeoutMs ?? agentTimeoutMs("claude");
 
   try {

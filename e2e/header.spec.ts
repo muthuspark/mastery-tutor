@@ -12,12 +12,12 @@ test("keeps the app header consistent across pages and quiz results", async ({ p
     await page.goto("/");
     const header = page.locator("body > .site-header");
     const expected = await header.boundingBox();
-    const brand = header.getByRole("link", { name: "Mastery Tutor" });
+    const brand = header.getByRole("link", { name: "Newton" });
     const expectedBrand = await brand.boundingBox();
     for (const path of ["/settings", "/course/header-course", "/course/header-course/ch/0", "/course/header-course/ch/0/quiz"]) {
       await page.goto(path);
       await expect(header).toBeVisible();
-      await expect(page.getByRole("link", { name: "Mastery Tutor", exact: true })).toHaveCount(1);
+      await expect(page.getByRole("link", { name: "Newton", exact: true })).toHaveCount(1);
       expect(await header.boundingBox()).toEqual(expected);
       expect(await brand.boundingBox()).toEqual(expectedBrand);
       await expect(header.getByRole("link", { name: "Profile settings" })).toBeVisible();

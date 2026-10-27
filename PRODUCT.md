@@ -6,11 +6,11 @@ product
 
 ## Users
 
-Learners use Mastery Tutor to study a topic, practice what they have learned, understand mistakes, and decide what to study next. The interface supports sustained reading and focused assessment on desktop and mobile.
+Learners use Newton to study a topic, practice what they have learned, understand mistakes, and decide what to study next. The interface supports sustained reading and focused assessment on desktop and mobile.
 
 ## Product Purpose
 
-Mastery Tutor provides course creation, lessons, assessment, feedback, and progress tracking. Its product direction is evidence-driven adaptive learning: help learners demonstrate, retain, and apply knowledge, with recommendations grounded in recorded evidence. The requirements are defined in `loop-prd.md`; they are not claims of proven teaching effectiveness.
+Newton provides course creation, lessons, assessment, feedback, and progress tracking. Its product direction is evidence-driven adaptive learning: help learners demonstrate, retain, and apply knowledge, with recommendations grounded in recorded evidence. The requirements are defined in `loop-prd.md`; they are not claims of proven teaching effectiveness.
 
 ## Brand Personality
 

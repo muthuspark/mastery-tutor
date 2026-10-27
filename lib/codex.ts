@@ -69,7 +69,7 @@ export async function runCodexObject<T>(
   options: RunOptions = {},
   runner: CodexRunner = defaultRunner,
 ): Promise<T> {
-  const workDir = await mkdtemp(path.join(tmpdir(), "mastery-tutor-codex-"));
+  const workDir = await mkdtemp(path.join(tmpdir(), "newton-codex-"));
   const schemaPath = path.join(workDir, "schema.json");
   const outputPath = path.join(workDir, "answer.json");
   const timeoutMs = options.timeoutMs ?? agentTimeoutMs("codex");

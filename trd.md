@@ -1,4 +1,4 @@
-# Mastery Tutor: Technical Implementation
+# Newton: Technical Implementation
 
 ## 1. Overview
 A local, single-user web app. You enter a topic, and it builds a first-principles syllabus of short chapters. Each chapter is unlocked only after you pass the QnA for the previous one, and a progress bar at the top shows where you are.

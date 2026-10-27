@@ -16,7 +16,7 @@ async function expectBounds(locator: Locator, viewport: number, maximum: number)
 async function pageGeometry(page: Page, width: number, variant: "wide" | "reading" | "home") {
   const header = page.locator("body > .site-header");
   const wide = await expectBounds(header, width, 1216);
-  await expect(header.getByRole("link", { name: "Mastery Tutor", exact: true })).toBeVisible();
+  await expect(header.getByRole("link", { name: "Newton", exact: true })).toBeVisible();
   await expect(header.getByRole("link", { name: "Profile settings", exact: true })).toBeVisible();
   const main = page.getByRole("main");
   const bounds = await expectBounds(main, width, variant === "reading" ? 768 : 1216);

@@ -72,7 +72,7 @@ function GenerationOverlay({ stage, returnFocusRef }: { stage: number; returnFoc
       }
     }}>
       <header className="site-header">
-        <span className="site-brand eyebrow">Mastery Tutor</span>
+        <span className="site-brand eyebrow">Newton</span>
         <span className="site-header-status ui text-sm text-[var(--muted)]">Your learning workspace</span>
       </header>
       <div className="generation-overlay__inner">

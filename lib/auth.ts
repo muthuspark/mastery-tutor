@@ -12,7 +12,7 @@ import { sendLoginCode } from "./mailtrap";
 function createAuth() {
   return betterAuth({
     ...authConfig(),
-    appName: "Mastery Tutor",
+    appName: "Newton",
     database: drizzleAdapter(db, { provider: "sqlite", schema }),
     emailAndPassword: { enabled: false },
     session: { expiresIn: 7 * 24 * 60 * 60, disableSessionRefresh: true, cookieCache: { enabled: false } },

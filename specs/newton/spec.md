@@ -1,10 +1,10 @@
-# Mastery Tutor
+# Newton
 
 ## Summary
 
 <!-- Format: State the outcome, scope, and measurable reason for doing this. -->
 
-Build Mastery Tutor, a local single-user learning app that generates a first-principles course for a topic and guides the learner through short chapters with mastery-gated QnA. The outcome is a usable end-to-end course flow with cached LLM content, progress tracking, remediation, review questions, and markdown export. Initial release targets one local user and no authentication.
+Build Newton, a local single-user learning app that generates a first-principles course for a topic and guides the learner through short chapters with mastery-gated QnA. The outcome is a usable end-to-end course flow with cached LLM content, progress tracking, remediation, review questions, and markdown export. Initial release targets one local user and no authentication.
 
 ## Problem
 
@@ -277,8 +277,8 @@ Cases:
 
 Audience: the developer implementing the local app and the product owner reviewing scope.
 Writing profile: 80% ASD-STE100 controlled-language style: short sentences, clear terms, active voice, and no unexplained acronyms.
-Primary artifact: `specs/mastery-tutor/spec.md`, a concise implementation specification. It explains the learner flow, server boundary, data model, gate rule, and failure paths.
-Supporting artifacts: `specs/mastery-tutor/task.md` with ordered implementation tasks; Mermaid sequence diagram in the Technical Design section; `trd.md` remains the source requirement document.
+Primary artifact: `specs/newton/spec.md`, a concise implementation specification. It explains the learner flow, server boundary, data model, gate rule, and failure paths.
+Supporting artifacts: `specs/newton/task.md` with ordered implementation tasks; Mermaid sequence diagram in the Technical Design section; `trd.md` remains the source requirement document.
 Accessibility: use readable Markdown headings, labeled tables, text equivalents for diagrams, and explicit error/state descriptions. Acceptance evidence is the completed task list plus the verification commands and tests recorded in the spec notes.
 
 ### UI Mockup Images
@@ -357,7 +357,7 @@ Evidence: T8 added `GET /api/courses/[id]/export`, deterministic Markdown serial
 Evidence: Export never calls Codex and labels chapters without cached content as not generated. `lib/export.test.ts` verifies ordering, content inclusion, and missing-content labeling.
 Evidence: `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` passed after T8. Eleven tests pass, and the production build includes the course export route.
 Evidence: T9 added route contract tests, a jsdom onboarding component test, and a Playwright homepage smoke test. The suite covers invalid input, missing resources, minimal onboarding, and absence of the Beginner choice.
-Evidence: T10 final verification completed on 2026-10-06: `npm run db:migrate`, `npm run lint`, `npm run typecheck`, `npm test` (15 tests), `npm run build`, `npm run test:e2e` (1 Chromium test), and `msdd review "Mastery Tutor"` all passed. The review found no structural or technical completeness gaps.
+Evidence: T10 final verification completed on 2026-10-06: `npm run db:migrate`, `npm run lint`, `npm run typecheck`, `npm test` (15 tests), `npm run build`, `npm run test:e2e` (1 Chromium test), and `msdd review "Newton"` all passed. The review found no structural or technical completeness gaps.
 Evidence: T11 command verification is complete: migration (`npm run db:migrate`), lint, typecheck, unit/route/component tests (`npm test`), production build, and browser tests (`npm run test:e2e`) all ran successfully.
 Evidence: T12 review confirmed clean lint/typecheck/build results and 15 passing tests covering schemas, score threshold/gating, locks and prerequisites, retries, review scheduling, export, route error contracts, and the Codex command seam. The browser smoke test verifies the minimal onboarding surface and absence of the removed level-choice UI; the deeper create-to-mastery flow remains covered by route/domain tests rather than a live Codex browser fixture.
 Evidence: `npm run lint`, `npm run typecheck`, and `npm test` passed with 15 tests. `npm run test:e2e` passed with one Chromium smoke test after installing the Playwright browser dependency.

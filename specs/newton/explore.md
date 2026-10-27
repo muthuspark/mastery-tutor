@@ -1,4 +1,4 @@
-# Exploration: Mastery Tutor
+# Exploration: Newton
 
 ## Context
 
@@ -27,4 +27,4 @@ Implement in milestone order: scaffold and persistence; course/syllabus generati
 - Chapter 0 opens initially; later chapters unlock only when the preceding chapter passes at score >= 0.8.
 - Quiz responses include MCQ, short-answer, and explain-why questions, with per-answer feedback and model answers.
 - Include up to two due review questions from earlier missed concepts and schedule missed concepts one to two chapters later.
-- Produce `spec.md` and generated `task.md` under `specs/mastery-tutor/`.
+- Produce `spec.md` and generated `task.md` under `specs/newton/`.

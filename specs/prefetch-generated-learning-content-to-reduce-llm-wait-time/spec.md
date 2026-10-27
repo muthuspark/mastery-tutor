@@ -258,7 +258,7 @@ stateDiagram-v2
 
 ## Explanation and Output Artifacts
 
-- Audience: maintainers and implementers of Mastery Tutor.
+- Audience: maintainers and implementers of Newton.
 - Writing profile: 80% ASD-STE100 controlled language with short, testable statements.
 - Primary artifact: this Markdown specification for the warm-up pipeline and its acceptance evidence.
 - Supporting artifacts: Mermaid sequence/state diagrams here and the ordered task list in `task.md`.

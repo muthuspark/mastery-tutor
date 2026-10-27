@@ -43,7 +43,7 @@ it("uses server configuration and ignores requested providers and old cookies", 
   const { agentForRequest } = await import("./agent");
   commands.add("codex");
   vi.stubEnv("DEEPSEEK_API_KEY", "key");
-  const request = new Request("http://localhost", { headers: { cookie: "mastery-tutor-agent=claude" } });
+  const request = new Request("http://localhost", { headers: { cookie: "newton-agent=claude" } });
   vi.stubEnv("AI_PROVIDER", "codex");
   expect(await agentForRequest(request)).toBe("codex");
   vi.stubEnv("AI_PROVIDER", "deepseek");

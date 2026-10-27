@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mastery Tutor",
+  title: "Newton",
   description: "Learn a topic one mastered chapter at a time.",
 };
 

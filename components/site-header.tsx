@@ -7,7 +7,7 @@ export function SiteHeader({ status }: { status?: string }) {
     <header className="site-header">
       <Link className="site-brand" href="/">
         <Image className="brand-mark" src="/brand-mark.svg" width={40} height={40} alt="" aria-hidden="true" priority />
-        <span>Mastery Tutor</span>
+        <span>Newton</span>
       </Link>
       {status ? <span className="site-header-status ui text-sm text-[var(--muted)]">{status}</span> : <AccountControls />}
     </header>

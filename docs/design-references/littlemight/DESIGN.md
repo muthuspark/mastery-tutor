@@ -124,7 +124,7 @@ components:
 
 ## Overview
 
-**Reference:** [littlemight.com](https://littlemight.com/), inspected 25 October 2026. This is an external design reference, not a description of Mastery Tutor's current UI. It does not replace the repository's root design guide.
+**Reference:** [littlemight.com](https://littlemight.com/), inspected 25 October 2026. This is an external design reference, not a description of Newton's current UI. It does not replace the repository's root design guide.
 
 **Interpretation: an illustrated field journal.** The publication pairs expressive editorial typography with practical interface text and technical metadata. Warm paper, dark ink, hand-drawn imagery and orange emphasis establish its character. Large horizontal bands and thin rules organize the homepage; generous whitespace separates stories without enclosing every item in a card.
 
