@@ -22,3 +22,4 @@ data/login-e2e-state.json
 .xpo/git.lock
 .xpo/events.lock
 .xpo/worktrees/
+output/

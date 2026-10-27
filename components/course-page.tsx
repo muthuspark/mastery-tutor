@@ -2,14 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { RevisitDialog } from "@/components/revisit-dialog";
 import { CoursePreparation, type PreparationState } from "./course-preparation";
 import { BackToLearning } from "./back-link";
 
-type Chapter = { id: string; idx: number; title: string; prerequisites: number[]; status: "locked" | "open" | "passed" };
+type Chapter = { id: string; idx: number; title: string; status: "locked" | "open" | "passed" };
 type CourseResponse = { course: { topic: string } & PreparationState; chapters: Chapter[]; progress: { passed: number; total: number } };
 
 export function CoursePage() {
@@ -34,6 +33,7 @@ export function CoursePage() {
   const total = data.chapters.length;
   const passed = data.chapters.filter((chapter) => chapter.status === "passed").length;
   const completed = total > 0 && passed === total;
+  const currentChapterId = data.chapters.find((chapter) => chapter.status === "open")?.id;
   function openRevisitDialog(chapter: Chapter) {
     setRevisitError("");
     setRevisitChapter(chapter);
@@ -52,13 +52,12 @@ export function CoursePage() {
   }
   return (
     <main id="main-content" tabIndex={-1} className="reading-shell course-index">
-      <BackToLearning />
+      <div className="course-console-toolbar">
       <header className="course-hero">
-        <div className="course-hero-copy">
-        <p className="course-index-label">Your learning path</p>
-        <h1 className="display max-w-3xl text-4xl leading-none">{data.course.topic}</h1>
-        </div>
-        <Image className="course-index-art" src="/images/newton-under-apple-tree.webp" width={1254} height={1254} sizes="(max-width: 767px) 100px, 176px" alt="" aria-hidden="true" preload />
+        <Link href="/" className="course-back-arrow" aria-label="Back to studies" title="Back to studies">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12H4m7-7-7 7 7 7" stroke="currentColor" strokeWidth="2" /></svg>
+        </Link>
+        <h1 className="display">{data.course.topic}</h1>
       </header>
       <div className="course-toolbar">
         <div className="course-index-progress">
@@ -67,6 +66,7 @@ export function CoursePage() {
         </div>
         <a className="button-secondary ui shrink-0" href={`/api/courses/${params.id}/export`}>Export notes</a>
       </div>
+      </div>
       {total === 0 ? (
         <section className="border-t border-[var(--line)] pt-6" aria-labelledby="empty-course-heading">
           <h2 id="empty-course-heading" className="display text-3xl leading-tight">No chapters available</h2>
@@ -74,16 +74,17 @@ export function CoursePage() {
         </section>
       ) : (
         <section aria-labelledby="course-chapters-title" className="course-index-outline">
-        <h2 id="course-chapters-title">Chapters</h2>
-        <ol className="chapter-list divide-y divide-[var(--line)]">
+        <h2 id="course-chapters-title" className="sr-only">Chapters</h2>
+        <ol className="chapter-list">
           {data.chapters.map((chapter) => {
             const isOpen = chapter.status === "open";
             const isPassed = chapter.status === "passed";
             if (isPassed) return (
               <li key={chapter.id}>
                 <div className="chapter-row chapter-row--mastered">
-                  <span className="chapter-index-number ui text-xs font-bold" role="img" aria-label="Completed">✓</span>
-                  <div className="chapter-row-copy"><span className="chapter-title text-xl">{chapter.title}</span><span className="chapter-mastered-label">Mastered</span></div>
+                  <span className="chapter-index-number" aria-hidden="true">{String(chapter.idx + 1).padStart(2, "0")}</span>
+                  <div className="chapter-row-copy"><span className="chapter-title">{chapter.title}</span></div>
+                  <span className="chapter-console-status"><svg className="chapter-status-icon" role="img" aria-label="Completed" viewBox="0 0 16 16"><path d="M1 7h3v3h3V7h3V4h3V1h3v5h-3v3h-3v3H7v3H4v-3H1z" fill="currentColor" /></svg>Mastered</span>
                   <span className="chapter-row-actions ui text-xs">
                     <Link className="chapter-read" href={`/course/${params.id}/ch/${chapter.idx}`} aria-label={`Read → ${chapter.title}`}>Read →</Link>
                     <button type="button" className="text-button chapter-retake" aria-label={`Retake mastery check → ${chapter.title}`} aria-haspopup="dialog" onClick={() => openRevisitDialog(chapter)}>Retake →</button>
@@ -92,19 +93,19 @@ export function CoursePage() {
               </li>
             );
             const content = <>
-              <span className="chapter-index-number ui text-xs font-bold" aria-hidden="true">{String(chapter.idx + 1).padStart(2, "0")}</span>
+              <span className="chapter-index-number" aria-hidden="true">{String(chapter.idx + 1).padStart(2, "0")}</span>
               <div className="chapter-row-copy">
-                <span className="chapter-title text-xl">{chapter.title}</span>
-                {chapter.status === "locked" ? <UnlockGuidance chapter={chapter} chapters={data.chapters} /> : null}
+                <span className="chapter-title">{chapter.title}</span>
               </div>
+              <span className="chapter-console-status">{isOpen ? "Ready" : <><svg className="chapter-status-icon" aria-hidden="true" viewBox="0 0 16 16"><path d="M5 1h6v2h2v4h2v9H1V7h2V3h2zm0 2v4h6V3zm2 7v3h2v-3z" fill="currentColor" fillRule="evenodd" /></svg>Locked</>}</span>
               <span className="chapter-row-actions ui text-xs">
-                <span className="font-bold">{isOpen ? "Continue →" : "Locked"}</span>
+                {isOpen ? <span className={chapter.id === currentChapterId ? "chapter-console-continue" : "chapter-console-open"}>Continue →</span> : <span aria-hidden="true">—</span>}
               </span>
             </>;
             return (
               <li key={chapter.id}>
                 {chapter.status === "locked" ? <div className="chapter-row text-[var(--muted)]">{content}</div> : (
-                  <Link className={`chapter-row chapter-link no-underline hover:bg-[var(--paper-deep)] ${isOpen ? "text-[var(--accent)]" : ""}`} href={`/course/${params.id}/ch/${chapter.idx}`} aria-current={isOpen ? "step" : undefined}>{content}</Link>
+                  <Link className="chapter-row chapter-link" href={`/course/${params.id}/ch/${chapter.idx}`} aria-label={`${chapter.title} Continue →`} aria-current={chapter.id === currentChapterId ? "step" : undefined}>{content}</Link>
                 )}
               </li>
             );
@@ -116,21 +117,4 @@ export function CoursePage() {
       <RevisitDialog open={Boolean(revisitChapter)} chapterTitle={revisitChapter?.title ?? "this chapter"} isSubmitting={isRevisiting} error={revisitError} onCancel={() => { if (!isRevisiting) { setRevisitChapter(null); setRevisitError(""); } }} onConfirm={() => void confirmRevisit()} />
     </main>
   );
-}
-
-function UnlockGuidance({ chapter, chapters }: { chapter: Chapter; chapters: Chapter[] }) {
-  const previous = chapters.find(item => item.idx === chapter.idx - 1);
-  const required = new Set(chapter.prerequisites ?? []);
-  const prerequisites = chapters.filter(item => required.has(item.idx)).sort((a, b) => a.idx - b.idx);
-  const missing = [...required].some(idx => !chapters.some(item => item.idx === idx));
-  return <div className="ui mt-2 text-sm">
-    <p>{previous
-      ? `Unlocks when you pass the mastery check for “${previous.title}”${required.size ? " with all listed prerequisites mastered" : ""}.`
-      : "Chapters unlock in sequence after the previous chapter’s mastery check is passed."}</p>
-    {prerequisites.length ? <>
-      <p className="mt-2">Required prerequisites:</p>
-      <ul className="mt-1 space-y-1">{prerequisites.map(item => <li key={item.id}>{item.title}: {item.status === "passed" ? "Mastered" : "Not yet mastered"}</li>)}</ul>
-    </> : null}
-    {missing ? <p className="mt-2">A listed prerequisite is unavailable in this course. This chapter cannot unlock until all listed prerequisites are mastered.</p> : null}
-  </div>;
 }

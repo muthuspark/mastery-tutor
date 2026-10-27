@@ -82,7 +82,7 @@ function GenerationOverlay({ stage, returnFocusRef }: { stage: number; returnFoc
             <p className="eyebrow">Your curriculum desk</p>
             <h1 ref={titleRef} tabIndex={-1} id="generation-title" className="display generation-title">Building your learning path</h1>
             <p id="generation-detail" role="status" aria-atomic="true" className="generation-detail">{current.detail}.</p>
-            <div className="generation-progress" aria-hidden="true"><span style={{ width: `${((stage + 1) / generationStages.length) * 100}%` }} /></div>
+            <div className="generation-progress" aria-hidden="true"><progress className="progress-fill" value={stage + 1} max={generationStages.length} /></div>
             <p className="ui generation-time">Writing and review will continue on your course page.</p>
           </section>
 

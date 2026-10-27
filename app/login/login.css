@@ -48,8 +48,7 @@ body:has(.login-page) .site-brand {
   letter-spacing: 0;
 }
 
-body:has(.login-page) .brand-mark { display: none; }
-body:has(.login-page) .login-brand-mark { display: block; width: 1.75rem; height: 1.925rem; }
+body:has(.login-page) .brand-mark { display: block; width: 1.75rem; height: 1.925rem; }
 .login-beta { color: var(--muted); font-size: 0.875rem; }
 
 .login-page {
@@ -126,14 +125,14 @@ body:has(.login-page) .site-footer {
   background: transparent;
   color: var(--muted);
 }
-body:has(.login-page) .site-footer-inner { display: none; }
-body:has(.login-page) .login-footer-inner {
+body:has(.login-page) .site-footer-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   min-height: 3.5rem;
   font-size: 0.75rem;
+  padding-block: 0;
 }
 
 @media (max-width: 1023px) and (min-width: 768px) {
@@ -145,7 +144,7 @@ body:has(.login-page) .login-footer-inner {
 @media (max-width: 767px) {
   body:has(.login-page) .site-header { min-height: 3.75rem; padding-block: 0.5rem; }
   body:has(.login-page) .site-brand { font-size: 1.65rem; }
-  body:has(.login-page) .login-brand-mark { width: 1.4rem; height: 1.54rem; }
+  body:has(.login-page) .brand-mark { width: 1.4rem; height: 1.54rem; }
   .login-beta { font-size: 0.75rem; }
   .login-page { display: flex; flex-direction: column; justify-content: center; gap: 0.75rem; padding-block: 1rem; }
   .login-illustration { flex: 0 1 auto; }
@@ -164,7 +163,7 @@ body:has(.login-page) .login-footer-inner {
   .login-page:has(.login-code) .login-form label { margin-top: 0.75rem; }
   .login-page .login-form > div { margin-top: 1rem; }
   .login-page [role="alert"] { padding: 0.5rem 0.75rem; }
-  body:has(.login-page) .login-footer-inner { min-height: 2.75rem; font-size: 0.625rem; }
+  body:has(.login-page) .site-footer-content { min-height: 2.75rem; font-size: 0.625rem; }
 }
 
 /* Reclaim decorative space when a phone keyboard or a short window needs it.
@@ -194,11 +193,14 @@ body:has(.login-page) .login-footer-inner {
   .login-page .login-invitation { margin-top: 0.75rem; font-size: 0.6875rem; }
   .login-page [role="alert"] { margin-top: 0.5rem; padding: 0.25rem 0.5rem; font-size: 0.75rem; }
   .login-page .login-form > div { margin-top: 0.5rem; font-size: 0.75rem; }
-  body:has(.login-page) .login-footer-inner { min-height: 2.5rem; font-size: 0.625rem; }
-}
-@media (max-width: 380px) {
-  .login-footer-inner > p:nth-child(2) { display: none; }
+  body:has(.login-page) .site-footer-content { min-height: 2.5rem; font-size: 0.625rem; }
 }
 @media (max-height: 450px) and (min-width: 768px) {
   body:has(.login-page .login-code) .site-footer { display: none; }
+}
+
+body:has(.login-page) .footer-beta { display: block; }
+body:has(.login-page) .footer-method { display: none; }
+@media (max-width: 380px) {
+  body:has(.login-page) .footer-beta { display: none; }
 }

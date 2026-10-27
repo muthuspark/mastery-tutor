@@ -78,7 +78,7 @@ function StudyProgress({ course }: { course: Course }) {
   const percent = total > 0 ? Math.round((passed / total) * 100) : 0;
   return (
     <div className="study-progress" role="progressbar" aria-label={`${course.topic} progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-valuetext={`${passed} of ${total} chapters mastered`}>
-      <div className={total > 0 && passed === total ? "is-complete" : undefined} style={{ width: `${percent}%` }} />
+      <progress className={`progress-fill${total > 0 && passed === total ? " is-complete" : ""}`} value={percent} max={100} aria-hidden="true" />
     </div>
   );
 }

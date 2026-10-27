@@ -29,13 +29,13 @@ All page backgrounds are white, including authentication, studies, courses, chap
 
 Define shared backgrounds in app/globals.css. The aliases --paper, --surface, and --paper-deep inherit those tokens. Page styles may define their foreground and action tokens, but should inherit shared page backgrounds.
 
-Existing fallback tokens still support older components. Prefer the redesigned foreground and action roles above when updating those components.
+These foreground and action roles are shared globally, including quizzes, results, loading screens, recovery screens, and the not-found page. Route styles should not redefine the shared theme.
 
 Use orange selectively for the next action, progress, and active navigation details. Keep errors, selection, and completion understandable without color alone.
 
 ## Typography
 
-Authenticated pages use self-hosted Sora for headings and Manrope for body text, navigation, forms, buttons, and metadata.
+Authenticated pages use self-hosted Sora for headings and Manrope for body text, navigation, forms, buttons, and metadata. Their font-face declarations live once in app/globals.css so initial loads and client navigation use the same type system.
 
 | Element | Font | Typical size | Weight |
 | --- | --- | --- | --- |
@@ -63,12 +63,14 @@ Typical content widths:
 
 | Surface | Maximum width |
 | --- | --- |
-| Studies dashboard | 1420px |
-| Course index | 1040px |
+| Studies dashboard | 1240px |
+| Course index | 1240px, aligned with the shared navigation |
 | Chapter reader | 1240px overall, with a reading column up to 760px |
 | Profile settings | 896px |
 
 Use flexible gutters on desktop and approximately 20px on small screens. Keep long titles and uninterrupted strings wrap-safe.
+
+Shared page padding is 24px vertically on desktop and 20px on narrow screens. Individual compositions can add space within their content, but back navigation and recovery screens should start from these shared defaults.
 
 ### Landing page
 
@@ -86,9 +88,15 @@ Show real chapter counts and percentages. Preparing, failed, unstarted, and comp
 
 ### Course index
 
-Show the course title with a small apple-tree illustration, followed by one progress summary and the export action. Present chapters as a sequential flat list.
+Use the approved Study console direction: a compact course title with progress and Export notes in the same desktop toolbar. Align the content with the shared navigation. Do not add illustrations or introductory labels.
 
-Highlight open chapters with a neutral surface and an orange continuation cue. Mastered chapters keep separate Read and Retake actions. Locked chapters show their actual sequential and prerequisite requirements and remain non-navigable.
+Place a small back arrow immediately beside the course title, linking to the studies page. Give it the accessible name and tooltip “Back to studies” and a 44px interaction target. Do not reserve a separate row for this navigation.
+
+Present chapters as one dense full-width directory with aligned chapter numbers, titles, statuses, and actions. Omit visible column headers; begin the list directly below the course toolbar. Use roughly 48px rows on desktop, allowing long titles to increase the row height. On small screens, place status below the title while keeping the chapter number and action visible. Keep the chapter sequence intact. Omit unlocking explanations and prerequisite lists.
+
+Use a narrow 48px chapter column, 20px desktop column gaps, and 8px outer cell padding. Keep Status and Action compact at the right, with Read and Retake distributed across the action column. Preserve the full navigation-aligned width rather than adding outer margins.
+
+Keep the course console white and charcoal with neutral separators. Completed progress segments and pixel checks are charcoal; locked chapters use a small pixel lock and readable muted text. Only the first open chapter receives an orange Continue action and a small orange position marker. Other open chapters remain accessible with a text continuation action. Mastered chapters keep separate quiet Read and Retake actions. Locked chapters remain non-navigable. Server-side prerequisite and access rules remain unchanged.
 
 Retaking requires the existing confirmation dialog and its explanation of what is reset. Visual updates must preserve saved progress, exports, and prerequisite rules.
 
@@ -111,6 +119,8 @@ Owner-only invitations remain a separate section below the learner profile. Pres
 ### Header and footer
 
 Use the pixel apple beside the Newton wordmark on redesigned pages. Authenticated navigation retains Profile settings and Sign out. Authentication shows Private beta.
+
+All authenticated routes share the same header geometry, gutters, logo size, and navigation type. Do not override the header or footer independently on a route. The landing page may adjust its composition for its pixel typography and single-screen layout.
 
 Use a slim neutral footer with a fine rule. Standard authenticated footer copy is “Grow your understanding.” and “Read. Practice. Reflect.”
 
@@ -144,7 +154,7 @@ Status labels and actions must distinguish available, mastered, locked, preparin
 
 Approved assets:
 
-- public/images/newton-under-apple-tree.webp: landing illustration and compact course or resume vignette.
+- public/images/newton-under-apple-tree.webp: landing illustration and compact resume vignette. Do not use it on the course index.
 - public/images/studies-books.webp: supporting illustration for creation and settings.
 - public/images/pixel-apple.svg: compact brand mark.
 
@@ -177,8 +187,10 @@ Use short color transitions, typically 150–200ms. Do not add decorative motion
 
 ## Implementation and review
 
-Shared tokens and controls live in app/globals.css. Route-specific styles currently live in app/login/login.css, app/studies.css, app/course/[id]/course-index.css, app/course/[id]/ch/[idx]/reader.css, and app/settings/settings.css.
+Shared fonts, colors, controls, header, footer, and navigation live in app/globals.css. Route-specific composition styles live in app/login/login.css, app/studies.css, app/course/[id]/course-index.css, app/course/[id]/ch/[idx]/reader.css, and app/settings/settings.css. Keep those files focused on the layout and content needs of each page.
 
 Before editing Next.js code, read the relevant bundled guide in node_modules/next/dist/docs as required by AGENTS.md.
 
 For UI changes, verify relevant existing component and browser tests. Inspect representative desktop and mobile renders. Check long titles, empty and failed states, keyboard focus, and image proportions when affected. Use the production build to verify font, CSS, and route integration.
+
+The route crawl in e2e/style-uniformity.spec.ts checks shared styles at 1440px, 390px, and 320px. It records computed styles in test-results/style-audit.json and screenshots in test-results/style-audit. Run it when changing shared typography, colors, or page chrome.

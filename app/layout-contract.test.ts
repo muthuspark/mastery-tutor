@@ -33,16 +33,16 @@ describe("page container CSS contract", () => {
     expect(overrides).toHaveLength(1);
   });
 
-  it("preserves the published desktop and mobile tokens at the existing breakpoint", () => {
+  it("uses consistent page spacing and gutters at the existing breakpoint", () => {
     const roots = rules.filter((rule) => rule.selectors.includes(":root"));
     expect(roots).toHaveLength(2);
     expect(roots[0].declarations).toMatchObject({
       "--layout-max-wide": "77.5rem",
       "--layout-max-reading": "47.5rem",
       "--layout-gutter": "2rem",
-      "--layout-page-space": "3.5rem",
+      "--layout-page-space": "1.5rem",
     });
-    expect(roots[1].declarations).toEqual({ "--layout-gutter": "1.25rem", "--layout-page-space": "2.5rem" });
+    expect(roots[1].declarations).toEqual({ "--layout-gutter": "1.25rem", "--layout-page-space": "1.25rem" });
     expect(css).toMatch(/@media \(max-width: 639px\)\s*\{\s*:root\s*\{/);
   });
 

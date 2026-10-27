@@ -1,33 +1,3 @@
-@font-face {
-  font-family: "Sora";
-  src: url("/fonts/sora-variable.woff2") format("woff2");
-  font-weight: 400 800;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Manrope";
-  src: url("/fonts/manrope-variable.woff2") format("woff2");
-  font-weight: 400 800;
-  font-style: normal;
-  font-display: swap;
-}
-body:has(.settings-page) {
-  --sans: "Manrope", system-ui, sans-serif;
-  --serif: var(--sans);
-  --display: "Sora", system-ui, sans-serif;
-  --ink: oklch(0.23 0.009 145);
-  --muted: oklch(0.47 0.012 86);
-  --line: oklch(0.72 0.018 88 / 45%);
-  --action: oklch(0.62 0.19 42);
-  --radius-control: 0;
-  font-family: var(--sans);
-}
-body:has(.settings-page) .site-header { min-height: 4.25rem; padding-block: 0.5rem; }
-body:has(.settings-page) .site-brand { font: 700 1.5rem/1.3 var(--display); letter-spacing: -0.04em; }
-body:has(.settings-page) .brand-mark { display: none; }
-body:has(.settings-page) .login-brand-mark { display: block; width: 1.65rem; height: 1.815rem; }
-body:has(.settings-page) .home-settings { padding-inline: 0; font-size: 0.875rem; font-weight: 500; }
 .settings-page { --container-max: 56rem; padding-block: 1.5rem 3rem; }
 .settings-page .back-link { font: 500 0.8125rem/1.5 var(--sans); letter-spacing: 0; text-transform: none; }
 .settings-page .settings-intro { display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin-block: 1.5rem 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
@@ -42,20 +12,11 @@ body:has(.settings-page) .home-settings { padding-inline: 0; font-size: 0.875rem
 .settings-page textarea { min-height: 13rem; }
 .settings-page #profile-count { margin-top: 0.625rem; font-size: 0.75rem; font-variant-numeric: tabular-nums; }
 .settings-page #profile-effect { margin-top: 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--line); background: var(--paper-deep); font-size: 0.8125rem; line-height: 1.8; }
-.settings-page .button-primary { min-height: 3rem; border-radius: 0; padding: 0.75rem 1.25rem; font-size: 0.875rem; font-weight: 600; box-shadow: 0 3px 0 oklch(0.47 0.15 40), 3px 0 0 -1px var(--action), -3px 0 0 -1px var(--action); }
-.settings-page .button-primary:hover:not(:disabled) { background: oklch(0.54 0.16 42); }
-.settings-page .button-primary:active:not(:disabled) { box-shadow: 0 1px 0 oklch(0.47 0.15 40); }
-.settings-page .button-secondary { border-radius: 0; font-size: 0.875rem; }
 .settings-page .invitation-section { margin-top: 3rem; padding-top: 2rem; }
 .settings-page .invitation-section h2 { font: 600 1.375rem/1.4 var(--display); letter-spacing: -0.03em; }
 .settings-page .invitation-section > p { max-width: 68ch; font-size: 0.9375rem; line-height: 1.8; }
 .settings-page .invitation-section form { max-width: 34rem; }
 .settings-page [role="alert"] { font-size: 0.875rem; }
-body:has(.settings-page) .site-footer { width: min(calc(100% - 2 * var(--layout-gutter)), var(--layout-max-wide)); margin: 0 auto; padding: 0; border-top: 1px solid var(--line); background: transparent; color: var(--muted); }
-body:has(.settings-page) .site-footer-inner { display: none; }
-body:has(.settings-page) .login-footer-inner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; min-height: 3.5rem; padding-block: 1rem; font-size: 0.75rem; }
-body:has(.settings-page) .login-footer-inner p:nth-child(2) { display: none; }
-body:has(.settings-page) .reader-footer-method { display: block; }
 @media (max-width: 767px) {
   .settings-page .settings-intro { gap: 1rem; margin-top: 1.25rem; }
   .settings-page .settings-intro h1 { font-size: 1.875rem; }
@@ -63,12 +24,7 @@ body:has(.settings-page) .reader-footer-method { display: block; }
   .settings-art { width: 6rem; height: 5rem; }
   .settings-page #profile-effect { padding: 0.875rem 1rem; }
   .settings-page textarea { min-height: 14rem; }
-  body:has(.settings-page) .site-brand { font-size: 1.25rem; }
-  body:has(.settings-page) .login-footer-inner { font-size: 0.6875rem; }
 }
 @media (max-width: 380px) {
   .settings-art { display: none; }
-  body:has(.settings-page) .site-header { gap: 0.5rem; }
-  body:has(.settings-page) .site-header nav { column-gap: 0.75rem; }
-  body:has(.settings-page) .home-settings { font-size: 0.75rem; }
 }
