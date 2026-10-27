@@ -35,6 +35,8 @@ for (const width of [1440, 390]) {
     await expect(choice).toBeChecked();
     await page.getByRole("button", { name: "Continue", exact: true }).click();
     await expect(page.getByRole("heading", { name: prompts[1] })).toBeFocused();
+    await page.evaluate(() => document.fonts.ready);
+    await page.screenshot({ path: `test-results/chapter-practice-feedback-${width}.png`, fullPage: true });
     expect(requests[1]).toMatchObject({ choiceIndex: 0, usedHint: true });
     await page.reload();
     await expect(page.getByRole("heading", { name: prompts[1] })).toBeFocused();

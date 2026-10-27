@@ -3,14 +3,12 @@
 .studies-intro h1 { font: 700 2.5rem/1.2 var(--display); letter-spacing: -0.04em; }
 .studies-intro > p { margin-top: 0.5rem; color: var(--muted); font-size: 1.0625rem; line-height: 1.6; }
 .studies-page .learning-workspace { grid-template-columns: minmax(0, 1.9fr) minmax(17rem, 1fr); gap: 1.75rem 2rem; }
-.studies-page .featured-study { display: grid; grid-template-columns: minmax(0, 1fr) auto 11rem; align-items: center; gap: 1.5rem; min-height: 10.5rem; padding: 1.25rem 1.75rem; border-color: var(--line); border-radius: 0; background: var(--paper-deep); }
+.studies-page .featured-study { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1.5rem; min-height: 0; padding: 1.25rem 0; border: 0; border-block: 1px solid var(--line); border-radius: 0; background: transparent; }
 .studies-page .featured-study-content { max-width: none; }
-.studies-page .featured-study-label { margin-bottom: 0.5rem; color: var(--ink); font-size: 0.8125rem; }
 .studies-page .featured-study h2 { margin-bottom: 0.5rem; font: 600 1.75rem/1.25 var(--display); letter-spacing: -0.045em; }
 .studies-page .featured-study-meta { font-size: 0.875rem; }
 .studies-page .featured-study-progress { gap: 1rem; margin-top: 0.875rem; }
 .studies-page .featured-study-progress > span { font-size: 0.875rem; }
-.featured-study-art { display: block; width: 11rem; height: 10rem; margin-block: -1rem; object-fit: contain; image-rendering: pixelated; }
 .studies-page .resume-skeleton { min-height: 10.5rem; border-radius: 0; }
 .studies-page .studies-section { min-width: 0; padding: 0; border: 0; border-radius: 0; }
 .studies-page .studies-heading { gap: 1rem; padding-bottom: 0.875rem; }
@@ -19,7 +17,7 @@
 .studies-page .studies-list { margin-top: 0; }
 .studies-page .study-progress { position: relative; height: 0.625rem; overflow: hidden; border-radius: 0; background: var(--line); }
 .studies-page .study-progress::after { position: absolute; inset: 0; content: ""; background: repeating-linear-gradient(to right, transparent 0, transparent calc(8.333333% - 2px), var(--paper) calc(8.333333% - 2px), var(--paper) 8.333333%); pointer-events: none; }
-.studies-page .featured-study .study-progress::after { background: repeating-linear-gradient(to right, transparent 0, transparent calc(4.166667% - 2px), var(--paper-deep) calc(4.166667% - 2px), var(--paper-deep) 4.166667%); }
+.studies-page .featured-study .study-progress::after { background: repeating-linear-gradient(to right, transparent 0, transparent calc(4.166667% - 2px), var(--paper) calc(4.166667% - 2px), var(--paper) 4.166667%); }
 .studies-page .study-link { min-height: 4rem; padding-block: 0.625rem; }
 .studies-page .study-link:last-child { padding-bottom: 0.625rem; border-bottom: 1px solid var(--line); }
 .studies-page .study-topic { font-family: var(--sans); font-size: 1rem; font-weight: 600; line-height: 1.4; letter-spacing: -0.015em; }
@@ -58,8 +56,7 @@
 @media (max-width: 1199px) and (min-width: 1024px) {
   .studies-page .learning-workspace { gap: 1.5rem; }
   .studies-page .course-creation { padding-left: 1.5rem; }
-  .studies-page .featured-study { gap: 1rem; grid-template-columns: minmax(0, 1fr) auto 8rem; }
-  .featured-study-art { width: 8rem; }
+  .studies-page .featured-study { gap: 1rem; grid-template-columns: minmax(0, 1fr) auto; }
   .studies-intro h1 { font-size: 2.125rem; }
 }
 @media (max-width: 1023px) {
@@ -77,11 +74,10 @@
   .studies-intro { margin-bottom: 1.5rem; }
   .studies-intro h1 { font-size: 1.875rem; }
   .studies-intro > p { font-size: 0.9375rem; }
-  .studies-page .featured-study { grid-template-columns: minmax(0, 1fr) 6rem; gap: 1rem; padding: 1.25rem; }
+  .studies-page .featured-study { grid-template-columns: minmax(0, 1fr); gap: 1rem; padding: 1.25rem 0; }
   .studies-page .featured-study-content { grid-column: 1 / -1; }
   .studies-page .featured-study h2 { font-size: 1.5rem; }
   .studies-page .featured-study > .button-primary { align-self: center; justify-self: start; white-space: normal; }
-  .featured-study-art { width: 6rem; height: 6rem; margin: 0; }
   .studies-page .study-link { padding-block: 1rem; }
   .studies-page .study-topic { font-size: 1rem; }
   .studies-page .studies-heading h2, .studies-page .course-creation h2 { font-size: 1.25rem; }

@@ -24,10 +24,14 @@ test("chapter reading keeps navigation, practice, and lesson text usable across 
   await page.goto("/course/reader-course/ch/1");
   await expect(page.getByRole("heading", { name: "How many cards are still possible?" })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
-  const outline = page.getByRole("navigation", { name: "Course chapters" });
-  await expect(outline.getByRole("link", { name: /Understanding conditional probability/ })).toHaveAttribute("aria-current", "page");
-  await expect(outline.getByRole("link", { name: /Independent events/ })).toHaveCount(0);
-  await expect(page.getByRole("progressbar", { name: "Course progress" })).toHaveAttribute("aria-valuenow", "1");
+  await expect(page.getByRole("complementary", { name: "Course outline" })).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Course chapters" })).toHaveCount(0);
+  const back = page.getByRole("link", { name: "Back to course", exact: true });
+  await expect(back).toHaveAttribute("href", "/course/reader-course");
+  await expect(page.locator(".reader-title-row")).toContainText(chapter.title);
+  await expect(page.getByText("Explore the idea. Put your understanding into practice.")).toHaveCount(0);
+  await expect(page.locator(".socratic-session")).toHaveCSS("border-top-width", "0px");
+  await expect(page.locator(".assessment-option").first()).toHaveCSS("border-right-width", "0px");
   for (const [width, height] of [[1440, 1000], [768, 1024], [390, 844], [320, 667]]) {
     await page.setViewportSize({ width, height });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${width}px reading layout`).toBe(true);
@@ -40,6 +44,7 @@ test("chapter reading keeps navigation, practice, and lesson text usable across 
   }
   await page.getByLabel("A. 52 cards").check();
   await expect(page.getByRole("button", { name: "Continue", exact: true })).toBeEnabled();
+  await expect(page.locator(".assessment-option").first()).not.toHaveCSS("box-shadow", "none");
   await page.getByRole("button", { name: "Give me a hint" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Count only the hearts and diamonds." })).toBeVisible();
 });

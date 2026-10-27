@@ -6,28 +6,11 @@
   font-display: swap;
 }
 
-@font-face {
-  font-family: "Newton Mono";
-  src: url("/fonts/dm-mono-regular.ttf") format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Newton Mono";
-  src: url("/fonts/dm-mono-medium.ttf") format("truetype");
-  font-weight: 500 700;
-  font-style: normal;
-  font-display: swap;
-}
-
 /* Scope the single-screen composition to the public entrance. */
 body:has(.login-page) {
   --ink: oklch(0.23 0.009 145);
   --muted: oklch(0.47 0.012 86);
   --line: oklch(0.72 0.018 88 / 65%);
-  --sans: "Newton Mono", "Courier New", monospace;
   --display: "Newton Pixel", monospace;
   --layout-max-wide: 94rem;
   --layout-gutter: clamp(1.25rem, 3vw, 3rem);
@@ -48,7 +31,7 @@ body:has(.login-page) .site-brand {
   letter-spacing: 0;
 }
 
-body:has(.login-page) .brand-mark { display: block; width: 1.75rem; height: 1.925rem; }
+
 .login-beta { color: var(--muted); font-size: 0.875rem; }
 
 .login-page {
@@ -121,14 +104,13 @@ body:has(.login-page) .site-footer {
   width: min(calc(100% - 2 * var(--layout-gutter)), var(--layout-max-wide));
   margin: 0 auto;
   padding: 0;
-  border-top: 1px solid var(--line);
   background: transparent;
   color: var(--muted);
 }
 body:has(.login-page) .site-footer-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 1rem;
   min-height: 3.5rem;
   font-size: 0.75rem;
@@ -144,7 +126,7 @@ body:has(.login-page) .site-footer-content {
 @media (max-width: 767px) {
   body:has(.login-page) .site-header { min-height: 3.75rem; padding-block: 0.5rem; }
   body:has(.login-page) .site-brand { font-size: 1.65rem; }
-  body:has(.login-page) .brand-mark { width: 1.4rem; height: 1.54rem; }
+
   .login-beta { font-size: 0.75rem; }
   .login-page { display: flex; flex-direction: column; justify-content: center; gap: 0.75rem; padding-block: 1rem; }
   .login-illustration { flex: 0 1 auto; }
@@ -197,10 +179,4 @@ body:has(.login-page) .site-footer-content {
 }
 @media (max-height: 450px) and (min-width: 768px) {
   body:has(.login-page .login-code) .site-footer { display: none; }
-}
-
-body:has(.login-page) .footer-beta { display: block; }
-body:has(.login-page) .footer-method { display: none; }
-@media (max-width: 380px) {
-  body:has(.login-page) .footer-beta { display: none; }
 }

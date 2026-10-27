@@ -35,21 +35,21 @@ Use orange selectively for the next action, progress, and active navigation deta
 
 ## Typography
 
-Authenticated pages use self-hosted Sora for headings and Manrope for body text, navigation, forms, buttons, and metadata. Their font-face declarations live once in app/globals.css so initial loads and client navigation use the same type system.
+All pages use self-hosted EB Garamond for body text, navigation, forms, buttons, and metadata. Authenticated headings retain Roboto Condensed. Regular and italic variable fonts cover weights 400–800. Their font-face declarations live once in app/globals.css so initial loads and client navigation use the same type system.
 
 | Element | Font | Typical size | Weight |
 | --- | --- | --- | --- |
-| Page heading | Sora | 36–40px desktop; 30px mobile | 600–700 |
-| Featured course title | Sora | 28px desktop; 24px mobile | 600 |
-| Section heading | Sora | 20–24px | 600 |
-| Course and chapter row title | Manrope | 16–18px | 600 |
-| Body and controls | Manrope | 16px | 400–600 |
-| Supporting copy | Manrope | 14–15px | 400 |
-| Metadata | Manrope | 12–13px | 400–500 |
+| Page heading | Roboto Condensed | 36–40px desktop; 30px mobile | 600–700 |
+| Featured course title | Roboto Condensed | 28px desktop; 24px mobile | 600 |
+| Section heading | Roboto Condensed | 20–24px | 600 |
+| Course and chapter row title | EB Garamond | 16–18px | 600 |
+| Body and controls | EB Garamond | 16px | 400–600 |
+| Supporting copy | EB Garamond | 14–15px | 400 |
+| Metadata | EB Garamond | 12–13px | 400–500 |
 
 Use modest negative tracking on headings, typically -0.03em to -0.04em. Keep body tracking natural and body line-height between 1.6 and 1.85. Limit lesson prose to roughly 65–75 characters per line.
 
-The approved landing page retains Pixelify Sans headings and DM Mono text as an intentional pixel-themed entrance. Do not apply those fonts to dense study lists or lesson content. Code uses a monospace font; mathematical notation retains KaTeX.
+The approved landing page retains Pixelify Sans headings and EB Garamond body text as an intentional pixel-themed entrance. Do not apply those fonts to dense study lists or lesson content. Code uses a monospace font; mathematical notation retains KaTeX.
 
 Font files and their open-source licenses live in public/fonts. Serve fonts locally with font-display: swap.
 
@@ -80,7 +80,7 @@ On small or short screens, shrink or hide decorative art before reducing control
 
 ### Studies dashboard
 
-Lead with the workspace heading and a shallow resume panel. Place the study list beside the new-study form on desktop. Keep all saved studies reachable.
+Lead with the workspace heading and an open resume strip with top and bottom dividers, no side borders, no background fill, and no illustration. Place the study list beside the new-study form on desktop. Keep all saved studies reachable.
 
 At sufficiently large desktop sizes, the dashboard fits the viewport and long study lists scroll within their section. On mobile, stack the resume panel, studies, and creation form with normal page scrolling.
 
@@ -102,7 +102,9 @@ Retaking requires the existing confirmation dialog and its explanation of what i
 
 ### Chapter reader
 
-Use a compact course outline beside the reading column on desktop. On mobile, use a horizontally scrollable chapter navigation strip above the lesson.
+Use a single left-aligned reading column within the navigation-aligned page shell, with text at most 760px wide, with no chapter sidebar or separate back-navigation row. Align the chapter metadata, title text, and lesson body on one left edge, with a 52px gutter for the back arrow. Place a 44px back-arrow link beside the chapter title, with accessible name and tooltip “Back to course”. Use a compact 32px desktop title and 24px mobile title with quiet chapter and status metadata. Omit introductory taglines.
+
+Place practice scenarios and questions directly on white, without an outer panel. Separate the scenario and bold question through spacing and typography, using natural left-aligned wrapping. Show feedback as smaller supporting text with a fine separator below, without an enclosing box. Answers use radio buttons and thin row separators, with a thin charcoal outline on the selected answer. Reserve orange for the available primary submission action; disabled practice buttons use neutral surfaces and readable muted text. Center the back arrow against the title’s first line.
 
 Keep practice, original explanations, additional explanation levels, and assessment controls in their existing order. Preserve generation, loading, recovery, and explanation-depth behavior.
 
@@ -118,11 +120,11 @@ Owner-only invitations remain a separate section below the learner profile. Pres
 
 ### Header and footer
 
-Use the pixel apple beside the Newton wordmark on redesigned pages. Authenticated navigation retains Profile settings and Sign out. Authentication shows Private beta.
+Use the single newton-logo.svg image combining the pixel apple and Pixelify Sans Semibold Newton wordmark. The wordmark is outlined for consistent rendering without loading a font. Preserve its aspect ratio and use the image alt text “Newton”. Authenticated navigation uses Settings and Sign out with matching monochrome 16px pixel icons and 44px interaction heights. Use no button borders or permanent underlines; underline on hover and keyboard focus. Settings opens within the app, so omit an external-link arrow. Authentication shows Private beta.
 
 All authenticated routes share the same header geometry, gutters, logo size, and navigation type. Do not override the header or footer independently on a route. The landing page may adjust its composition for its pixel typography and single-screen layout.
 
-Use a slim neutral footer with a fine rule. Standard authenticated footer copy is “Grow your understanding.” and “Read. Practice. Reflect.”
+Use a slim neutral footer with no divider. Center the single line “Read. Practice. Reflect.” in small muted text across pages.
 
 ### Buttons
 
@@ -154,7 +156,7 @@ Status labels and actions must distinguish available, mastered, locked, preparin
 
 Approved assets:
 
-- public/images/newton-under-apple-tree.webp: landing illustration and compact resume vignette. Do not use it on the course index.
+- public/images/newton-under-apple-tree.webp: landing illustration. Do not use it on the course index.
 - public/images/studies-books.webp: supporting illustration for creation and settings.
 - public/images/pixel-apple.svg: compact brand mark.
 

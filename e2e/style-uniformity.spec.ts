@@ -67,8 +67,8 @@ test("crawls page families and checks the shared visual system", async ({ page }
       referenceHeader ??= styles.header;
       if (!process.env.STYLE_AUDIT_BASELINE) {
         expect(styles.background, name).toBe("rgb(255, 255, 255)");
-        expect(styles.bodyFont, name).toContain("Manrope");
-        expect(styles.headingFont, name).toContain("Sora");
+        expect(styles.bodyFont, name).toContain("EB Garamond");
+        expect(styles.headingFont, name).toContain("Roboto Condensed");
         expect(styles.header, name).toEqual(referenceHeader);
         expect(styles.footerBackground, name).toBe("rgba(0, 0, 0, 0)");
         expect(styles.overflow, name).toBe(false);
@@ -80,8 +80,8 @@ test("crawls page families and checks the shared visual system", async ({ page }
         await expect(page.getByRole("heading", { name: "Chapter complete" })).toBeVisible();
         const result = await inspect("quiz-result", width);
         if (!process.env.STYLE_AUDIT_BASELINE) {
-          expect(result.bodyFont).toContain("Manrope");
-          expect(result.headingFont).toContain("Sora");
+          expect(result.bodyFont).toContain("EB Garamond");
+          expect(result.headingFont).toContain("Roboto Condensed");
           expect(result.header).toEqual(referenceHeader);
           expect(result.overflow).toBe(false);
         }
@@ -100,9 +100,10 @@ test("login retains its approved pixel typography within the white visual system
   await page.evaluate(() => document.fonts.ready);
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
-    const styles = await page.evaluate(() => ({ background: getComputedStyle(document.body).backgroundColor, font: getComputedStyle(document.querySelector("h1")!).fontFamily, overflow: document.documentElement.scrollWidth > innerWidth }));
+    const styles = await page.evaluate(() => ({ background: getComputedStyle(document.body).backgroundColor, font: getComputedStyle(document.querySelector("h1")!).fontFamily, bodyFont: getComputedStyle(document.body).fontFamily, overflow: document.documentElement.scrollWidth > innerWidth }));
     expect(styles.background).toBe("rgb(255, 255, 255)");
     expect(styles.font).toContain("Newton Pixel");
+    expect(styles.bodyFont).toContain("EB Garamond");
     expect(styles.overflow).toBe(false);
     await page.screenshot({ path: `test-results/style-audit/login-${width}.png`, fullPage: true });
   }

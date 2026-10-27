@@ -14,7 +14,7 @@ Newton provides course creation, lessons, assessment, feedback, and progress tra
 
 ## Brand Personality
 
-Thoughtful, approachable, and focused. The approved interface uses white backgrounds, charcoal text, orange actions, Sora headings, Manrope body text, and restrained pixel-art illustrations. The landing page retains its approved pixel typography. Visual details and page-specific conventions are documented in DESIGN.md and implemented in the existing components and tokens.
+Thoughtful, approachable, and focused. The approved interface uses white backgrounds, charcoal text, orange actions, Roboto Condensed headings, EB Garamond body text, and restrained pixel-art illustrations. The landing page retains its approved pixel typography. Visual details and page-specific conventions are documented in DESIGN.md and implemented in the existing components and tokens.
 
 ## Anti-references
 

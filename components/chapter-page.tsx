@@ -6,7 +6,6 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 import { MermaidContent } from "@/components/mermaid-content";
 import { ReadingPageState } from "@/components/reading-page-state";
-import { BackLink } from "./back-link";
 import { SocraticSession } from "./socratic-session";
 
 type Direction = "simpler" | "deeper";
@@ -206,42 +205,20 @@ export function ChapterPage() {
   const showRetryButton = Boolean(timeline?.failedRequest || retryExplanation.isPending || (retryExplanation.isSuccess && !retryAccepted));
 
   const courseChapters = courseQuery.data?.chapters ?? [];
-  const mastered = courseChapters.filter((item) => item.status === "passed").length;
 
   return <><main id="main-content" tabIndex={-1} className="reading-shell chapter-reader">
-    <nav aria-label="Back navigation" className="reader-back"><BackLink href={`/course/${params.id}`}>Back to course</BackLink></nav>
-    <div className="reader-layout">
-    <aside className="reader-outline" aria-label="Course outline">
-      <p className="reader-label">Your course</p>
-      <h2 className="reader-course-title">{courseQuery.data?.course.topic}</h2>
-      <p className="reader-progress-label">{mastered} of {courseChapters.length} chapters mastered</p>
-      <div className="reader-progress" role="progressbar" aria-label="Course progress" aria-valuemin={0} aria-valuemax={courseChapters.length} aria-valuenow={mastered} aria-valuetext={`${mastered} of ${courseChapters.length} chapters mastered`}>
-        {courseChapters.map((item) => <span key={item.id} className={item.status === "passed" ? "is-mastered" : ""} />)}
-      </div>
-      <nav aria-label="Course chapters">
-        <ol className="reader-chapters">
-          {courseChapters.map((item) => <li key={item.id}>
-            {item.status === "locked" ? <span className="reader-chapter reader-chapter--locked">
-              <span className="reader-chapter-number" aria-hidden="true">{String(item.idx + 1).padStart(2, "0")}</span>
-              <span>{item.title}<span className="reader-locked-label">Locked</span></span>
-            </span> : <Link className="reader-chapter" href={`/course/${params.id}/ch/${item.idx}`} aria-current={item.idx === Number(params.idx) ? "page" : undefined}>
-              <span className="reader-chapter-number" aria-hidden="true">{item.status === "passed" ? "✓" : String(item.idx + 1).padStart(2, "0")}</span>
-              <span>{item.title}</span>
-              {item.status === "passed" ? <span className="sr-only"> (mastered)</span> : null}
-            </Link>}
-          </li>)}
-        </ol>
-      </nav>
-      <p className="reader-outline-note">A little progress,<br />one chapter at a time.</p>
-    </aside>
     <div className="reader-content">
     <header className="reader-heading">
       <div className="reader-chapter-meta">
         <p>Chapter {Number(params.idx) + 1} of {courseChapters.length}</p>
         <span className={`reader-status${chapter?.status === "passed" ? " reader-status--mastered" : ""}`}>{chapter?.status === "passed" ? "Mastered" : "In progress"}</span>
       </div>
-      <h1 className="display lesson-title">{chapterQuery.data.chapter.title}</h1>
-      <p className="reader-heading-note">Explore the idea. Put your understanding into practice.</p>
+      <div className="reader-title-row">
+        <Link href={`/course/${params.id}`} className="reader-back-arrow" aria-label="Back to course" title="Back to course">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12H4m7-7-7 7 7 7" stroke="currentColor" strokeWidth="2" /></svg>
+        </Link>
+        <h1 className="display lesson-title">{chapterQuery.data.chapter.title}</h1>
+      </div>
     </header>
     {!preparingVersion && !failedVersion ? <SocraticSession key={`${chapterQuery.data.chapter.id}:${chapterQuery.data.chapter.contentGenerationVersion ?? 1}`} chapterId={chapterQuery.data.chapter.id} version={chapterQuery.data.chapter.contentGenerationVersion ?? 1} /> : null}
 
@@ -284,7 +261,6 @@ export function ChapterPage() {
       </div> : null}
     </section>
 
-    </div>
     </div>
   </main></>;
 }

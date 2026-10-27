@@ -89,7 +89,7 @@ function QuestionChoices({ question, promptId, pending, disabled, onAnswer }: {
     if (selected === null || pending || disabled) return;
     onAnswer(selected === -1 ? null : selected, hintShown);
   }}>
-    <fieldset aria-labelledby={promptId} disabled={pending || disabled} className="space-y-3">
+    <fieldset aria-labelledby={promptId} disabled={pending || disabled} className="socratic-choices">
       <legend className="sr-only">Choose your answer</legend>
       {[...question.options, "I'm not sure"].map((option, index) => {
         const value = index === question.options.length ? -1 : index;
