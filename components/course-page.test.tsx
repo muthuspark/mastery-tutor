@@ -28,7 +28,7 @@ it("announces loading inside the reading course overview landmark", () => {
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 });
 
-it("offers a local exit and retries only course reads while preserving mastered progress", async () => {
+it("retries only course reads while preserving mastered progress", async () => {
   let finishRetry!: (response: unknown) => void;
   const fetch = vi.fn()
     .mockResolvedValueOnce({ ok: false })
@@ -39,10 +39,7 @@ it("offers a local exit and retries only course reads while preserving mastered 
   expect(await screen.findByRole("heading", { level: 1, name: "Course unavailable" })).toBeInTheDocument();
   expect(screen.getByRole("main")).toHaveClass("reading-shell");
   expect(screen.getByRole("alert")).toHaveTextContent("Could not load this course.");
-  const back = screen.getByRole("link", { name: "Back to learning" });
-  expect(back).toHaveAttribute("href", "/");
-  back.focus();
-  expect(back).toHaveFocus();
+  expect(screen.queryByRole("link", { name: /^Back to/ })).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
   const pending = await screen.findByRole("button", { name: "Trying again…" });
@@ -64,7 +61,7 @@ it("offers a local exit and retries only course reads while preserving mastered 
   expect(fetch.mock.calls).toEqual([["/api/courses/course"], ["/api/courses/course"]]);
 });
 
-it("gives an empty course a descriptive heading and focusable learning exit without completion", async () => {
+it("gives an empty course a descriptive heading without back controls or completion", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({
     course: { topic: "Empty course" }, chapters: [], progress: { passed: 0, total: 0 },
   }) }));
@@ -72,10 +69,7 @@ it("gives an empty course a descriptive heading and focusable learning exit with
   expect(await screen.findByRole("heading", { level: 2, name: "No chapters available" })).toBeInTheDocument();
   expect(screen.getByRole("main")).toHaveClass("reading-shell");
   expect(screen.getByRole("region", { name: "No chapters available" })).toHaveTextContent("This course has no chapters yet.");
-  const back = screen.getByRole("link", { name: "Back to studies" });
-  expect(back).toHaveAttribute("href", "/");
-  back.focus();
-  expect(back).toHaveFocus();
+  expect(screen.queryByRole("link", { name: /^Back to/ })).not.toBeInTheDocument();
   expect(screen.getByText("0 of 0 chapters mastered")).toBeInTheDocument();
   expect(screen.queryByText("You completed this course.")).not.toBeInTheDocument();
 });

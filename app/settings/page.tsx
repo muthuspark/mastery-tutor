@@ -1,7 +1,6 @@
 import { InvitationForm } from "@/components/invitation-form";
 import { isOwner } from "@/lib/auth-config";
 import { requirePageUser } from "@/lib/access";
-import Link from "next/link";
 import { ProfileForm } from "@/components/profile-form";
 import Image from "next/image";
 import "./settings.css";
@@ -13,9 +12,6 @@ export default async function SettingsPage() {
       <div className="settings-content">
       <header className="settings-intro">
         <div><div className="settings-title-row">
-          <Link href="/" className="settings-back-arrow" aria-label="Back to studies" title="Back to studies">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12H4m7-7-7 7 7 7" stroke="currentColor" strokeWidth="2" /></svg>
-          </Link>
           <h1 className="display">Profile settings</h1>
         </div>
         <p>Help Newton explain things in a way that works for you.</p></div>

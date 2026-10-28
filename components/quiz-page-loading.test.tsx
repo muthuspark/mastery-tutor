@@ -57,7 +57,7 @@ it("offers manual recovery after the bounded preparation retries run out", async
   expect(screen.getByRole("status")).toHaveTextContent("still being prepared");
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   expect(fetch).toHaveBeenCalledTimes(6); // Course lookup plus initial quiz request and four retries.
-  expect(screen.getByRole("link", { name: "Back to chapter" })).toHaveAttribute("href", "/course/course/ch/0");
+  expect(screen.queryByRole("link", { name: /^Back to/ })).not.toBeInTheDocument();
   fetch.mockResolvedValueOnce(response(quiz));
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
   expect(await loaded()).toBeVisible();
@@ -75,10 +75,7 @@ it.each(["http", "network"])("recovers a %s quiz failure by refetching only the 
   const retry = screen.getByRole("button", { name: "Try again" });
   retry.focus();
   expect(retry).toHaveFocus();
-  const back = screen.getByRole("link", { name: "Back to chapter" });
-  expect(back).toHaveAttribute("href", "/course/course/ch/0");
-  back.focus();
-  expect(back).toHaveFocus();
+  expect(screen.queryByRole("link", { name: /^Back to/ })).not.toBeInTheDocument();
   fireEvent.click(retry);
   await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(3));
   expect(await screen.findByRole("status")).toHaveTextContent("Preparing your QnA…");
@@ -106,7 +103,7 @@ it.each([
   const fetch = vi.fn().mockResolvedValue(response(body, status));
   mount(fetch);
   expect(await screen.findByRole("alert")).toHaveTextContent(message);
-  expect(screen.getByRole("link", { name: "Back to course" })).toHaveAttribute("href", "/course/course");
+  expect(screen.queryByRole("link", { name: /^Back to/ })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
   expect(fetch).toHaveBeenCalledTimes(1);
 });
@@ -115,7 +112,7 @@ it.each([403, 404])("handles a chapter becoming unavailable at quiz fetch time (
   mount(vi.fn().mockResolvedValueOnce(response(course)).mockResolvedValueOnce(response({}, status)));
   expect(await screen.findByRole("heading", { name: "QnA unavailable" })).toBeVisible();
   expect(screen.getByRole("alert")).toHaveTextContent(status === 403 ? "This chapter is locked." : "This chapter is unavailable.");
-  expect(screen.getByRole("link", { name: "Back to course" })).toHaveAttribute("href", "/course/course");
+  expect(screen.queryByRole("link", { name: /^Back to/ })).not.toBeInTheDocument();
 });
 
 it("offers recovery for an empty quiz response", async () => {

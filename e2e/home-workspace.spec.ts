@@ -22,7 +22,7 @@ for (const width of [1440, 390]) {
     await expect(featured.getByRole("link", { name: "Continue studying →" })).toHaveAttribute("href", "/course/os");
     await expect(featured.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "33");
     await page.evaluate(() => document.fonts.ready);
-    await expect.poll(() => featured.locator("img").evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+    await expect(featured.locator("img")).toHaveCount(0);
     if (width > 767) await expect.poll(() => page.locator(".studies-books").evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
     const list = page.getByRole("region", { name: "Your studies" });
     await expect(list.getByRole("link")).toHaveCount(6);

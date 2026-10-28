@@ -53,10 +53,7 @@ it.each(["http", "network"])("recovers a %s chapter failure with a disabled pend
   const retry = main().getByRole("button", { name: "Try again" });
   retry.focus();
   expect(retry).toHaveFocus();
-  const back = main().getByRole("link", { name: "Back to course" });
-  expect(back).toHaveAttribute("href", "/course/course");
-  back.focus();
-  expect(back).toHaveFocus();
+  expect(screen.queryByRole("link", { name: /^Back to/ })).not.toBeInTheDocument();
   fireEvent.click(retry);
   expect(await screen.findByRole("button", { name: "Trying again…" })).toBeDisabled();
   expect(main().getByRole("status")).toHaveTextContent("Trying again…");
@@ -82,12 +79,12 @@ it("retries a failed course lookup before fetching the chapter", async () => {
 it.each([
   { body: { ...course, chapters: [] }, status: 200 },
   { body: {}, status: 404 },
-])("provides course navigation for an unavailable course or chapter ($status)", async ({ body, status }) => {
+])("handles an unavailable course or chapter without back controls ($status)", async ({ body, status }) => {
   const fetch = vi.fn().mockResolvedValue(response(body, status));
   mount(fetch);
   expect(await screen.findByRole("heading", { name: "Chapter unavailable" })).toBeVisible();
   expect(main().getByRole("alert")).toHaveTextContent("This chapter is unavailable.");
-  expect(main().getByRole("link", { name: "Back to course" })).toHaveAttribute("href", "/course/course");
+  expect(screen.queryByRole("link", { name: /^Back to/ })).not.toBeInTheDocument();
   expect(main().queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
   expect(fetch).toHaveBeenCalledTimes(1);
 });
@@ -96,7 +93,7 @@ it.each([403, 404])("handles a terminal chapter response (%s) without offering a
   mount(vi.fn().mockResolvedValueOnce(response(course)).mockResolvedValueOnce(response({}, status)));
   await screen.findByRole("heading", { name: "Chapter unavailable" });
   expect(main().getByRole("alert")).toHaveTextContent(status === 403 ? "This chapter is locked." : "This chapter is unavailable.");
-  expect(main().getByRole("link", { name: "Back to course" })).toHaveAttribute("href", "/course/course");
+  expect(screen.queryByRole("link", { name: /^Back to/ })).not.toBeInTheDocument();
   expect(main().queryByRole("button")).not.toBeInTheDocument();
 });
 

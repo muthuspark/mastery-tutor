@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { RevisitDialog } from "@/components/revisit-dialog";
 import { CoursePreparation, type PreparationState } from "./course-preparation";
-import { BackToLearning } from "./back-link";
 
 type Chapter = { id: string; idx: number; title: string; status: "locked" | "open" | "passed" };
 type CourseResponse = { course: { topic: string } & PreparationState; chapters: Chapter[]; progress: { passed: number; total: number } };
@@ -21,7 +20,6 @@ export function CoursePage() {
   if (isLoading && !isFetched) return <main id="main-content" tabIndex={-1} className="reading-shell"><p className="loading-state ui text-sm text-[var(--muted)]" role="status">Loading course…</p></main>;
   if (isError || !data) return (
     <main id="main-content" tabIndex={-1} className="reading-shell">
-      <BackToLearning />
       <h1 className="display text-4xl leading-none">Course unavailable</h1>
       <p className="ui mt-5 text-sm text-[var(--muted)]" role={isFetching ? "status" : "alert"}>{isFetching ? "Loading course…" : "Could not load this course."}</p>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -54,9 +52,6 @@ export function CoursePage() {
     <main id="main-content" tabIndex={-1} className="reading-shell course-index">
       <div className="course-console-toolbar">
       <header className="course-hero">
-        <Link href="/" className="course-back-arrow" aria-label="Back to studies" title="Back to studies">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12H4m7-7-7 7 7 7" stroke="currentColor" strokeWidth="2" /></svg>
-        </Link>
         <h1 className="display">{data.course.topic}</h1>
       </header>
       <div className="course-toolbar">

@@ -26,8 +26,7 @@ test("chapter reading keeps navigation, practice, and lesson text usable across 
   await page.evaluate(() => document.fonts.ready);
   await expect(page.getByRole("complementary", { name: "Course outline" })).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Course chapters" })).toHaveCount(0);
-  const back = page.getByRole("link", { name: "Back to course", exact: true });
-  await expect(back).toHaveAttribute("href", "/course/reader-course");
+  await expect(page.getByRole("link", { name: /^Back to/ })).toHaveCount(0);
   await expect(page.locator(".reader-title-row")).toContainText(chapter.title);
   await expect(page.getByText("Explore the idea. Put your understanding into practice.")).toHaveCount(0);
   await expect(page.locator(".socratic-session")).toHaveCSS("border-top-width", "0px");
@@ -45,9 +44,6 @@ test("chapter reading keeps navigation, practice, and lesson text usable across 
       expect(practice!.width).toBeCloseTo(shell!.width, 0);
       expect(lesson!.x).toBeCloseTo(shell!.x, 0);
       await expect(page.locator(".assessment-option").first()).toHaveCSS("font-size", "16px");
-      const backBounds = await back.boundingBox();
-      expect(backBounds!.width).toBeGreaterThanOrEqual(44);
-      expect(backBounds!.height).toBeGreaterThanOrEqual(44);
     }
     if (width === 1440 || width === 390) {
       await page.evaluate(() => window.scrollTo(0, 0));

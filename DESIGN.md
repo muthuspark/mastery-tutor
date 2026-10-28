@@ -70,7 +70,7 @@ Typical content widths:
 
 Use flexible gutters on desktop and approximately 20px on small screens. Keep long titles and uninterrupted strings wrap-safe.
 
-Shared page padding is 24px vertically on desktop and 20px on narrow screens. Individual compositions can add space within their content, but back navigation and recovery screens should start from these shared defaults.
+Shared page padding is 24px vertically on desktop and 20px on narrow screens. Individual compositions can add space within their content, and recovery screens should start from these shared defaults.
 
 ### Landing page
 
@@ -84,13 +84,13 @@ Lead with the workspace heading and an open resume strip with top and bottom div
 
 At sufficiently large desktop sizes, the dashboard fits the viewport and long study lists scroll within their section. On mobile, stack the resume panel, studies, and creation form with normal page scrolling.
 
-Show real chapter counts and percentages. Preparing, failed, unstarted, and completed courses retain distinct, truthful actions.
+Show real chapter counts and percentages. Preparing, failed, unstarted, and completed courses retain distinct, truthful actions. Use the same 12-segment progress treatment for the resume strip and saved studies. On phones, use 14px progress metadata and action labels, a full-width resume action, and a 12px gap between study titles and actions. Keep keyboard focus outlines inside saved-study rows so scrolling containers do not clip them.
 
 ### Course index
 
 Use the approved Study console direction: a compact course title with progress and Export notes in the same desktop toolbar. Align the content with the shared navigation. Do not add illustrations or introductory labels.
 
-Place a small back arrow immediately beside the course title, linking to the studies page. Give it the accessible name and tooltip “Back to studies” and a 44px interaction target. Do not reserve a separate row for this navigation.
+Align the course title directly with the shared navigation gutter. Omit page-level back arrows and back-navigation rows.
 
 Present chapters as one dense full-width directory with aligned chapter numbers, titles, statuses, and actions. Omit visible column headers; begin the list directly below the course toolbar. Use roughly 48px rows on desktop, allowing long titles to increase the row height. On small screens, place status below the title while keeping the chapter number and action visible. Keep the chapter sequence intact. Omit unlocking explanations and prerequisite lists.
 
@@ -102,13 +102,13 @@ Retaking requires the existing confirmation dialog and its explanation of what i
 
 ### Chapter reader
 
-Use a single left-aligned reading column within the navigation-aligned page shell, with text at most 760px wide, with no chapter sidebar or separate back-navigation row. Align the chapter metadata, title text, and lesson body on one left edge, with a 52px gutter for the back arrow. Place a 44px back-arrow link beside the chapter title, with accessible name and tooltip “Back to course”. Use a compact 32px desktop title and 24px mobile title with quiet chapter and status metadata. Omit introductory taglines.
+Use a single left-aligned reading column within the navigation-aligned page shell, with text at most 760px wide and no chapter sidebar. Align metadata, title, and lesson body with the shared page gutter. Do not reserve an arrow gutter or render a back-navigation control. Use a compact 32px desktop title and 24px mobile title with quiet chapter and status metadata. Omit introductory taglines.
 
-Place practice scenarios and questions directly on white, without an outer panel. Separate the scenario and bold question through spacing and typography, using natural left-aligned wrapping. Show feedback as smaller supporting text with a fine separator below, without an enclosing box. Answers use radio buttons and thin row separators, with a thin charcoal outline on the selected answer. Reserve orange for the available primary submission action; disabled practice buttons use neutral surfaces and readable muted text. Center the back arrow against the title’s first line.
+Place practice scenarios and questions directly on white, without an outer panel. Separate the scenario and bold question through spacing and typography, using natural left-aligned wrapping. Show feedback as smaller supporting text with a fine separator below, without an enclosing box. Answers use radio buttons and thin row separators, with a thin charcoal outline on the selected answer. Reserve orange for the available primary submission action; disabled practice buttons use neutral surfaces and readable muted text.
 
 Keep practice, original explanations, additional explanation levels, and assessment controls in their existing order. Preserve generation, loading, recovery, and explanation-depth behavior.
 
-On screens below 768px, reserve the 52px back-arrow gutter within the chapter heading only. Practice and lesson text use the full shell width with the shared page gutters. Keep answer text at 16px, touch targets at least 44px high, and the chapter quiz action full-width below the explanation controls.
+On screens below 768px, practice and lesson text use the full shell width with the shared page gutters. Keep answer text at 16px, touch targets at least 44px high, and the chapter quiz action full-width below the explanation controls.
 
 Use 24px between the chapter heading and practice, 4px between feedback label and feedback copy, 16px around the feedback separator and before answer choices, and 24px before the question. Leave 48px between the end of practice and the lesson. Keep the hint beside Continue when space allows, wrapping naturally on narrow screens.
 
@@ -116,13 +116,15 @@ Lessons scroll naturally. Tables, equations, and diagrams may scroll within thei
 
 ### Profile settings
 
-Use a clear heading, a small books illustration, and an open form layout. Left-align the settings content in the shared navigation-width shell, with no left padding on the form container. Reserve the 52px arrow gutter within the title row only, so the arrow and form align with the navigation. Replace the separate back-navigation row with a 44px arrow beside the title, linking to studies and labeled “Back to studies”. Keep the optional About me field, character count, personalization explanation, save feedback, and retry states visible.
+Use a clear heading, a small books illustration, and an open form layout. Align the settings title and form in the shared navigation-width shell without a back-arrow gutter. Keep the optional About me field, character count, personalization explanation, save feedback, and retry states visible.
 
 Owner-only invitations remain a separate section below the learner profile. Preserve the existing access rules. Do not expose technical provider configuration in learner flows.
 
 ## Components
 
 ### Header and footer
+
+Use browser Back and Forward for history navigation. Omit page-level back controls on content, settings, assessment, preparation, and recovery screens. The persistent Newton logo links to studies even on direct entry. Preserve forward course/chapter links, quiz question navigation, and contextual result actions such as Review chapter and View course.
 
 Use the single newton-logo.svg image combining the pixel apple and Pixelify Sans Semibold Newton wordmark. The wordmark is outlined for consistent rendering without loading a font. Preserve its aspect ratio and use the image alt text “Newton”. Authenticated navigation uses Settings and Sign out with matching monochrome 16px pixel icons and 44px interaction heights. Use no button borders or permanent underlines; underline on hover and keyboard focus. Settings opens within the app, so omit an external-link arrow. Authentication shows Private beta.
 

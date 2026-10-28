@@ -1,13 +1,11 @@
 .chapter-reader-surface { flex: 1; min-width: 0; }
 .chapter-reader { --container-max: var(--layout-max-wide); padding-block: 1.5rem 4rem; }
-.reader-content { min-width: 0; width: 100%; max-width: 50.75rem; padding-left: 3.25rem; }
+.reader-content { min-width: 0; width: 100%; max-width: 47.5rem; }
 .reader-heading { padding-bottom: 1.5rem; }
 .reader-chapter-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin: 0 0 0.5rem; color: var(--muted); font-size: 0.8125rem; }
 .reader-status { display: inline-flex; align-items: center; gap: 0.5rem; }
 .reader-status::before { content: ""; width: 0.25rem; height: 0.25rem; background: var(--muted); }
-.reader-title-row { --reader-title-size: 2rem; position: relative; display: flex; align-items: center; }
-.reader-back-arrow { position: absolute; left: -3.25rem; top: calc((var(--reader-title-size) * 1.3 - 2.75rem) / 2); display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; color: var(--muted); text-decoration: none; }
-.reader-back-arrow:hover { color: var(--ink); background: var(--paper-deep); }
+.reader-title-row { --reader-title-size: 2rem; }
 .chapter-reader .lesson-title { min-width: 0; margin: 0; font: 600 var(--reader-title-size)/1.3 var(--display); letter-spacing: -0.035em; text-wrap: wrap; overflow-wrap: anywhere; }
 .chapter-reader .socratic-session { margin-top: 0; margin-bottom: 3rem; padding: 0; border: 0; background: transparent; }
 .chapter-reader .socratic-session:empty { display: none; }
@@ -49,9 +47,6 @@
 
 @media (max-width: 767px) {
   .chapter-reader { padding-block: 1rem 2.5rem; }
-  /* Keep the arrow gutter in the heading, not beside the lesson on phones. */
-  .chapter-reader .reader-content { padding-left: 0; }
-  .chapter-reader .reader-heading { padding-left: 3.25rem; }
   .reader-chapter-meta { font-size: 0.75rem; }
   .reader-title-row { --reader-title-size: 1.5rem; }
   .chapter-reader .socratic-session h3 { font-size: 1.125rem; }

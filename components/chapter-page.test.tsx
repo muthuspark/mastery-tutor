@@ -24,7 +24,7 @@ it.each(["passed", "open"])("loads a %s lesson and only prefetches assessments f
   await screen.findByText("Saved separation lesson");
   const title = screen.getByRole("heading", { level: 1, name: chapter.title });
   expect(title.compareDocumentPosition(screen.getByText("Saved separation lesson")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(screen.getByRole("link", { name: "Back to course" })).toHaveAttribute("href", "/course/course");
+  expect(screen.queryByRole("link", { name: /^Back to/ })).not.toBeInTheDocument();
   expect(screen.getByRole("region", { name: "Chapter practice" })).toBeInTheDocument();
   expect(await screen.findByRole("heading", { name: "Which step separates the variables?" })).toBeVisible();
   expect(fetch).toHaveBeenCalledWith("/api/chapters/chapter/socratic", expect.objectContaining({ method: "POST", body: JSON.stringify({ action: "start", version: 1 }) }));

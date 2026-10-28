@@ -165,7 +165,7 @@ export function ChapterPage() {
     }
     await (courseQuery.isError ? courseQuery.refetch() : chapterQuery.refetch());
   }, retry: false });
-  if (reviewed && chapterQuery.failureReason instanceof ReadyContentError && chapterQuery.failureReason.status === 202 && !chapterQuery.data) return <ReadingPageState kind="failure" heading="Chapter still preparing" message="Your chapter is being written and reviewed. You can return to the course while preparation continues." backHref={`/course/${params.id}`} preparing />;
+  if (reviewed && chapterQuery.failureReason instanceof ReadyContentError && chapterQuery.failureReason.status === 202 && !chapterQuery.data) return <ReadingPageState kind="failure" heading="Chapter still preparing" message="Your chapter is being written and reviewed. You can return to the course while preparation continues." preparing />;
   if (!recovery.isPending && (courseQuery.isLoading || chapterQuery.isLoading)) return <ReadingPageState kind="loading" message="Loading chapter…" />;
   const loadError = courseQuery.isError ? courseQuery.error : chapterQuery.error;
   const status = loadError instanceof ReadyContentError ? loadError.status : undefined;
@@ -176,7 +176,6 @@ export function ChapterPage() {
       kind="failure"
       heading={recovery.isPending ? "Loading chapter" : unavailable ? "Chapter unavailable" : preparing ? "Chapter still preparing" : "Could not load chapter"}
       message={recovery.isError ? recovery.error.message : recovery.isPending ? "Trying again…" : status === 403 ? "This chapter is locked. Complete the earlier chapters before reading it." : unavailable ? "This chapter is unavailable. Return to the course to choose a chapter." : preparing ? "Your chapter is still being prepared. Try again in a moment, or return to the course while you wait." : "Could not load this chapter. Try again, or return to the course."}
-      backHref={`/course/${params.id}`}
       pending={recovery.isPending}
       preparing={preparing}
       onRetry={!unavailable || recovery.isPending ? () => recovery.mutate() : undefined}
@@ -214,9 +213,6 @@ export function ChapterPage() {
         <span className={`reader-status${chapter?.status === "passed" ? " reader-status--mastered" : ""}`}>{chapter?.status === "passed" ? "Mastered" : "In progress"}</span>
       </div>
       <div className="reader-title-row">
-        <Link href={`/course/${params.id}`} className="reader-back-arrow" aria-label="Back to course" title="Back to course">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12H4m7-7-7 7 7 7" stroke="currentColor" strokeWidth="2" /></svg>
-        </Link>
         <h1 className="display lesson-title">{chapterQuery.data.chapter.title}</h1>
       </div>
     </header>

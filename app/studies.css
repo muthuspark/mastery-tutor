@@ -17,8 +17,9 @@
 .studies-page .studies-list { margin-top: 0; }
 .studies-page .study-progress { position: relative; height: 0.625rem; overflow: hidden; border-radius: 0; background: var(--line); }
 .studies-page .study-progress::after { position: absolute; inset: 0; content: ""; background: repeating-linear-gradient(to right, transparent 0, transparent calc(8.333333% - 2px), var(--paper) calc(8.333333% - 2px), var(--paper) 8.333333%); pointer-events: none; }
-.studies-page .featured-study .study-progress::after { background: repeating-linear-gradient(to right, transparent 0, transparent calc(4.166667% - 2px), var(--paper) calc(4.166667% - 2px), var(--paper) 4.166667%); }
 .studies-page .study-link { min-height: 4rem; padding-block: 0.625rem; }
+.studies-page .study-link:focus-visible { outline-offset: -2px; }
+.studies-page .study-link:active { background: var(--paper-deep); }
 .studies-page .study-link:last-child { padding-bottom: 0.625rem; border-bottom: 1px solid var(--line); }
 .studies-page .study-topic { font-family: var(--sans); font-size: 1rem; font-weight: 600; line-height: 1.4; letter-spacing: -0.015em; }
 .studies-page .study-meta { font-size: 0.75rem; line-height: 1.5; }
@@ -77,9 +78,13 @@
   .studies-page .featured-study { grid-template-columns: minmax(0, 1fr); gap: 1rem; padding: 1.25rem 0; }
   .studies-page .featured-study-content { grid-column: 1 / -1; }
   .studies-page .featured-study h2 { font-size: 1.5rem; }
-  .studies-page .featured-study > .button-primary { align-self: center; justify-self: start; white-space: normal; }
+  .studies-page .featured-study > .button-primary { justify-self: stretch; white-space: normal; }
   .studies-page .study-link { padding-block: 1rem; }
+  .studies-page .study-heading { column-gap: 0.75rem; }
   .studies-page .study-topic { font-size: 1rem; }
+  .studies-page .subject-count, .studies-page .study-meta, .studies-page .study-percent, .studies-page .study-action { font-size: 0.875rem; }
+  .studies-page .study-action { min-height: 0; }
+  .studies-page .study-progress { height: 0.5rem; }
   .studies-page .studies-heading h2, .studies-page .course-creation h2 { font-size: 1.25rem; }
   .studies-page .new-course-form textarea { min-height: 7.5rem; font-size: 1rem; }
   .studies-page .course-begin { width: 100%; }

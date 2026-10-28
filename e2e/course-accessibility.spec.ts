@@ -16,8 +16,7 @@ test("course index presents progress and all chapter states on desktop and mobil
   } }));
   await page.goto("/course/course-index");
   await expect(page.getByText("4 of 12 chapters mastered")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Back to studies" })).toHaveAttribute("href", "/");
-  await expect(page.getByRole("link", { name: "Back to studies" })).toHaveAttribute("title", "Back to studies");
+  await expect(page.getByRole("link", { name: /^Back to/ })).toHaveCount(0);
   await page.evaluate(() => document.fonts.ready);
   await expect(page.locator(".course-index img")).toHaveCount(0);
   await expect(page.getByText(/unlocks|prerequisites/i)).toHaveCount(0);

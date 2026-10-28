@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { BackToLearning } from "./back-link";
 
 export type PreparationState = {
   preparationStatus?: "pending" | "generating" | "ready" | "failed";
@@ -23,7 +22,6 @@ export function CoursePreparation({ courseId, course, onRefresh }: { courseId: s
     : course.preparationStage === "repairing" ? "Refining the learning path after review."
     : "Building a focused path for your learning request.";
   return <main id="main-content" tabIndex={-1} className="page-shell">
-    <BackToLearning />
     <section className="max-w-2xl py-8" aria-labelledby="preparation-heading">
       <p className="eyebrow">Your learning path</p>
       <h1 id="preparation-heading" className="display mt-4 text-4xl leading-tight">{failed ? "Could not prepare your course" : "Preparing your course"}</h1>

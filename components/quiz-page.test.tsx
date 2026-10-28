@@ -92,10 +92,7 @@ it("locks navigation and answers during submission, then preserves answers after
   expect(screen.getByRole("button", { name: "Previous question" })).toBeDisabled();
   expect(screen.getByRole("button", { name: "Grading your answers…" })).toBeDisabled();
   for (const radio of screen.getAllByRole("radio")) expect(radio).toBeDisabled();
-  const back = screen.getByRole("link", { name: "Back to chapter" });
-  expect(back).toHaveAttribute("aria-disabled", "true");
-  expect(back).toHaveAttribute("tabindex", "-1");
-  expect(fireEvent.click(back)).toBe(false);
+  expect(screen.queryByRole("link", { name: /^Back to/ })).not.toBeInTheDocument();
   previous();
   expect(screen.getByRole("heading", { name: "Question 3" })).toBeVisible();
   expect(submit).toHaveBeenCalledTimes(1);
@@ -104,7 +101,6 @@ it("locks navigation and answers during submission, then preserves answers after
   expect(screen.getByRole("alert")).toHaveFocus();
   expect(screen.getByRole("button", { name: "Submit answers" })).toBeEnabled();
   expect(screen.getByRole("button", { name: "Previous question" })).toBeEnabled();
-  expect(back).toHaveAttribute("aria-disabled", "false");
   previous();
   expect(screen.getByRole("radio", { name: "A. Answer 2" })).toBeChecked();
 });
@@ -115,8 +111,8 @@ it.each([
   { name: "completion takes priority over a next chapter", fields: { complete: true, nextChapterIdx: 1 }, label: "View completed course", href: "/course/course" },
   { name: "server-selected next chapter", fields: { complete: false, nextChapterIdx: 4 }, label: "Continue", href: "/course/course/ch/4" },
   { name: "zero next chapter index", fields: { complete: false, nextChapterIdx: 0 }, label: "Continue", href: "/course/course/ch/0" },
-  { name: "no available next chapter", fields: { complete: false, nextChapterIdx: null }, label: "Back to course", href: "/course/course" },
-  { name: "missing next chapter information", fields: {}, label: "Back to course", href: "/course/course" },
+  { name: "no available next chapter", fields: { complete: false, nextChapterIdx: null }, label: "View course", href: "/course/course" },
+  { name: "missing next chapter information", fields: {}, label: "View course", href: "/course/course" },
 ])("uses the correct passing action for $name", async ({ fields, label, href }) => {
   await mount(vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ...result, ...fields }) }));
   answer(1); next(); answer(2); next(); answer(3); submitAnswers();
