@@ -9,7 +9,7 @@ export default defineConfig({
     env: {
       NEXT_DIST_DIR: ".next-e2e",
       DATABASE_URL: "file:./data/login-e2e.db", OWNER_EMAIL: "owner@example.com",
-      INVITED_EMAILS: "second@example.com,delivery-failure@example.com,mobile@example.com,switch@example.com",
+      INVITED_EMAILS: "second@example.com,delivery-failure@example.com,mobile@example.com,switch@example.com,header@example.com",
       BETTER_AUTH_SECRET: "controlled-e2e-secret-at-least-thirty-two-characters",
       BETTER_AUTH_URL: "http://localhost:3102", AI_PROVIDER: "deepseek", DEEPSEEK_API_KEY: "test-only",
       MAILTRAP_API_KEY: "test-only", FROM_EMAIL: "tutor@example.com",

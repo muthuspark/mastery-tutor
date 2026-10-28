@@ -1,14 +1,11 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 export function AccountControls() {
-  const pathname = usePathname();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  if (pathname === "/login") return <span className="login-beta">Private beta</span>;
   async function logout() {
     setBusy(true); setError("");
     try {

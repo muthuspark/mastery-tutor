@@ -1,14 +1,12 @@
 import { AccountControls } from "./account-controls";
-import Image from "next/image";
-import Link from "next/link";
+import { currentUser } from "@/lib/access";
+import { HeaderShell } from "./site-header-shell";
 
-export function SiteHeader({ status }: { status?: string }) {
+export async function SiteHeader({ status }: { status?: string }) {
+  const user = await currentUser();
   return (
-    <header className="site-header">
-      <Link className="site-brand" href="/">
-        <Image className="brand-logo" src="/images/newton-logo.svg" width={143} height={36} alt="Newton" loading="eager" />
-      </Link>
-      {status ? <span className="site-header-status ui text-sm text-[var(--muted)]">{status}</span> : <AccountControls />}
-    </header>
+    <HeaderShell href={user ? "/" : "/login"}>
+      {status ? <span className="site-header-status ui text-sm text-[var(--muted)]">{status}</span> : user ? <AccountControls /> : <span className="login-beta">Private beta</span>}
+    </HeaderShell>
   );
 }
