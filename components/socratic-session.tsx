@@ -47,7 +47,7 @@ export function SocraticSession({ chapterId, version }: { chapterId: string; ver
         <p className="ui text-sm font-semibold">{lastTurn.correct ? "Building on your thinking" : "Let’s examine that"}</p>
         <p id={`${headingId}-feedback`} className="assessment-body mt-2 whitespace-pre-wrap">{lastTurn.feedback}</p>
       </div> : null}
-      {session.question.setup ? <p id={`${headingId}-setup`} className="assessment-body mt-6 whitespace-pre-wrap">{session.question.setup}</p> : null}
+      {session.question.setup ? <p id={`${headingId}-setup`} className="socratic-setup assessment-body mt-6 whitespace-pre-wrap">{session.question.setup}</p> : null}
       <h3 id={`${headingId}-question`} ref={focusRef} tabIndex={-1} aria-describedby={[lastTurn ? `${headingId}-feedback` : null, session.question.setup ? `${headingId}-setup` : null].filter(Boolean).join(" ") || undefined} className="display assessment-text mt-6 text-2xl">{session.question.prompt}</h3>
       <QuestionChoices key={session.question.id} promptId={`${headingId}-question`} question={session.question} pending={practice.isPending} disabled={conflict} onAnswer={(choiceIndex, usedHint) => send({ action: "answer", version, sessionId: session.id, questionId: session.question!.id, choiceIndex, usedHint })} />
     </> : null}
@@ -84,7 +84,7 @@ function QuestionChoices({ question, promptId, pending, disabled, onAnswer }: {
   const [selected, setSelected] = useState<number | null>(null);
   const [hintShown, setHintShown] = useState(false);
   const hintId = useId();
-  return <form className="mt-6" onSubmit={(event) => {
+  return <form className="socratic-answer-form mt-6" onSubmit={(event) => {
     event.preventDefault();
     if (selected === null || pending || disabled) return;
     onAnswer(selected === -1 ? null : selected, hintShown);
@@ -99,7 +99,7 @@ function QuestionChoices({ question, promptId, pending, disabled, onAnswer }: {
         </label>;
       })}
     </fieldset>
-    <div className="mt-5 flex flex-wrap items-center gap-4">
+    <div className="socratic-actions mt-5 flex flex-wrap items-center gap-4">
       <button type="submit" className="button-primary ui" disabled={selected === null || pending || disabled}>{pending ? "Thinking it through…" : "Continue"}</button>
       <button type="button" className="text-button ui text-sm" disabled={pending || disabled} aria-expanded={hintShown} aria-controls={hintId} onClick={() => setHintShown(true)}>Give me a hint</button>
     </div>

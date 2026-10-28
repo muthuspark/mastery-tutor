@@ -108,6 +108,10 @@ Place practice scenarios and questions directly on white, without an outer panel
 
 Keep practice, original explanations, additional explanation levels, and assessment controls in their existing order. Preserve generation, loading, recovery, and explanation-depth behavior.
 
+On screens below 768px, reserve the 52px back-arrow gutter within the chapter heading only. Practice and lesson text use the full shell width with the shared page gutters. Keep answer text at 16px, touch targets at least 44px high, and the chapter quiz action full-width below the explanation controls.
+
+Use 24px between the chapter heading and practice, 4px between feedback label and feedback copy, 16px around the feedback separator and before answer choices, and 24px before the question. Leave 48px between the end of practice and the lesson. Keep the hint beside Continue when space allows, wrapping naturally on narrow screens.
+
 Lessons scroll naturally. Tables, equations, and diagrams may scroll within their own regions when necessary; they must not widen the whole page. Overflowing equations remain keyboard accessible.
 
 ### Profile settings

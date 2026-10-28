@@ -1,7 +1,7 @@
 .chapter-reader-surface { flex: 1; min-width: 0; }
 .chapter-reader { --container-max: var(--layout-max-wide); padding-block: 1.5rem 4rem; }
 .reader-content { min-width: 0; width: 100%; max-width: 50.75rem; padding-left: 3.25rem; }
-.reader-heading { padding-bottom: 1rem; }
+.reader-heading { padding-bottom: 1.5rem; }
 .reader-chapter-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin: 0 0 0.5rem; color: var(--muted); font-size: 0.8125rem; }
 .reader-status { display: inline-flex; align-items: center; gap: 0.5rem; }
 .reader-status::before { content: ""; width: 0.25rem; height: 0.25rem; background: var(--muted); }
@@ -9,19 +9,25 @@
 .reader-back-arrow { position: absolute; left: -3.25rem; top: calc((var(--reader-title-size) * 1.3 - 2.75rem) / 2); display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; color: var(--muted); text-decoration: none; }
 .reader-back-arrow:hover { color: var(--ink); background: var(--paper-deep); }
 .chapter-reader .lesson-title { min-width: 0; margin: 0; font: 600 var(--reader-title-size)/1.3 var(--display); letter-spacing: -0.035em; text-wrap: wrap; overflow-wrap: anywhere; }
-.chapter-reader .socratic-session { margin-top: 1rem; padding: 0; border: 0; background: transparent; }
+.chapter-reader .socratic-session { margin-top: 0; margin-bottom: 3rem; padding: 0; border: 0; background: transparent; }
 .chapter-reader .socratic-session:empty { display: none; }
 .chapter-reader .socratic-session > :first-child { margin-top: 0; }
 .chapter-reader .socratic-session h3 { margin-top: 1.5rem; font: 600 1.375rem/1.5 var(--display); letter-spacing: -0.03em; text-wrap: wrap; }
 .chapter-reader .socratic-session h3:focus { outline: none; }
 .chapter-reader .assessment-body { font-size: 1.0625rem; line-height: 1.8; }
+.chapter-reader .socratic-session > .socratic-setup { margin-top: 1rem; }
+.chapter-reader .socratic-session > .socratic-setup:first-child { margin-top: 0; }
+.chapter-reader .socratic-answer-form { margin-top: 1rem; }
+.chapter-reader .socratic-actions { margin-top: 1rem; gap: 0.75rem 1.5rem; }
 .chapter-reader .socratic-choices { border-top: 1px solid var(--line); }
 .chapter-reader .assessment-option { margin: 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; padding: 1rem 0.75rem; background: transparent; font-size: 1rem; line-height: 1.6; }
 .chapter-reader .assessment-option:hover { background: var(--paper-deep); }
 .chapter-reader .assessment-option:has(input:checked) { background: transparent; box-shadow: inset 0 0 0 1px var(--ink); }
 .chapter-reader .assessment-option:has(input:disabled) { cursor: default; }
 .chapter-reader .assessment-option:has(input:disabled):hover { background: transparent; }
-.chapter-reader .socratic-feedback { padding: 0 0 1.25rem; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+.chapter-reader .socratic-feedback { padding: 0 0 1rem; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+.chapter-reader .socratic-feedback > .assessment-body { margin-top: 0.25rem; }
+.chapter-reader p.socratic-feedback { margin-top: 1rem; }
 .chapter-reader .socratic-feedback .assessment-body, .chapter-reader p.socratic-feedback { color: var(--muted); font-size: 0.9375rem; line-height: 1.75; }
 .chapter-reader .socratic-session .button-primary:disabled { background: var(--paper-deep); border-color: var(--line); color: var(--muted); box-shadow: none; opacity: 1; cursor: default; }
 .chapter-reader .socratic-session summary { display: list-item; min-height: 2.75rem; padding-block: 0.75rem; }
@@ -43,11 +49,14 @@
 
 @media (max-width: 767px) {
   .chapter-reader { padding-block: 1rem 2.5rem; }
+  /* Keep the arrow gutter in the heading, not beside the lesson on phones. */
+  .chapter-reader .reader-content { padding-left: 0; }
+  .chapter-reader .reader-heading { padding-left: 3.25rem; }
   .reader-chapter-meta { font-size: 0.75rem; }
   .reader-title-row { --reader-title-size: 1.5rem; }
   .chapter-reader .socratic-session h3 { font-size: 1.125rem; }
   .chapter-reader .assessment-body, .chapter-reader .prose-editorial { font-size: 1rem; }
-  .chapter-reader .assessment-option { padding: 0.875rem 0.625rem; font-size: 0.9375rem; }
+  .chapter-reader .assessment-option { min-height: 2.75rem; padding: 0.875rem 0.625rem; font-size: 1rem; }
   .chapter-reader .chapter-action-row { align-items: stretch; flex-direction: column; }
-  .chapter-reader .chapter-quiz-cta { align-self: flex-start; max-width: 100%; white-space: normal; }
+  .chapter-reader .chapter-quiz-cta { align-self: stretch; margin-left: 0; max-width: 100%; white-space: normal; }
 }

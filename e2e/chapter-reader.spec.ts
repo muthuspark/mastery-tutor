@@ -32,11 +32,23 @@ test("chapter reading keeps navigation, practice, and lesson text usable across 
   await expect(page.getByText("Explore the idea. Put your understanding into practice.")).toHaveCount(0);
   await expect(page.locator(".socratic-session")).toHaveCSS("border-top-width", "0px");
   await expect(page.locator(".assessment-option").first()).toHaveCSS("border-right-width", "0px");
-  for (const [width, height] of [[1440, 1000], [768, 1024], [390, 844], [320, 667]]) {
+  for (const [width, height] of [[1440, 1000], [768, 1024], [390, 844], [360, 740], [320, 667], [667, 320]]) {
     await page.setViewportSize({ width, height });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${width}px reading layout`).toBe(true);
     await expect(page.getByRole("heading", { level: 1, name: chapter.title })).toBeVisible();
     await expect(page.getByRole("link", { name: "Check your understanding →" })).toHaveAttribute("href", "/course/reader-course/ch/1/quiz");
+    if (width < 768) {
+      const shell = await page.locator(".chapter-reader").boundingBox();
+      const practice = await page.locator(".socratic-session").boundingBox();
+      const lesson = await page.locator(".prose-editorial").boundingBox();
+      expect(practice!.x).toBeCloseTo(shell!.x, 0);
+      expect(practice!.width).toBeCloseTo(shell!.width, 0);
+      expect(lesson!.x).toBeCloseTo(shell!.x, 0);
+      await expect(page.locator(".assessment-option").first()).toHaveCSS("font-size", "16px");
+      const backBounds = await back.boundingBox();
+      expect(backBounds!.width).toBeGreaterThanOrEqual(44);
+      expect(backBounds!.height).toBeGreaterThanOrEqual(44);
+    }
     if (width === 1440 || width === 390) {
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.screenshot({ path: `test-results/chapter-reader-${width}.png`, fullPage: true });
