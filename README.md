@@ -126,6 +126,8 @@ DeepSeek charges for API usage. A course can require several writing, review, an
 
 ## Useful commands
 
+On the production server, run `./deploy.sh` as the checkout owner. It pulls the current branch with a fast-forward only, installs locked dependencies, builds in a staging directory, restarts `mastery-tutor`, and checks `/login`. It retains the previous build in `.next-backup-*` for rollback and restores it automatically if the new service fails its health check. The service applies database migrations when it starts.
+
 ```bash
 npm run db:migrate  # Apply migrations
 npm run db:generate # Generate a migration after schema changes
