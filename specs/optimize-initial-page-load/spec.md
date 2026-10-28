@@ -4,7 +4,7 @@
 
 <!-- Format: State the outcome, scope, and measurable reason for doing this. -->
 
-Reduce the initial loading cost of Newton's public entrance and learning workspace, with reproducible production measurements and preserved visual quality, accessibility, authentication, and study creation. Track GitHub issue #8: https://github.com/muthuspark/mastery-tutor/issues/8. Prioritize the measured font cost and eliminate demonstrated unnecessary requests. A 30% reduction in cold transferred bytes on both desktop routes is a provisional planning objective, subject to character-coverage verification; it is not a claimed result.
+Reduce the initial loading cost of Newton's public entrance and learning workspace, with reproducible production measurements and preserved visual quality, accessibility, authentication, and study creation. Track GitHub issue #8: https://github.com/muthuspark/mastery-tutor/issues/8. Prioritize the measured font cost and eliminate demonstrated unnecessary requests. The build-phase baseline and coverage analysis set a 30% reduction target for cold transferred bytes on desktop /login and empty /. This is an acceptance target, not a claimed result.
 
 ## Problem
 
@@ -51,7 +51,7 @@ Evidence: Desktop workspace layout shift repeatedly totaled approximately 0.276 
 <!-- Format: Use stable IDs such as REQ-001. For each requirement state the behavior, inputs/outputs, and priority. -->
 
 - REQ-001 (must): Establish and retain reproducible before/after production measurements for /login and /, including request count, transferred bytes, encoded body bytes, decoded body bytes, resource categories, key load metrics, and observation conditions.
-- REQ-002 (must): Reduce cold initial transferred bytes on both routes and eliminate identified unnecessary requests. Set the final numerical byte target after the current baseline and coverage analysis; use 30% per desktop route as the provisional objective, and document any evidence-based revision before implementation acceptance.
+- REQ-002 (must): Reduce cold initial transferred bytes on both routes and eliminate identified unnecessary requests. Reduce median cold transferred bytes by at least 30% on desktop /login and empty / against the matching current baseline; populated and mobile pages must not regress.
 - REQ-003 (must): Preserve the approved font families, used weights/styles, existing character coverage and font licensing. Optional character ranges may load only when needed; font delivery failure must leave readable fallback text.
 - REQ-004 (must): Improve reuse of unchanged fonts and static assets using update-safe asset versions. Authenticated HTML, session responses and private learning data retain existing privacy and freshness behavior.
 - REQ-005 (must): Prevent loading-related workspace instability. Verify a CLS budget of at most 0.1 on controlled empty and populated workspace measurements.
@@ -78,7 +78,7 @@ Evidence: Desktop workspace layout shift repeatedly totaled approximately 0.276 
 - Measure a production build with cold browser cache for the public entrance and initial workspace, preserve behavior and design, and choose optimizations from observed cost.
 ### Assumptions
 - /login is the landing page and / is the authenticated workspace. No separate deployed URL has been supplied.
-- The proposed 30% target is provisional. The required outcome is a verified reduction with a numerical target fixed from current profiling before optimization acceptance.
+- The completed build-phase baseline and coverage analysis fixed the desktop byte target at 30%; all comparisons must use equivalent conditions.
 - Existing character coverage is preserved; English-only content is not assumed.
 ### Constraints
 - Keep the approved typography, illustration style and accessible interactions.
@@ -86,7 +86,7 @@ Evidence: Desktop workspace layout shift repeatedly totaled approximately 0.276 
 - Treat existing unrelated workspace changes as concurrent work to preserve.
 ### Open Questions
 - The original 108-resource / 1.8-MB environment is unknown. This does not block using the defined production routes as the new baseline.
-- The final numerical target and exact shift cause are profiling outputs required during implementation, not reasons to fabricate performance claims.
+- Profiling fixed the 30% desktop target and attributed the major shifts to the studies panel changing columns or growing after client data arrives; the technical solution and verification are in plan.md.
 
 ## Edge Cases and Failure Handling
 
@@ -120,5 +120,5 @@ Evidence: Desktop workspace layout shift repeatedly totaled approximately 0.276 
 - Audience: Maintainers evaluating issue #8 and agents implementing the approved feature.
 - Writing profile: Plain, concise technical prose using the repository's MSDD format.
 - Primary artifact: This high-level spec in specs/optimize-initial-page-load/spec.md.
-- Supporting artifacts: plan.md for technical design and evidence; task.md for checkable execution; build-phase machine-readable measurements and a compact before/after summary linked from the plan. Reports must identify their route, purpose and conditions, and exclude tokens, cookies, OTPs and private learner content.
+- Supporting artifacts: plan.md for technical design and evidence; task.md for checkable execution; build-phase raw measurements in output/ and tracked aggregate conditions/results in measurements.json, linked from the plan. Reports must identify their route, purpose and conditions, and exclude tokens, cookies, OTPs and private learner content.
 - Accessibility: Preserve approved typography, readable fallbacks, keyboard/focus behavior, semantic loading/error states and responsive content. Tables must label units and metric definitions.

@@ -1,11 +1,11 @@
 import { recordAuthEvent } from "@/lib/auth-events";
 import { authorize } from "@/lib/access";
-import { asc, count, eq, getTableColumns, sql } from "drizzle-orm";
+import { listUserCourses } from "@/lib/course-list";
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { chapters, courses } from "@/lib/db/schema";
+import { courses } from "@/lib/db/schema";
 import { classifyCodexFailure, CodexError } from "@/lib/codex-errors";
 import { agentForRequest, noAgentError } from "@/lib/agent";
 import { enqueueGenerationJob } from "@/lib/generation";
@@ -33,17 +33,7 @@ function errorResponse(error: unknown) {
 export async function GET() {
   const access = await authorize();
   if (access instanceof Response) return access;
-  const result = db.select({
-    ...getTableColumns(courses),
-    passed: count(sql`case when ${chapters.status} = 'passed' then 1 end`),
-    total: count(chapters.id),
-  }).from(courses)
-    .leftJoin(chapters, eq(chapters.courseId, courses.id))
-    .where(eq(courses.userId, access.user.id))
-    .groupBy(courses.id)
-    .orderBy(asc(courses.createdAt))
-    .all();
-  return NextResponse.json({ courses: result.map(({ passed, total, ...course }) => ({ ...course, progress: { passed, total } })) });
+  return NextResponse.json({ courses: listUserCourses(access.user.id) });
 }
 
 export async function POST(request: Request) {

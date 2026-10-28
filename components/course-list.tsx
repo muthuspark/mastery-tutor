@@ -4,16 +4,19 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-type Course = { id: string; topic: string; createdAt: string; startedAt?: string | null; preparationStatus?: string; progress: { passed: number; total: number } };
+export type CourseSummary = { id: string; topic: string; createdAt: string; startedAt?: string | null; preparationStatus?: string; progress: { passed: number; total: number } };
+type Course = CourseSummary;
 
-export function CourseList({ children }: { children?: ReactNode }) {
+export function CourseList({ children, initialCourses }: { children?: ReactNode; initialCourses?: CourseSummary[] }) {
   const { data, isLoading, isError, refetch } = useQuery<{ courses: Course[] }>({ queryKey: ["courses"], queryFn: async () => {
     const response = await fetch("/api/courses");
     if (!response.ok) throw new Error("Could not load your studies");
     return response.json();
-  }, refetchInterval: (query) => query.state.data?.courses.some((course) => ["pending", "generating"].includes(course.preparationStatus ?? "")) ? 5_000 : false });
+  }, initialData: initialCourses ? { courses: initialCourses } : undefined,
+  refetchInterval: (query) => query.state.data?.courses.some((course) => ["pending", "generating"].includes(course.preparationStatus ?? "")) ? 5_000 : false });
   const courses = data?.courses ?? [];
-  const empty = !isLoading && !isError && courses.length === 0;
+  // A background error must not move the creation form to another grid column.
+  const empty = data !== undefined && courses.length === 0;
   const featured = courses
     .filter((course) => (!course.preparationStatus || course.preparationStatus === "ready") && course.progress.total > course.progress.passed)
     .sort((a, b) => {
@@ -22,7 +25,7 @@ export function CourseList({ children }: { children?: ReactNode }) {
     })[0];
   return (
     <div className={`learning-workspace${empty ? " learning-workspace--empty" : ""}`}>
-      {isLoading ? <div className="resume-skeleton" aria-hidden="true" /> : featured && !isError ? <FeaturedStudy course={featured} /> : null}
+      {isLoading ? <div className="resume-skeleton" aria-hidden="true" /> : featured ? <FeaturedStudy course={featured} /> : null}
       {empty ? children : null}
       <section className="studies-section" aria-labelledby="studies-title">
         <div className="studies-heading"><h2 id="studies-title" className="display text-3xl">Your studies</h2>{!isLoading && !isError ? <span className="subject-count ui shrink-0">{courses.length} {courses.length === 1 ? "subject" : "subjects"}</span> : null}</div>

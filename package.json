@@ -16,7 +16,9 @@
     "db:push": "drizzle-kit push",
     "ralph": "tsx scripts/ralph.ts",
     "test:e2e:ralph": "playwright test --config playwright.ralph.config.ts",
-    "test:e2e:login": "playwright test --config playwright.login.config.ts"
+    "test:e2e:login": "playwright test --config playwright.login.config.ts",
+    "profile:pages": "node scripts/profile-page-load.mjs",
+    "test:performance": "node scripts/verify-page-load.mjs"
   },
   "dependencies": {
     "@shikijs/rehype": "^4.5.0",

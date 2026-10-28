@@ -222,3 +222,42 @@ npm run ralph -- --resume <run-id> --retry-verification --base-url http://localh
 `--retry-verification` backs up the old checkpoint, accepts the current edits on the recorded branch and HEAD, and restarts checks, host Playwright execution, and review. An existing iteration spec is reused, preserving manual test fixes; browser coverage preparation runs when that spec is missing. The reviewer still checks coverage. It does **not** reset the repair count or bypass acceptance. Use it only when you intend the current edits to belong to that increment. `--base-url` can also accompany ordinary resume; changing it invalidates prior browser evidence. Other run options remain saved.
 
 Creating or testing this script does not start a paid agent run. Its automated tests use fake Codex/npm executables and temporary Git repositories.
+
+### Production page-load profiling and fonts
+
+Run `node scripts/profile-page-load.mjs --build --output output/page-load-before.json`
+from this checkout, then use the same command with `page-load-after.json` after changes.
+The harness needs the project's Playwright Chromium (`npx playwright install chromium`),
+uses port 3108 and `.next-e2e-perf`, seeds a temporary SQLite database with empty and
+populated accounts, and blocks external server requests with an explicit test preload.
+It never uses real email or AI credentials. It closes its server and deletes temporary
+sessions/databases; reports stay in ignored `output/`. Do not run simultaneous profiles
+or change the app during a measurement. The optional `--runs N` defaults to three.
+
+Reports include all CDP requests and separate Resource Timing transferred, compressed
+body and decoded body sizes. HTTP-200 speculative RSC responses cancelled by Next are
+counted and labelled separately; failed content/assets invalidate a sample. Desktop is
+1440×900 at scale 1, unthrottled. Mobile is 390×844 at scale 2, touch/mobile emulation,
+150 ms latency, 1.6 Mbit/s down, 750 kbit/s up and 4× CPU slowdown. Both use a fixed
+five-second observation after load, fonts and workspace settlement; warm visits navigate
+away/back with cache enabled. Server/image-transform caches are warmed independently.
+These lab timings are not field Web Vitals.
+
+Regenerate the committed font subsets with:
+
+```bash
+uv run --with fonttools==4.46.0 --with brotli==1.1.0 python scripts/subset-fonts.py
+```
+
+The generator verifies complete source character coverage, glyph mapping/metrics,
+variable axes and font naming/license metadata. It retains original fonts and licenses
+in `public/fonts`, generates Unicode-range faces in `app/fonts` (sharing combining marks between scripts), and writes
+content-hashed WOFF2 files plus a manifest in `public/fonts/optimized`. Latin text stays together to preserve kerning and accent placement. Standard shaping
+and the numeric variants used by the app are retained. Extra character ranges load when used; do not preload every subset. Only hashed WOFF2 paths get immutable
+caching. Regenerate assets and CSS together so font updates receive new URLs.
+
+Run `npm run test:performance -- --build` for the production font-cache/version,
+font-failure, delayed-layout, multilingual, navigation, real local OTP, cross-tab sign-out
+and persisted-study checks. This uses port 3118 and the same isolated fixture; it also
+needs Python 3 with the pinned FontTools/Brotli versions above. Results and screenshots
+are written to `output/page-load-checks/`. Do not run it during a profiling sample.

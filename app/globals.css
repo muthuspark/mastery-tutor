@@ -1,36 +1,6 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@import "katex/dist/katex.min.css";
-
-@font-face {
-  font-family: "Roboto Condensed";
-  src: url("/fonts/roboto-condensed-variable.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Roboto Condensed";
-  src: url("/fonts/roboto-condensed-italic-variable.woff2") format("woff2");
-  font-style: italic;
-  font-weight: 100 900;
-  font-display: swap;
-}
-@font-face {
-  font-family: "EB Garamond";
-  src: url("/fonts/eb-garamond-variable.woff2") format("woff2");
-  font-style: normal;
-  font-weight: 400 800;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "EB Garamond";
-  src: url("/fonts/eb-garamond-italic-variable.woff2") format("woff2");
-  font-style: italic;
-  font-weight: 400 800;
-  font-display: swap;
-}
+@import "./fonts/body.css";
 
 /* White surfaces, fine ink rules, and orange emphasis. */
 :root {
@@ -43,7 +13,7 @@
   --color-text-soft: oklch(0.503938 0.013914 106.889);
   --color-orange: oklch(0.62 0.19 42);
   --color-footer: oklch(0.259566 0.003667 106.652);
-  --color-rule: oklch(0.72 0.018 88 / 45%);
+  --color-rule: oklch(0.72 0.018 88 / 30%);
   --color-rule-soft: oklch(0.155892 0.005324 145.314 / 6%);
   /* Preserve existing token names used by components and diagrams. */
   --color-slate-dark: var(--color-ink);
@@ -140,7 +110,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); font-weight: 600; text-wra
 .skip-link:focus { transform: translateY(0); }
 .site-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; min-height: 4.25rem; padding-block: 0.5rem; border-bottom: 1px solid var(--line); }
 .site-brand { display: inline-flex; align-items: center; gap: 0.625rem; min-height: 2.75rem; color: var(--ink); font: 600 1.5rem/1 var(--display); letter-spacing: -0.04em; text-decoration: none; }
-.brand-logo { display: block; width: 8.9375rem; height: auto; flex-shrink: 0; }
+.brand-logo { display: block; width: 5rem; height: auto; flex-shrink: 0; }
 .site-header-status { display: inline-flex; align-items: center; min-height: 2.75rem; }
 .account-navigation { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 0.5rem 1.5rem; }
 .account-control { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.75rem; padding: 0.5rem 0; color: var(--ink); font: 500 0.875rem/1.5 var(--sans); text-decoration: none; white-space: nowrap; }
@@ -335,7 +305,6 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); font-weight: 600; text-wra
   .chapter-quiz-cta { margin-left: 0; }
   .site-header { min-height: 4.25rem; }
   .site-brand { font-size: 1.25rem; gap: 0.5rem; }
-  .brand-logo { width: 7.125rem; }
   .home-intro { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; padding-block: 3rem 2.5rem; }
   .home-title { max-width: 16ch; }
   .home-intro-note { max-width: 42ch; }
