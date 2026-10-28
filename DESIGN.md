@@ -66,7 +66,7 @@ Typical content widths:
 | Studies dashboard | 1240px |
 | Course index | 1240px, aligned with the shared navigation |
 | Chapter reader | 1240px overall, with a reading column up to 760px |
-| Profile settings | 896px |
+| Profile settings | 1240px overall, left-aligned form up to 896px |
 
 Use flexible gutters on desktop and approximately 20px on small screens. Keep long titles and uninterrupted strings wrap-safe.
 
@@ -112,7 +112,7 @@ Lessons scroll naturally. Tables, equations, and diagrams may scroll within thei
 
 ### Profile settings
 
-Use a clear heading, a small books illustration, and an open form layout. Keep the optional About me field, character count, personalization explanation, save feedback, and retry states visible.
+Use a clear heading, a small books illustration, and an open form layout. Left-align the settings content in the shared navigation-width shell, with no left padding on the form container. Reserve the 52px arrow gutter within the title row only, so the arrow and form align with the navigation. Replace the separate back-navigation row with a 44px arrow beside the title, linking to studies and labeled “Back to studies”. Keep the optional About me field, character count, personalization explanation, save feedback, and retry states visible.
 
 Owner-only invitations remain a separate section below the learner profile. Preserve the existing access rules. Do not expose technical provider configuration in learner flows.
 

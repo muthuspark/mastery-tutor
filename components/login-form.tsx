@@ -62,7 +62,7 @@ export function LoginForm() {
       <span>{busy ? (sent ? "Signing in…" : "Sending code…") : sent ? "Sign in" : cooldown ? `Try again in ${cooldown}s` : "Email me a code"}</span>
       <svg className="login-submit-arrow" aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none"><path d="M4 12h15M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" /></svg>
     </button>
-    {sent ? <div className="ui mt-5 flex flex-wrap justify-between gap-4 text-sm">
+    {sent ? <div className="login-recovery ui">
       <button type="button" className="underline disabled:opacity-50" disabled={busy || cooldown > 0} onClick={() => void requestCode()}>{cooldown ? `Resend in ${cooldown}s` : "Resend code"}</button>
       <button type="button" className="underline" disabled={busy} onClick={() => { setSent(false); setCode(""); setError(""); setCooldown(0); setTimeout(() => emailRef.current?.focus(), 0); }}>Change email</button>
     </div> : null}

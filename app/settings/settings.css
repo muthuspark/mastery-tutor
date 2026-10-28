@@ -1,7 +1,10 @@
-.settings-page { --container-max: 56rem; padding-block: 1.5rem 3rem; }
-.settings-page .back-link { font: 500 0.8125rem/1.5 var(--sans); letter-spacing: 0; text-transform: none; }
-.settings-page .settings-intro { display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin-block: 1.5rem 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
-.settings-page .settings-intro h1 { font: 600 2.25rem/1.2 var(--display); letter-spacing: -0.04em; }
+.settings-page { --container-max: var(--layout-max-wide); --settings-title-size: 2.25rem; padding-block: 1.5rem 3rem; }
+.settings-content { width: 100%; max-width: 56rem; }
+.settings-title-row { position: relative; padding-left: 3.25rem; }
+.settings-back-arrow { position: absolute; left: 0; top: calc((var(--settings-title-size) * 1.2 - 2.75rem) / 2); display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; color: var(--muted); text-decoration: none; }
+.settings-back-arrow:hover { color: var(--ink); background: var(--paper-deep); }
+.settings-page .settings-intro { display: flex; align-items: center; justify-content: space-between; gap: 2rem; margin-block: 0 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }
+.settings-page .settings-intro h1 { font: 600 var(--settings-title-size)/1.2 var(--display); letter-spacing: -0.04em; }
 .settings-intro > div { min-width: 0; }
 .settings-intro p { margin-top: 0.75rem; color: var(--muted); font-size: 0.9375rem; line-height: 1.7; }
 .settings-art { display: block; flex: 0 0 auto; width: 10rem; height: 6rem; object-fit: contain; image-rendering: pixelated; }
@@ -18,8 +21,8 @@
 .settings-page .invitation-section form { max-width: 34rem; }
 .settings-page [role="alert"] { font-size: 0.875rem; }
 @media (max-width: 767px) {
-  .settings-page .settings-intro { gap: 1rem; margin-top: 1.25rem; }
-  .settings-page .settings-intro h1 { font-size: 1.875rem; }
+  .settings-page { --settings-title-size: 1.875rem; }
+  .settings-page .settings-intro { gap: 1rem; }
   .settings-intro p { font-size: 0.875rem; }
   .settings-art { width: 6rem; height: 5rem; }
   .settings-page #profile-effect { padding: 0.875rem 1rem; }

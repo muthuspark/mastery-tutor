@@ -1,24 +1,15 @@
 ---
 name: msdd-build
-description: Implement an approved MSDD specification continuously, one verified task at a time. Use when the user wants to build the feature defined in spec.md.
+description: Implement an approved MSDD specification continuously, one verified task at a time.
 ---
 
 # MSDD Build
 
-`spec.md` is a living source of truth throughout implementation, not a document frozen at the start. Update it automatically whenever implementation reveals or changes a material fact; do not wait until the end of the coding session.
+Keep `spec.md` and `plan.md` current throughout implementation. The spec records high-level behavior and acceptance criteria. The plan records the actual technical design, interfaces, file changes, implementation steps, and verification approach. Update the correct artifact as implementation reveals or changes a material fact.
 
-## Keep the specification current
+Update `spec.md` for changed requirements, flows, constraints, edge cases, or acceptance criteria. Update `plan.md` for architecture, interfaces, data contracts, file changes, technical decisions, implementation steps, and verification details. Record completed checks with an `Evidence:` prefix so they do not become tasks.
 
-As you work, immediately record implementation discoveries in the relevant spec sections:
-
-- **Requirements**, **User/System Flows**, and **Acceptance Criteria** for changed behavior or observable outcomes.
-- **Technical Design** for the actual architecture, interfaces, data contracts, dependencies, and diagrams.
-- **Decisions and Constraints** for decisions made, rationale, assumptions invalidated, and constraints discovered.
-- **Edge Cases and Failure Handling** for newly discovered failure paths and recovery behavior.
-- **Implementation Plan** when work is added, removed, reordered, or split.
-- **Verification and Implementation Notes** for commands run, evidence, deviations, and rollout observations. Prefix completed-check records with `Evidence:` so they document the result without becoming another task.
-
-Update the spec before proceeding to the next task. Re-run `msdd build` after any implementation-plan or verification change so `task.md` is reconciled with the current source of truth. Mark a task complete only after the spec accurately describes the implemented result and the verification evidence is recorded. Apply in-scope decisions automatically; stop for user direction only when a discovery materially expands the agreed scope or requires a product choice.
+Apply in-scope decisions automatically. Stop for user direction only when a discovery materially expands scope or requires a product choice. Re-run `msdd build` after plan or verification changes so `task.md` is reconciled.
 
 Start the continuous task loop with:
 
@@ -26,4 +17,4 @@ Start the continuous task loop with:
 msdd build "Feature name"
 ```
 
-Implement only the task returned by the CLI, update `spec.md` with relevant decisions and evidence, run focused verification, mark that task `[x]` in `task.md`, and run the build command again internally. Continue until it reports completion or a genuine blocker requires user input.
+Implement only the next unchecked task from `task.md`, verify it, update spec/plan with material discoveries and evidence, then mark the task `[x]`. Run `msdd build` again internally and continue until it reports completion or a genuine blocker requires user input.

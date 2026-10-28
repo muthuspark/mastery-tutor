@@ -1,35 +1,22 @@
 ---
 name: msdd-spec
-description: Turn a confirmed MSDD exploration into an implementation-ready specification and task list. Use after exploration when the user wants to define the feature before coding.
+description: Turn confirmed feature intent into a high-level specification, low-level implementation plan, and checkable tasks.
 ---
 
 # MSDD Spec
 
-Read the feature's `explore.md`, resolve material ambiguity with the user, and record confirmed decisions in the thirteen-section `spec.md`. Keep the `Explanation and Output Artifacts` section audience-focused: choose prose, diagram, interactive HTML, or narrated explainer video and use an 80%-ASD-STE100 writing profile unless the user specifies another level.
+Use the confirmed exploration discussion and decisions. Do not require or read an `explore.md` artifact. Resolve material ambiguity with the user before finalizing.
 
-Use valid, readable Markdown. Do not compress required lists into a sentence. In particular, write separate Markdown bullets or numbered lines; use `### Goals` and `### Non-goals`, `### Actors` and `### Scenarios`, and the four `###` subsections for Decisions and Constraints. Write the five Explanation and Output Artifacts fields as separate bullets.
+Keep the artifacts distinct:
 
-In `Technical Design`, make the change easy to understand technically:
+- `spec.md` is the high-level design: why the feature is needed, intent, goals, users, expected behavior, user/system flows, edge cases, constraints, and observable acceptance criteria. Keep implementation file changes and component-level decisions out of the spec.
+- `plan.md` is the low-level design: components, responsibilities, interfaces, data flow, technical decisions, failure handling, verification mapping, affected files, and ordered implementation steps. Use a concise Mermaid diagram when it makes the design easier to understand.
+- `task.md` is the agent execution checklist: small, independently checkable steps derived from the plan. Preserve acceptance-criteria coverage through plan verification steps.
 
-- Include a short **Solution Description** with the proposed approach, main flow, and key decision.
-- Include one or two minimal Mermaid diagrams in fenced `mermaid` blocks. Choose the diagram that explains the feature at a glance:
-
-  | What the design needs to show | Diagram |
-  | --- | --- |
-  | How services or components connect | Architecture diagram |
-  | The order of calls between components | Sequence diagram |
-  | Decisions, branches, and failure paths | Flowchart |
-  | How an item changes over its lifetime | State diagram |
-  | Data entities and their relationships | ER diagram |
-
-  Start with a sequence diagram when the main challenge is understanding the end-to-end flow. Add a flowchart for complex decision rules or a state diagram when valid transitions matter. Add a second diagram only when it explains a distinct, material part of the design. Show only change-relevant elements, use labels a non-technical reader can understand, and keep exact inputs, outputs, and error handling in the related text sections.
-
-- Include these concise subsections: **Current State** (omit when it adds no context), **Proposed Design**, **Architecture / Components**, **Data Model / API Changes** (state “None” when applicable), **Technical Decisions**, **Trade-offs**, **Failure Handling**, and **Testing Strategy**.
-
-Create the specification with:
+Create all three artifacts with the existing command:
 
 ```sh
 msdd spec "Feature name"
 ```
 
-The CLI generates `task.md`. The next workflow is `$msdd-build`.
+The command creates `spec.md`, `plan.md`, and `task.md` in `specs/<feature>/`. The next workflow is `$msdd-build`.

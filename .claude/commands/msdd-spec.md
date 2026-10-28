@@ -1,19 +1,21 @@
 ---
 name: "MSDD Spec"
-description: Turn an exploration into a detailed implementation specification.
+description: Create a high-level spec, low-level plan, and checkable task list.
 allowed-tools: Bash(msdd:*)
 ---
 
-Use the confirmed exploration decisions to complete every section of the detailed spec:
+Use confirmed decisions from the exploration conversation. Do not require an `explore.md` file. Resolve material ambiguity before finalizing.
+
+Keep the artifacts distinct:
+
+- `spec.md` is the high-level design: intent, goals, users, expected behavior, flows, edge cases, constraints, and observable acceptance criteria.
+- `plan.md` is the low-level design: components, interfaces, data flow, technical decisions, affected files, failure handling, verification mapping, and ordered implementation steps.
+- `task.md` is the plan broken into small, independently checkable steps for the agent.
+
+Create all three using the existing command:
 
 ```sh
 msdd spec "<feature name>"
 ```
 
-Use valid, readable Markdown. Keep each required list item on its own bullet or numbered line; never combine a required list into prose. In particular, use `### Goals` and `### Non-goals`; `### Actors` and `### Scenarios`; the four subsections `### Confirmed Decisions`, `### Assumptions`, `### Constraints`, and `### Open Questions`; and five separate bullets for the Explanation and Output Artifacts fields.
-
-In `Technical Design`, include a short **Solution Description** with the proposed approach, main flow, and key decision. Include one or two minimal Mermaid diagrams in fenced `mermaid` blocks: use an architecture diagram for component connections, a sequence diagram for call order, a flowchart for decisions and failure paths, a state diagram for lifecycle transitions, or an ER diagram for entity relationships. Start with a sequence diagram when the end-to-end flow is the main challenge. Add a second diagram only for a distinct, material design concern. Show only change-relevant elements, use non-technical labels, and keep exact inputs, outputs, and error handling in the related text sections.
-
-Use concise **Current State** (omit when unnecessary), **Proposed Design**, **Architecture / Components**, **Data Model / API Changes** (state “None” when applicable), **Technical Decisions**, **Trade-offs**, **Failure Handling**, and **Testing Strategy** subsections.
-
-Resolve open questions before finalizing. The spec is the source of truth for the build mode.
+The next workflow is `/msdd-build`.

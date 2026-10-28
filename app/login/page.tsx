@@ -13,7 +13,7 @@ export default async function LoginPage() {
         alt="Pixel art of Isaac Newton reading beneath an apple tree, an apple in his hand."
         width={1254}
         height={1254}
-        sizes="(max-width: 767px) 260px, 48vw"
+        sizes="(max-width: 900px) 272px, (min-width: 1600px) 752px, 48vw"
         preload
       />
     </div>

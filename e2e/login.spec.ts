@@ -274,3 +274,48 @@ test("neutral header fallback preserves public header geometry", async ({ page }
     await page.locator(".site-header").evaluate((header, html) => { header.outerHTML = html; }, publicHeader);
   }
 });
+
+test("login adapts across narrow, tablet, landscape, and enlarged-text contexts", async ({ page }) => {
+  await page.route("**/api/auth/email-otp/send-verification-otp", route => route.fulfill({ json: { success: true } }));
+  await page.route("**/api/auth/sign-in/email-otp", route => route.fulfill({
+    status: 400, json: { error: { message: "This code has expired. Request another code and try again." } },
+  }));
+  const contexts = [
+    { width: 1440, height: 900 },
+    { width: 768, height: 1024 },
+    { width: 390, height: 844 },
+    { width: 320, height: 568 },
+    { width: 844, height: 390 },
+    { width: 390, height: 360 },
+    { width: 320, height: 568, enlarged: true },
+  ];
+  for (const viewport of contexts) {
+    await page.setViewportSize(viewport);
+    await page.goto("/login");
+    if (viewport.enlarged) await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+    await page.evaluate(() => document.fonts.ready);
+    const email = page.getByLabel("Email address");
+    expect(await email.evaluate(node => parseFloat(getComputedStyle(node).fontSize))).toBeGreaterThanOrEqual(16);
+    await email.fill("learner.with.a.long.email.address@example.com");
+    await email.press("Enter");
+    const code = page.getByLabel("Login code");
+    await expect(code).toBeFocused();
+    await code.fill("123456");
+    await code.press("Enter");
+    await expect(page.locator("#login-error")).toContainText("expired");
+    expect(await email.count()).toBe(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    for (const button of await page.locator(".login-form button").all()) {
+      const bounds = await button.boundingBox();
+      expect(bounds!.height).toBeGreaterThanOrEqual(44);
+      expect(bounds!.x).toBeGreaterThanOrEqual(0);
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(viewport.width);
+    }
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({ path: `test-results/login-adapt-${viewport.width}-${viewport.height}${viewport.enlarged ? "-large-text" : ""}.png`, fullPage: true });
+    await page.getByRole("button", { name: "Change email" }).click();
+    await expect(email).toBeFocused();
+    await expect(email).toHaveValue("learner.with.a.long.email.address@example.com");
+    await expect(page.locator("#login-error")).toHaveCount(0);
+  }
+});
