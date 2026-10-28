@@ -16,9 +16,11 @@ export function authConfig() {
   if (!secret || secret.length < 32) throw new Error("Configure BETTER_AUTH_SECRET with at least 32 random characters.");
   const url = process.env.BETTER_AUTH_URL;
   if (!url || !z.url().safeParse(url).success || !/^https?:\/\//.test(url)) throw new Error("Configure BETTER_AUTH_URL with the application's full URL.");
-  if (process.env.NODE_ENV === "production" && !url.startsWith("https://")) throw new Error("BETTER_AUTH_URL must use HTTPS in production.");
+  const parsedURL = new URL(url);
+  const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(parsedURL.hostname);
+  if (process.env.NODE_ENV === "production" && parsedURL.protocol !== "https:" && !loopback) throw new Error("BETTER_AUTH_URL must use HTTPS in production except for localhost loopback URLs.");
   ownerEmail();
   if (!process.env.MAILTRAP_API_KEY?.trim() || !z.email().safeParse(process.env.FROM_EMAIL).success) throw new Error("Configure MAILTRAP_API_KEY and FROM_EMAIL for login email delivery.");
   if (!["codex", "claude", "deepseek"].includes(process.env.AI_PROVIDER ?? "")) throw new Error("Configure AI_PROVIDER as codex, claude, or deepseek.");
-  return { secret, baseURL: new URL(url).origin };
+  return { secret, baseURL: parsedURL.origin };
 }
