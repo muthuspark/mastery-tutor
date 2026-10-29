@@ -37,7 +37,7 @@ export function NewCourseForm() {
       <form className="new-course-form" onSubmit={submit}>
         <p id="course-topic-help" className="course-creation-intro">Pick something you want to learn. We’ll turn it into a chapter-by-chapter learning path.</p>
         <p className="course-profile-hint">Want content tailored to your experience? Add a little about your background in <Link href="/settings">Profile settings</Link>.</p>
-        <label className="course-topic-label" htmlFor="topic">What do you want to learn?</label>
+        <label className="sr-only" htmlFor="topic">What do you want to learn?</label>
         <textarea ref={topicRef} id="topic" name="topic" required rows={4} value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="e.g. Learn Python from scratch" className="field" disabled={isSubmitting} aria-invalid={error ? true : undefined} aria-describedby={error ? "course-topic-help course-form-error" : "course-topic-help"} />
         <div className="course-form-actions">
           <button type="submit" disabled={isSubmitting} className="button-secondary course-begin">{isSubmitting ? "Starting your study…" : "Start a study →"}</button>

@@ -2,7 +2,6 @@ import { requirePageUser } from "@/lib/access";
 import { CourseList, type CourseSummary } from "@/components/course-list";
 import { listUserCourses } from "@/lib/course-list";
 import { NewCourseForm } from "@/components/new-course-form";
-import Image from "next/image";
 import "./studies.css";
 
 export default async function HomePage() {
@@ -23,7 +22,6 @@ export default async function HomePage() {
         <section className="course-creation" aria-labelledby="creation-title">
           <h2 id="creation-title" className="display">Start something new</h2>
           <NewCourseForm />
-          <Image className="studies-books" src="/images/studies-books.webp" width={1774} height={887} sizes="200px" alt="" aria-hidden="true" />
         </section>
       </CourseList>
     </main>
