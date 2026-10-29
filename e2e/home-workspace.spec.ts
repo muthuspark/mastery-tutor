@@ -29,7 +29,7 @@ for (const width of [1440, 390]) {
     await expect(list.getByText("Preparing your course")).toBeVisible();
     await expect(list.getByText("Review →")).toBeVisible();
     const creation = page.getByRole("region", { name: "Start something new" });
-    await expect(creation.getByRole("button", { name: "Create study →" })).toBeEnabled();
+    await expect(creation.getByRole("button", { name: "Start a study →" })).toBeEnabled();
     const headerBox = (await page.locator("body > .site-header").boundingBox())!;
     const mainBox = (await page.getByRole("main").boundingBox())!;
     expect(Math.abs(headerBox.x - mainBox.x)).toBeLessThan(1);
@@ -69,7 +69,7 @@ test("desktop keeps study actions in view and every saved study reachable", asyn
   for (const [width, height] of [[1440, 900], [1366, 768], [1024, 768]]) {
     await page.setViewportSize({ width, height });
     expect(await page.evaluate(() => ({ x: document.documentElement.scrollWidth <= innerWidth, y: document.documentElement.scrollHeight <= innerHeight })), `${width} × ${height}`).toEqual({ x: true, y: true });
-    await expect(page.getByRole("button", { name: "Create study →" })).toBeInViewport();
+    await expect(page.getByRole("button", { name: "Start a study →" })).toBeInViewport();
     await expect(page.getByRole("link", { name: "Continue studying →" })).toBeInViewport();
     await list.getByRole("link").last().scrollIntoViewIfNeeded();
     await list.getByRole("link").last().focus();

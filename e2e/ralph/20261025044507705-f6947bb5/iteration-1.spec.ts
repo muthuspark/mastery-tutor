@@ -17,7 +17,7 @@ async function expectSavedStudies(page: Page, courses: SavedCourse[]) {
   await expect(studies.getByText(`${courses.length} ${courses.length === 1 ? "subject" : "subjects"}`, { exact: true })).toBeVisible();
   await expect(studies.getByRole("link")).toHaveCount(courses.length);
   if (courses.length === 0) {
-    await expect(studies.getByText("Choose a topic to start your first study. Your saved studies and progress will appear here.", { exact: true })).toBeVisible();
+    await expect(studies.getByText("Your saved studies and progress will appear here.", { exact: true })).toBeVisible();
   }
   for (const course of courses) {
     const card = studies.locator(`a[href="/course/${course.id}"]`);
@@ -33,7 +33,7 @@ async function expectSavedStudies(page: Page, courses: SavedCourse[]) {
       await expect(progress).toHaveAttribute("aria-valuetext", `${passed} of ${total} chapters mastered`);
     }
   }
-  await expect(main.getByRole("button", { name: "Create study →", exact: true })).toBeVisible();
+  await expect(main.getByRole("button", { name: "Start a study →", exact: true })).toBeVisible();
 }
 
 test("read-only smoke: saved studies render real progress after reload and settings navigation", async ({ page }) => {

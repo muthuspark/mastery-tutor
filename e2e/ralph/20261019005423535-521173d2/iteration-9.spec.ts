@@ -113,7 +113,7 @@ for (const width of [375, 768, 1440]) {
         }
         await expect(topic).toBeDisabled();
         const pendingButton = main.locator('.new-course-form button[type="submit"]');
-        await expect(pendingButton).toHaveText("Building your path…");
+        await expect(pendingButton).toHaveText("Starting your study…");
         await expect(pendingButton).toBeDisabled();
         await layout(page, dialog, [heading, status]);
         await capture(page, info, `${result}-modal-initial`);

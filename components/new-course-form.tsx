@@ -2,9 +2,10 @@
 
 import { FormEvent, RefObject, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const generationStages = [
-  { title: "Saving your request", detail: "Creating your saved course" },
+  { title: "Saving your request", detail: "Creating your saved study" },
 ];
 
 export function NewCourseForm() {
@@ -22,7 +23,7 @@ export function NewCourseForm() {
     try {
       const response = await fetch("/api/courses", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ topic }) });
       const body = await response.json().catch(() => null);
-      if (!response.ok) { setError(body?.error?.message ?? "Could not create the course."); setIsSubmitting(false); return; }
+      if (!response.ok) { setError(body?.error?.message ?? "Could not start your study."); setIsSubmitting(false); return; }
       router.push(`/course/${body.courseId}`);
     } catch {
       setError("Could not reach the tutor. Please try again.");
@@ -34,11 +35,12 @@ export function NewCourseForm() {
     <>
       {isSubmitting ? <GenerationOverlay stage={generationStage} returnFocusRef={topicRef} /> : null}
       <form className="new-course-form" onSubmit={submit}>
+        <p id="course-topic-help" className="course-creation-intro">Pick something you want to learn. We’ll turn it into a chapter-by-chapter learning path.</p>
+        <p className="course-profile-hint">Want content tailored to your experience? Add a little about your background in <Link href="/settings">Profile settings</Link>.</p>
         <label className="course-topic-label" htmlFor="topic">What do you want to learn?</label>
-        <textarea ref={topicRef} id="topic" name="topic" required rows={4} value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="e.g. the fundamentals of system design" className="field" disabled={isSubmitting} aria-invalid={error ? true : undefined} aria-describedby={error ? "course-form-error" : undefined} />
+        <textarea ref={topicRef} id="topic" name="topic" required rows={4} value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="e.g. Learn Python from scratch" className="field" disabled={isSubmitting} aria-invalid={error ? true : undefined} aria-describedby={error ? "course-topic-help course-form-error" : "course-topic-help"} />
         <div className="course-form-actions">
-          <button type="submit" disabled={isSubmitting} className="button-secondary course-begin">{isSubmitting ? "Building your path…" : "Create study →"}</button>
-
+          <button type="submit" disabled={isSubmitting} className="button-secondary course-begin">{isSubmitting ? "Starting your study…" : "Start a study →"}</button>
         </div>
         {error ? <p id="course-form-error" className="ui mt-4 text-sm text-[var(--accent-dark)]" role="alert">{error}</p> : null}
       </form>

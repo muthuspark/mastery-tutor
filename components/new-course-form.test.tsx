@@ -10,7 +10,7 @@ it("offers course creation immediately without provider setup and keeps retry fe
   render(<NewCourseForm />);
   expect(screen.queryByText(/agent|Configure/)).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText("What do you want to learn?"), { target: { value: "Ecology" } });
-  fireEvent.click(screen.getByRole("button", { name: /Create study/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Start a study/ }));
   await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Please try again shortly."));
   expect(screen.getByLabelText("What do you want to learn?")).toHaveValue("Ecology");
   expect(fetch).toHaveBeenCalledTimes(1);

@@ -109,7 +109,7 @@ test("mobile login supports keyboard submission and a fresh course", async ({ pa
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await expect(page.getByRole("combobox")).toHaveCount(0);
   await page.getByLabel("What do you want to learn?").fill("Ecology for beginners");
-  await page.getByRole("button", { name: "Create study →" }).click();
+  await page.getByRole("button", { name: "Start a study →" }).click();
   await expect(page).toHaveURL(/\/course\//);
 });
 
