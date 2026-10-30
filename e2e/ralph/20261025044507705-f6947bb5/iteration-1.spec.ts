@@ -13,8 +13,7 @@ type SavedCourse = {
 async function expectSavedStudies(page: Page, courses: SavedCourse[]) {
   const main = page.getByRole("main");
   await expect(main.getByRole("heading", { name: "Your learning workspace", exact: true })).toBeVisible();
-  const studies = main.getByRole("region", { name: "Your studies", exact: true });
-  await expect(studies.getByText(`${courses.length} ${courses.length === 1 ? "subject" : "subjects"}`, { exact: true })).toBeVisible();
+  const studies = main.getByRole("region", { name: "Saved learning paths", exact: true });
   await expect(studies.getByRole("link")).toHaveCount(courses.length);
   if (courses.length === 0) {
     await expect(studies.getByText("Your saved studies and progress will appear here.", { exact: true })).toBeVisible();
@@ -28,7 +27,6 @@ async function expectSavedStudies(page: Page, courses: SavedCourse[]) {
     } else {
       const { passed, total } = course.progress;
       const progress = card.getByRole("progressbar", { name: `${course.topic} progress`, exact: true });
-      await expect(card.getByText(`${passed} of ${total} chapters mastered`, { exact: true })).toBeVisible();
       await expect(progress).toHaveAttribute("aria-valuenow", String(total ? Math.round(passed / total * 100) : 0));
       await expect(progress).toHaveAttribute("aria-valuetext", `${passed} of ${total} chapters mastered`);
     }

@@ -6,7 +6,7 @@ export async function SiteHeader({ status }: { status?: string }) {
   const user = await currentUser();
   return (
     <HeaderShell href={user ? "/" : "/login"}>
-      {status ? <span className="site-header-status ui text-sm text-[var(--muted)]">{status}</span> : user ? <AccountControls /> : <span className="login-beta">Private beta</span>}
+      {status ? <span className="site-header-status ui text-sm text-[var(--muted)]">{status}</span> : user ? <AccountControls /> : null}
     </HeaderShell>
   );
 }

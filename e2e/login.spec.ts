@@ -86,8 +86,8 @@ test("two learners sign in, study, keep private profiles, resume, and sign out a
   const graded = await ownerContext.request.post("/api/chapters/owner-chapter/attempts", { data: { answers: [{ questionId: "00000000-0000-4000-8000-000000000001", response: "Yes" }] } });
   expect(graded.status()).toBe(200);
   expect(await graded.json()).toMatchObject({ passed: true, complete: true });
-  await owner.goto("/"); await expect(owner.getByText("1 of 1 chapters mastered")).toBeVisible();
-  await owner.reload(); await expect(owner.getByText("1 of 1 chapters mastered")).toBeVisible();
+  await owner.goto("/"); await expect(owner.getByRole("region", { name: "Saved learning paths" }).getByText("100%", { exact: true })).toBeVisible();
+  await owner.reload(); await expect(owner.getByRole("region", { name: "Saved learning paths" }).getByText("100%", { exact: true })).toBeVisible();
   expect((await secondContext.request.get("/api/courses/owner")).status()).toBe(404);
   await owner.goto("/settings"); await expect(owner.getByLabel(/About me/)).toHaveValue("Experienced owner");
   await owner.reload(); await expect(owner.getByLabel(/About me/)).toHaveValue("Experienced owner");
@@ -124,7 +124,7 @@ test("invitation and delivery errors are recoverable without exposing provider d
 });
 
 // Keep observations in the runner so redirects/document replacements cannot erase a flash.
-type HeaderSample = { path: string; settings: boolean; signOut: boolean; beta: boolean; href: string | null; transient?: boolean };
+type HeaderSample = { path: string; settings: boolean; signOut: boolean; href: string | null; transient?: boolean };
 async function observeHeader(page: Page) {
   const samples: HeaderSample[] = [];
   await page.exposeBinding("recordHeader", (_source, sample: HeaderSample) => { samples.push(sample); });
@@ -138,7 +138,6 @@ async function observeHeader(page: Page) {
         path: location.pathname,
         settings: !!header.querySelector('a[href="/settings"]'),
         signOut: [...header.querySelectorAll("button")].some(button => /Sign(?:ing)? out/.test(button.textContent ?? "")),
-        beta: !!header.querySelector(".login-beta"),
         href: header.querySelector(".site-brand")?.getAttribute("href") ?? null,
       };
       const key = JSON.stringify(state);
@@ -152,7 +151,7 @@ async function observeHeader(page: Page) {
           const controls = [node, ...node.querySelectorAll(".account-control")].filter(element => element.matches(".account-control"));
           for (const control of controls) {
             if (!control.closest(".site-header") && !(record.target instanceof Element && record.target.closest(".site-header"))) continue;
-            void report({ path: location.pathname, settings: control.matches('a[href="/settings"]'), signOut: control.matches("button"), beta: false, href: null, transient: true });
+            void report({ path: location.pathname, settings: control.matches('a[href="/settings"]'), signOut: control.matches("button"), href: null, transient: true });
           }
         }
       }
@@ -187,17 +186,14 @@ for (const delay of [0, 400]) {
     const samples = await observeHeader(page);
     const delayed = delay ? await delayNavigation(page, delay) : undefined;
     await page.goto("/login");
-    await expect(page.locator(".site-header .login-beta")).toBeVisible();
     const logo = page.getByRole("link", { name: "Newton", exact: true });
     await logo.focus();
     await expect(logo).toBeFocused();
     await logo.press("Enter");
     await expect(page).toHaveURL(/\/login$/);
-    await expect(page.locator(".site-header .login-beta")).toBeVisible();
     // Also exercise the original protected destination independently of the fixed href.
     await page.goto("/");
     await expect(page).toHaveURL(/\/login$/);
-    await expect(page.locator(".site-header .login-beta")).toBeVisible();
     await settleHeader(page);
     expect(samples.length).toBeGreaterThan(0);
     expect(samples.filter(sample => sample.settings || sample.signOut)).toEqual([]);
@@ -210,7 +206,6 @@ for (const delay of [0, 400]) {
 test("header observer catches actions inserted and removed before a paint", async ({ page }) => {
   const samples = await observeHeader(page);
   await page.goto("/login");
-  await expect(page.locator(".login-beta")).toBeVisible();
   await page.evaluate(() => {
     const nav = document.createElement("nav");
     nav.innerHTML = '<a class="account-control" href="/settings">Settings</a><button class="account-control">Sign out</button>';
@@ -245,13 +240,12 @@ test("signed-in header keeps actions through logo navigation and becomes public 
     await expect(page.locator(".site-header .account-navigation")).toBeVisible();
     const transition = samples.slice(start).filter(sample => !sample.transient);
     expect(transition.some(sample => sample.path === "/")).toBe(true);
-    expect(transition.every(sample => sample.settings && sample.signOut && !sample.beta && sample.href === "/")).toBe(true);
+    expect(transition.every(sample => sample.settings && sample.signOut && sample.href === "/")).toBe(true);
     if (delayed) expect(delayed()).toBeGreaterThan(0);
     await page.unrouteAll({ behavior: "wait" });
   }
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
-  await expect(page.locator(".site-header .login-beta")).toBeVisible();
   await settleHeader(page);
   const signedOutStart = samples.length;
   const logo = page.getByRole("link", { name: "Newton", exact: true });
@@ -264,7 +258,6 @@ test("signed-in header keeps actions through logo navigation and becomes public 
 
 test("neutral header fallback preserves public header geometry", async ({ page }) => {
   await page.goto("/login");
-  await expect(page.locator(".site-header .login-beta")).toBeVisible();
   // Render the real fallback directly: fast session checks may never emit it over the network.
   const fallback = renderToStaticMarkup(createElement(SiteHeaderFallback));
   for (const width of [1440, 390, 320]) {
@@ -274,7 +267,7 @@ test("neutral header fallback preserves public header geometry", async ({ page }
     const publicHeader = await page.locator(".site-header").evaluate(header => header.outerHTML);
     await page.locator(".site-header").evaluate((header, html) => { header.outerHTML = html; }, fallback);
     await expect(page.getByRole("link", { name: "Newton", exact: true })).toBeVisible();
-    await expect(page.locator(".site-header .account-control, .site-header .login-beta")).toHaveCount(0);
+    await expect(page.locator(".site-header .account-control")).toHaveCount(0);
     const pending = await page.locator(".site-header").boundingBox();
     expect(pending).toEqual(before);
     await page.locator(".site-header").evaluate((header, html) => { header.outerHTML = html; }, publicHeader);

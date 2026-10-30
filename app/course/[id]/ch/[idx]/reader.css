@@ -42,8 +42,10 @@
 .reader-controls { margin-top: 2.5rem; padding-top: 1.5rem; }
 .chapter-reader .chapter-action-row { gap: 1.25rem; }
 .chapter-reader .chapter-adjustment-group { flex-wrap: wrap; gap: 0.75rem; }
-.chapter-reader .chapter-adjustment-buttons { border-color: var(--line); border-radius: 0; background: transparent; }
-.chapter-reader .chapter-segment-button { min-height: 2.75rem; border-radius: 0; padding-inline: 0.875rem; font-size: 0.875rem; }
+.chapter-reader .chapter-adjustment-buttons { flex-wrap: wrap; gap: 0.75rem; border: 0; background: transparent; }
+.chapter-reader .chapter-explanation-button { border: 1px solid var(--line); border-inline-color: transparent; border-radius: 0; background: #fff; color: var(--ink); box-shadow: 0 2px 0 var(--line); }
+.chapter-reader .chapter-explanation-button:hover { border-color: var(--line); border-inline-color: transparent; background: #fff; }
+.chapter-reader .chapter-explanation-button:active:not([aria-disabled="true"]) { box-shadow: 0 1px 0 var(--line); }
 
 @media (max-width: 767px) {
   .chapter-reader { padding-block: 1rem 2.5rem; }

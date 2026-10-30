@@ -46,11 +46,11 @@ test("appends explanation levels for a migrated mastered chapter and retains the
   await page.getByRole("button", { name: "Retry explanation" }).click();
   await expect(page.getByRole("heading", { name: "Intuitive explanation" })).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: /^Explanation added$/ })).toBeVisible();
-  await page.getByRole("button", { name: "More depth" }).click();
+  await page.getByRole("button", { name: "Explain in more depth" }).click();
   await expect(page.getByRole("heading", { name: "Guided explanation" }).first()).toBeVisible();
-  await page.getByRole("button", { name: "More depth" }).click();
+  await page.getByRole("button", { name: "Explain in more depth" }).click();
   await expect(page.getByRole("heading", { name: "Applied explanation" })).toBeVisible();
-  await page.getByRole("button", { name: "Simpler" }).click();
+  await page.getByRole("button", { name: "Simplify explanation" }).click();
   await expect(page.getByRole("heading", { name: "Guided explanation" }).last()).toBeVisible();
   await expect(page.getByText("Current explanation: Guided (2 of 6)")).toBeVisible();
 

@@ -236,10 +236,9 @@ export function ChapterPage() {
           : null}
       <div className="chapter-action-row">
         <div className="chapter-adjustment-group">
-          <p>Adjust explanation</p>
           <div role="group" aria-label="Adjust explanation depth" className="chapter-adjustment-buttons">
-            <button type="button" onClick={() => { if (!controlsDisabled && effectiveLevel > 1) requestExplanation.mutate("simpler"); }} aria-disabled={controlsDisabled || effectiveLevel <= 1} className="chapter-segment-button aria-disabled:cursor-not-allowed aria-disabled:opacity-60">Simpler</button>
-            <button type="button" onClick={() => { if (!controlsDisabled && effectiveLevel < 6) requestExplanation.mutate("deeper"); }} aria-disabled={controlsDisabled || effectiveLevel >= 6} className="chapter-segment-button aria-disabled:cursor-not-allowed aria-disabled:opacity-60">More depth</button>
+            <button type="button" onClick={() => { if (!controlsDisabled && effectiveLevel > 1) requestExplanation.mutate("simpler"); }} aria-disabled={controlsDisabled || effectiveLevel <= 1} className="button-secondary chapter-explanation-button aria-disabled:cursor-not-allowed aria-disabled:opacity-60">Simplify explanation</button>
+            <button type="button" onClick={() => { if (!controlsDisabled && effectiveLevel < 6) requestExplanation.mutate("deeper"); }} aria-disabled={controlsDisabled || effectiveLevel >= 6} className="button-secondary chapter-explanation-button aria-disabled:cursor-not-allowed aria-disabled:opacity-60">Explain in more depth</button>
           </div>
         </div>
         <Link href={`/course/${params.id}/ch/${params.idx}/quiz`} className="button-primary ui chapter-quiz-cta">Check your understanding →</Link>

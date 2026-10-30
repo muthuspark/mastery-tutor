@@ -6,7 +6,7 @@
 :root {
   color-scheme: light;
   /* White page background and neutral inset surfaces. */
-  --color-paper: #fff;
+  --color-paper: #eeeeee;
   --color-paper-2: oklch(0.97 0 0);
   --color-ink: oklch(0.23 0.009 145);
   --color-text-muted: oklch(0.47 0.012 86);
@@ -15,6 +15,7 @@
   --color-footer: oklch(0.259566 0.003667 106.652);
   --color-rule: oklch(0.72 0.018 88 / 30%);
   --color-rule-soft: oklch(0.155892 0.005324 145.314 / 6%);
+  --layout-guide: oklch(0.55 0.005 145 / 16%);
   /* Preserve existing token names used by components and diagrams. */
   --color-slate-dark: var(--color-ink);
   --color-ivory-medium: var(--color-paper);
@@ -59,6 +60,19 @@ html { background: var(--paper); }
 body { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 1rem; line-height: 1.5; font-kerning: normal; }
 body > main { flex: 1; }
 body > .site-header, body > .site-footer { flex-shrink: 0; }
+/* Full-height column rules sit outside the shared content gutters. */
+@media (min-width: 768px) {
+  body { position: relative; isolation: isolate; }
+  body::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset-block: 0;
+    inset-inline: calc(max(var(--layout-gutter), (100% - var(--layout-max-wide)) / 2) - 1rem);
+    border-inline: 1px solid var(--layout-guide);
+    pointer-events: none;
+  }
+}
 button, textarea, input, select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 a { color: inherit; text-underline-offset: 0.2em; }
@@ -131,7 +145,6 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); font-weight: 600; text-wra
 .featured-study { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 2rem; }
 .featured-study-content { flex: 1; min-width: 0; max-width: 42rem; }
 .featured-study h2 { margin-bottom: 0.75rem; font-size: 2.25rem; line-height: 1.2; overflow-wrap: anywhere; }
-.featured-study-meta { color: var(--muted); font-size: 1rem; }
 .featured-study-progress { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
 .featured-study-progress > .study-progress { flex: 1; height: 0.5rem; margin: 0; }
 .featured-study-progress > span { color: var(--muted); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
@@ -152,9 +165,6 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); font-weight: 600; text-wra
 .learning-workspace--empty { grid-template-columns: minmax(0, 1.85fr) minmax(19rem, 1fr); }
 .learning-workspace--empty .course-begin { background: var(--action); color: var(--paper); }
 .learning-workspace--empty .course-begin:hover:not(:disabled) { background: var(--ink); }
-.studies-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 1rem; }
-.studies-heading h2 { font-size: var(--text-section, 1.5rem); line-height: 1.3; letter-spacing: -0.015em; }
-.subject-count { color: var(--muted); font-size: var(--text-meta, 0.875rem); font-weight: 600; line-height: 1.5; font-variant-numeric: tabular-nums; }
 .studies-list { margin-top: 1.25rem; }
 .study-link { display: block; padding-block: 1.25rem; border-top: 1px solid var(--line); text-decoration: none; }
 .study-link:last-child { padding-bottom: 0; }
@@ -178,7 +188,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); font-weight: 600; text-wra
   .home-page .study-link { display: grid; grid-template-columns: minmax(0, 1fr) minmax(5rem, 0.6fr) 3.5ch 5.75rem; align-items: center; gap: 0.25rem 1rem; }
   .home-page .study-heading, .home-page .study-meta { display: contents; }
   .home-page .study-topic { grid-column: 1; grid-row: 1; font-size: 1.125rem; }
-  .home-page .study-meta > span:first-child { grid-column: 1; grid-row: 2; color: var(--muted); font-size: 0.8125rem; }
+  .home-page .study-preparation { grid-column: 1; grid-row: 2; color: var(--muted); font-size: 0.8125rem; }
   .home-page .study-action { grid-column: 4; grid-row: 1 / 3; }
   .home-page .study-link > .study-progress { grid-column: 2; grid-row: 1 / 3; margin: 0; }
   .home-page .study-percent { grid-column: 3; grid-row: 1 / 3; min-width: 0; color: var(--muted); font-size: 0.8125rem; }

@@ -92,7 +92,7 @@ export function CoursePage() {
               <div className="chapter-row-copy">
                 <span className="chapter-title">{chapter.title}</span>
               </div>
-              <span className="chapter-console-status">{isOpen ? "Ready" : <><svg className="chapter-status-icon" aria-hidden="true" viewBox="0 0 16 16"><path d="M5 1h6v2h2v4h2v9H1V7h2V3h2zm0 2v4h6V3zm2 7v3h2v-3z" fill="currentColor" fillRule="evenodd" /></svg>Locked</>}</span>
+              <span className="chapter-console-status">{!isOpen ? <><svg className="chapter-status-icon" aria-hidden="true" viewBox="0 0 16 16"><path d="M5 1h6v2h2v4h2v9H1V7h2V3h2zm0 2v4h6V3zm2 7v3h2v-3z" fill="currentColor" fillRule="evenodd" /></svg>Locked</> : null}</span>
               <span className="chapter-row-actions ui text-xs">
                 {isOpen ? <span className={chapter.id === currentChapterId ? "chapter-console-continue" : "chapter-console-open"}>Continue →</span> : <span aria-hidden="true">—</span>}
               </span>

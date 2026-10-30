@@ -59,6 +59,8 @@ Use a 4px spacing unit, with 8px, 12px, 16px, 24px, and 32px as common steps. Gr
 
 Shared headers and footers align with the page gutters. Use fine horizontal rules, open layouts, and flat lists. Prefer square corners and small stepped details over rounded cards.
 
+On screens at least 768px wide, faint 1px vertical column rules run the full page height, 16px outside the shared navigation and content shell. Use --layout-guide for these rules and the desktop studies column divider. Keep reading content free of interior decorative lines, and hide outer guides on smaller screens.
+
 Typical content widths:
 
 | Surface | Maximum width |
@@ -70,11 +72,15 @@ Typical content widths:
 
 Use flexible gutters on desktop and approximately 20px on small screens. Keep long titles and uninterrupted strings wrap-safe.
 
+The landing page inherits the same 1240px maximum shell width and shared gutters as authenticated pages, keeping the header and vertical guides aligned across routes.
+
 Shared page padding is 24px vertically on desktop and 20px on narrow screens. Individual compositions can add space within their content, and recovery screens should start from these shared defaults.
 
 ### Landing page
 
 Use a compact header and footer, with Newton beneath the apple tree beside the email-code form. Fit the initial page into common desktop and portrait mobile viewports.
+
+Frame the entrance with horizontal rules below the header and above the footer, joined to the outer column guides. In the two-column desktop layout, add a full-height rule centered in the gap between artwork and sign-in. Omit that interior vertical rule when the layout stacks or the artwork is hidden. Use --layout-guide throughout.
 
 On small or short screens, shrink or hide decorative art before reducing control usability. Code-entry and error states need room. Allow scrolling when zoom, a keyboard, or unusually long content makes it necessary; never clip authentication controls.
 

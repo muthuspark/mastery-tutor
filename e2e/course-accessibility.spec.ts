@@ -23,6 +23,7 @@ test("course index presents progress and all chapter states on desktop and mobil
   await expect(page.getByRole("link", { name: "Export notes" })).toHaveAttribute("href", "/api/courses/course-index/export");
   await expect(page.locator(".chapter-link[aria-current='step']")).toHaveAttribute("href", "/course/course-index/ch/4");
   await expect(page.locator(".chapter-console-continue")).toHaveCount(1);
+  await expect(page.getByText("Ready", { exact: true })).toHaveCount(0);
   for (const [width, height] of [[1440, 1000], [390, 844]]) {
     await page.setViewportSize({ width, height });
     await expect(page.locator(".chapter-list > li")).toHaveCount(12);
@@ -33,6 +34,11 @@ test("course index presents progress and all chapter states on desktop and mobil
     const title = (await page.getByRole("heading", { level: 1 }).boundingBox())!;
     expect(title.y - header.y - header.height).toBeLessThan(100);
     expect(await page.locator(".chapter-row").first().evaluate(element => getComputedStyle(element).gridTemplateColumns.split(" ").length)).toBe(width >= 640 ? 4 : 3);
+    const currentRow = (await page.locator(".chapter-link[aria-current='step']").boundingBox())!;
+    const continueBox = (await page.locator(".chapter-console-continue").boundingBox())!;
+    const retakeBox = (await page.locator(".chapter-retake").first().boundingBox())!;
+    expect(Math.abs(continueBox.x + continueBox.width - retakeBox.x - retakeBox.width)).toBeLessThan(2);
+    expect(Math.abs(continueBox.y + continueBox.height / 2 - currentRow.y - currentRow.height / 2)).toBeLessThan(2);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: `test-results/course-index-${width}.png`, fullPage: true });
   }

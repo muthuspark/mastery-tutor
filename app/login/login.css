@@ -6,8 +6,6 @@ body:has(.login-page) {
   --muted: oklch(0.47 0.012 86);
   --line: oklch(0.72 0.018 88 / 65%);
   --display: "Newton Pixel", monospace;
-  --layout-max-wide: 94rem;
-  --layout-gutter: clamp(1.25rem, 3vw, 3rem);
   min-height: 100svh;
   min-height: 100dvh;
   font-family: var(--sans);
@@ -27,17 +25,41 @@ body:has(.login-page) .site-brand {
 }
 
 
-.login-beta { color: var(--muted); font-size: 0.875rem; }
 
 .login-page {
+  --login-column-gap: clamp(2rem, 5vw, 5.5rem);
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.96fr);
   align-items: center;
-  gap: clamp(2rem, 5vw, 5.5rem);
+  gap: var(--login-column-gap);
   width: min(calc(100% - 2 * var(--layout-gutter)), var(--layout-max-wide));
   margin-inline: auto;
   padding-block: 1.5rem;
   outline: none;
+}
+
+/* Join the outer guides to form a header, two-column entrance, and footer. */
+.login-page::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline: 0;
+  border-block: 1px solid var(--layout-guide);
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .login-page::before { inset-inline: -1rem; }
+}
+@media (min-width: 901px) and (min-height: 601px) {
+  .login-page::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    left: calc((100% - var(--login-column-gap)) / 1.96 + var(--login-column-gap) / 2);
+    border-left: 1px solid var(--layout-guide);
+    pointer-events: none;
+  }
 }
 
 .login-illustration { display: flex; align-items: center; justify-content: center; min-width: 0; }
@@ -120,7 +142,6 @@ body:has(.login-page) .site-footer-content {
 /* Stack when two readable columns no longer fit, including portrait tablets. */
 @media (max-width: 900px) {
   body:has(.login-page) .site-header { min-height: 3.75rem; padding-block: 0.5rem; }
-  .login-beta { font-size: 0.875rem; }
   .login-page { grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: center; gap: 1rem; padding-block: 1.25rem; }
   .login-illustration img { width: auto; height: clamp(8rem, 26svh, 17rem); max-width: 100%; }
   .login-welcome { width: min(100%, 28rem); padding: 0; }

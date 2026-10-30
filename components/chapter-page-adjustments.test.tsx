@@ -76,7 +76,7 @@ it("sends an adjacent request once, announces progress, keeps focus, and appends
     currentTimeline.value = timeline({ activeRequest: { id: "pending-1", status: "pending", level: 1 } });
     return response(202, { id: "pending-1", level: 1, status: "pending" });
   });
-  const button = controls.getByRole("button", { name: "Simpler" });
+  const button = controls.getByRole("button", { name: "Simplify explanation" });
   button.focus();
   fireEvent.click(button);
   await waitFor(() => expect(controls.getByRole("status")).toHaveTextContent("Preparing"));
@@ -101,7 +101,7 @@ it("sends an adjacent request once, announces progress, keeps focus, and appends
 it("shows boundaries and legacy depth without inventing a level", async () => {
   const intuitive = { ...original, level: 1 as const, label: "Intuitive" };
   const { controls, client } = await mount({ timeline: timeline({ effectiveLevel: 1, sections: [intuitive] }) });
-  expect(controls.getByRole("button", { name: "Simpler" })).toHaveAttribute("aria-disabled", "true");
+  expect(controls.getByRole("button", { name: "Simplify explanation" })).toHaveAttribute("aria-disabled", "true");
   expect(controls.getByText("This is the simplest level (1 of 6)." )).toBeVisible();
   await act(async () => client.setQueryData(["chapter-explanations", "chapter"], timeline({
     baselineExplanationId: "legacy", legacyBaseline: true, effectiveLevel: 2,
@@ -145,7 +145,7 @@ it("retains cached explanation text when status reads fail and exposes a read-on
 it("keeps the quiz link and preserves the current text if a request fails", async () => {
   const { controls, post, client } = await mount();
   post.mockRejectedValueOnce(new TypeError("Failed to fetch"));
-  fireEvent.click(controls.getByRole("button", { name: "More depth" }));
+  fireEvent.click(controls.getByRole("button", { name: "Explain in more depth" }));
   expect(await controls.findByRole("alert")).toHaveTextContent("Failed to fetch");
   expect(screen.getByText("Guided explanation")).toBeVisible();
   expect(screen.getByRole("link", { name: "Check your understanding →" })).toHaveAttribute("href", "/course/course/ch/0/quiz");

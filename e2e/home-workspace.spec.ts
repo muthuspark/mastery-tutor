@@ -31,7 +31,7 @@ for (const width of [1440, 390]) {
     expect(mottoBox.y).toBeGreaterThanOrEqual(booksBox.y + booksBox.height);
     const footerBox = (await footer.boundingBox())!;
     expect(footerBox.y + footerBox.height - mottoBox.y - mottoBox.height).toBeGreaterThanOrEqual(24);
-    const list = page.getByRole("region", { name: "Your studies" });
+    const list = page.getByRole("region", { name: "Saved learning paths" });
     await expect(list.getByRole("link")).toHaveCount(6);
     await expect(list.getByText("Preparing your course")).toBeVisible();
     await expect(list.getByText("Review →")).toBeVisible();
@@ -71,7 +71,7 @@ test("desktop form grows without internal scrolling and every saved study stays 
   await page.route("**/api/courses", route => route.fulfill({ json: { courses } }));
   await page.goto("/");
   await page.evaluate(() => document.fonts.ready);
-  const list = page.getByRole("region", { name: "Your studies" });
+  const list = page.getByRole("region", { name: "Saved learning paths" });
   await expect(list.getByRole("link")).toHaveCount(30);
   for (const [width, height] of [[1440, 1024], [1440, 901], [1440, 900], [1366, 768], [1024, 768], [1024, 700]]) {
     await page.setViewportSize({ width, height });
