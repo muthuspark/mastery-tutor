@@ -53,7 +53,10 @@ describe("quiz route cache validation", () => {
       rubric: "Private grading rule", conceptTag: "separation", isReview: false,
       generationVersion: 1, createdAt: now,
     }));
-    const review = { ...current[0], id: randomUUID(), isReview: true, prompt: "Review equation" };
+    const reviewChapter = randomUUID();
+    db.insert(chapters).values({ id: reviewChapter, courseId, idx: 0, title: "Prior", objectives: [], prerequisites: [], status: "passed", createdAt: now }).run();
+    const review = { ...current[0], chapterId: reviewChapter, id: randomUUID(), isReview: true, prompt: "Review equation" };
+    db.insert(questions).values(review).run();
     vi.mocked(dueReviewQuestions).mockReturnValue([review]);
     if (source === "cached") db.insert(questions).values(current).run();
     else vi.mocked(generateQuiz).mockImplementationOnce(async () => {
@@ -102,7 +105,7 @@ describe("quiz route cache validation", () => {
 
     const response = await GET(new Request("http://localhost"), { params: Promise.resolve({ id: chapterId }) });
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(202);
     expect(db.select().from(questions).where(eq(questions.id, staleId)).get()).toBeUndefined();
     expect(db.select().from(questions).where(eq(questions.id, attemptedId)).get()).toBeDefined();
     expect(generateQuiz).toHaveBeenCalledWith(chapterId, "codex", 1, expect.any(Function));

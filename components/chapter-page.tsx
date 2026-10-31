@@ -162,6 +162,7 @@ export function ChapterPage() {
   const recovery = useMutation({ mutationFn: async () => {
     if (reviewed && chapterQuery.error instanceof ReadyContentError && chapterQuery.error.generationFailed) {
       await postJson(`/api/chapters/${chapter?.id}/regenerate`);
+      void queryClient.invalidateQueries({ queryKey: ["study"] });
     }
     await (courseQuery.isError ? courseQuery.refetch() : chapterQuery.refetch());
   }, retry: false });

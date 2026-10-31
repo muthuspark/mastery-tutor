@@ -1,3 +1,4 @@
+import { TodaysStudy } from "@/components/todays-study";
 import { requirePageUser } from "@/lib/access";
 import { CourseList, type CourseSummary } from "@/components/course-list";
 import { listUserCourses } from "@/lib/course-list";
@@ -18,7 +19,7 @@ export default async function HomePage() {
         <h1>Your learning workspace</h1>
         <p>A little progress, one chapter at a time.</p>
       </header>
-      <CourseList initialCourses={initialCourses}>
+      <CourseList initialCourses={initialCourses} today={<TodaysStudy />}>
         <section className="course-creation" aria-labelledby="creation-title">
           <h2 id="creation-title" className="display">Start something new</h2>
           <NewCourseForm />

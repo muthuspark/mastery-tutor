@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 export type CourseSummary = { id: string; topic: string; createdAt: string; startedAt?: string | null; preparationStatus?: string; progress: { passed: number; total: number } };
 type Course = CourseSummary;
 
-export function CourseList({ children, initialCourses }: { children?: ReactNode; initialCourses?: CourseSummary[] }) {
+export function CourseList({ children, initialCourses, today }: { children?: ReactNode; initialCourses?: CourseSummary[]; today?: ReactNode }) {
   const { data, isLoading, isError, refetch } = useQuery<{ courses: Course[] }>({ queryKey: ["courses"], queryFn: async () => {
     const response = await fetch("/api/courses");
     if (!response.ok) throw new Error("Could not load your studies");
@@ -25,9 +25,9 @@ export function CourseList({ children, initialCourses }: { children?: ReactNode;
     })[0];
   return (
     <div className={`learning-workspace${empty ? " learning-workspace--empty" : ""}`}>
-      {isLoading ? <div className="resume-skeleton" aria-hidden="true" /> : featured ? <FeaturedStudy course={featured} /> : null}
+      {today && !empty ? today : isLoading ? <div className="resume-skeleton" aria-hidden="true" /> : featured ? <FeaturedStudy course={featured} /> : null}
       {empty ? children : null}
-      <section className="studies-section" aria-label="Saved learning paths">
+      <section id="saved-studies" className="studies-section" aria-label="Saved learning paths">
         {isLoading ? <p className="loading-state ui mt-8 text-sm text-[var(--muted)]" role="status">Loading your studies…</p> : isError ? <p className="ui mt-5 text-sm text-[var(--accent-dark)]" role="alert">Could not load your studies. <button className="text-button min-h-11 text-sm!" onClick={() => void refetch()}>Try again</button></p> : courses.length === 0 ? <p className="empty-studies text-[var(--muted)]">Your saved studies and progress will appear here.</p> : (
           <div className="studies-list">
             {courses.map((course) => {

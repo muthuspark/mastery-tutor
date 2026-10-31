@@ -94,3 +94,23 @@
   .studies-page .new-course-form textarea { min-height: 7.5rem; font-size: 1rem; }
   .studies-page .course-begin { width: 100%; }
 }
+
+.studies-page .today-study { display: block; grid-column: 1 / -1; min-width: 0; overflow-wrap: anywhere; }
+.today-study-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .5rem 1.5rem; }
+.today-study p { max-width: 75ch; line-height: 1.6; overflow-wrap: anywhere; }
+.today-study-heading > p, .today-study-note, .today-study-list p { color: var(--muted); font-size: .9375rem; }
+.today-study-list { margin-block: .75rem; padding: 0; list-style: none; }
+.today-study-list li { display: flex; justify-content: space-between; gap: .75rem 1.5rem; padding-block: .5rem; border-top: 1px solid var(--line); }
+.today-study-list li > div { min-width: 0; }
+.today-study-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1rem; }
+.today-study details { margin-top: 1rem; }
+.today-study summary { cursor: pointer; min-height: 44px; padding-block: .5rem; }
+.study-zone-form { max-width: 30rem; display: grid; gap: .75rem; padding-block: .75rem; }
+.study-zone-form label { display: grid; gap: .375rem; }
+.study-zone-form .field { width: 100%; min-width: 0; }
+.today-study-note { margin-top: .75rem; }
+@media (max-width: 767px) {
+ .today-study-list li { display: block; }
+ .today-study-actions > * { width: 100%; white-space: normal; }
+ .today-study-heading > p { font-size: .875rem; }
+}

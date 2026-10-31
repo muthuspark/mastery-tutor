@@ -261,3 +261,15 @@ font-failure, delayed-layout, multilingual, navigation, real local OTP, cross-ta
 and persisted-study checks. This uses port 3118 and the same isolated fixture; it also
 needs Python 3 with the pinned FontTools/Brotli versions above. Results and screenshots
 are written to `output/page-load-checks/`. Do not run it during a profiling sample.
+
+## Today’s study and calendar reviews
+
+Today’s study offers up to five due concepts across your courses, followed by one optional next lesson whose prerequisites are complete. Each recommendation explains its scheduled date or prior miss. All saved studies remain available, and completed courses can supply review questions without resetting completion.
+
+Choose a review time zone on first use. Review dates are calendar dates in that saved zone, shared across devices. Changing the zone leaves existing date labels unchanged. A first correct chapter assessment schedules review tomorrow. Successful standalone reviews then use intervals of 3, 7, 14 and 30 days, staying at 30 days thereafter. A miss returns the concept tomorrow. Same-day successes cannot accelerate the schedule; a same-day miss takes precedence. These are scheduling rules, not measured estimates of forgetting or guarantees of retention.
+
+Initial setup seeds pending misses and saved valid concepts from passed chapters as due today. It preserves historical answers and completion and does not claim those historical records are verified recall evidence. Unsupported or stale questions are reported as unavailable. Regeneration and reset suspend their review schedules until current material is assessed again. Course deletion removes related review snapshots. Questions are reused in this first version and may test familiarity; fresh-question transfer is not measured.
+
+Reviews grade saved MCQs locally, without AI calls. Leaving a batch does not record answers; its questions can be resumed, but unsent selections are not saved across navigation. Submission, scheduling and the saved result commit together. Identical retries return that result once. Chapter quizzes likewise require a complete server-issued assessment identity; old browser tabs must reload. Historical free-text records remain readable; new assessment submissions use MCQs. The existing inclusive 80% chapter threshold and equal weighting of issued chapter/review questions are preserved. Standalone reviews do not change chapter scores, unlocks or completion.
+
+Apply additive migrations 0013 and 0014 through the normal deployment/startup migration command before serving this version, and restart all application processes sharing the database. No external scheduler or notification service is required. The bounded runtime assessment fix is included; the separate Lean verification pilot is not part of this feature. Focused browser checks run with `npx playwright test e2e/todays-study.spec.ts` using the isolated login fixture database and controlled external transports.

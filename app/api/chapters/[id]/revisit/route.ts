@@ -1,3 +1,4 @@
+import { invalidateStudySource } from "@/lib/study-invalidation";
 import { authorize } from "@/lib/access";
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -17,6 +18,7 @@ export async function POST(_request: Request, context: RouteContext) {
 
   const now = new Date();
   db.transaction((tx) => {
+    invalidateStudySource(tx, id);
     const questionIds = tx.select({ id: questions.id }).from(questions).where(eq(questions.chapterId, id)).all().map((question) => question.id);
     if (questionIds.length) {
       tx.delete(reviewItems).where(eq(reviewItems.sourceQuestionId, questionIds[0])).run();

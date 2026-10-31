@@ -325,3 +325,130 @@ export const reviewItemRelations = relations(reviewItems, ({ one }) => ({
     references: [questions.id],
   }),
 }));
+
+// Private immutable delivery and committed replay result; keys never enter public DTOs.
+export const assessmentSessions = sqliteTable(
+  "assessment_sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    chapterId: text("chapter_id")
+      .notNull()
+      .references(() => chapters.id, { onDelete: "cascade" }),
+    status: text("status", {
+      enum: ["open", "consumed", "invalidated"],
+    }).notNull(),
+    snapshot: text("snapshot", { mode: "json" })
+      .$type<import("../assessment-sessions").AssessmentSnapshot>()
+      .notNull(),
+    submission: text("submission"),
+    result: text("result", { mode: "json" }).$type<Record<string, unknown>>(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (t) => [
+    uniqueIndex("assessment_open_unique")
+      .on(t.userId, t.chapterId)
+      .where(sql`${t.status} = 'open'`),
+  ],
+);
+
+export const studyPreferences = sqliteTable("study_preferences", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  timeZone: text("time_zone").notNull(),
+  initializedAt: integer("initialized_at", { mode: "timestamp_ms" }).notNull(),
+  policyVersion: integer("policy_version").notNull().default(1),
+});
+export const conceptReviewSchedules = sqliteTable(
+  "concept_review_schedules",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    courseId: text("course_id")
+      .notNull()
+      .references(() => courses.id, { onDelete: "cascade" }),
+    chapterId: text("chapter_id")
+      .notNull()
+      .references(() => chapters.id, { onDelete: "cascade" }),
+    normalizedTag: text("normalized_tag").notNull(),
+    displayTag: text("display_tag").notNull(),
+    sourceQuestionId: text("source_question_id").references(
+      () => questions.id,
+      { onDelete: "set null" },
+    ),
+    sourceContentVersion: integer("source_content_version").notNull(),
+    dueDate: text("due_date").notNull(),
+    intervalStage: integer("interval_stage").notNull().default(0),
+    lastObservedAt: integer("last_observed_at", { mode: "timestamp_ms" }),
+    lastObservedDate: text("last_observed_date"),
+    lastOutcome: text("last_outcome", { enum: ["correct", "incorrect"] }),
+    lastMissDate: text("last_miss_date"),
+    suspended: integer("suspended", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    revision: integer("revision").notNull().default(0),
+  },
+  (t) => [
+    uniqueIndex("study_concept_unique").on(
+      t.userId,
+      t.chapterId,
+      t.normalizedTag,
+    ),
+    index("study_due_idx").on(t.userId, t.dueDate),
+  ],
+);
+export const studyReviewEvents = sqliteTable(
+  "study_review_events",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    scheduleId: text("schedule_id")
+      .notNull()
+      .references(() => conceptReviewSchedules.id, { onDelete: "cascade" }),
+    sourceKind: text("source_kind", { enum: ["chapter", "review"] }).notNull(),
+    sourceEventId: text("source_event_id").notNull(),
+    outcome: text("outcome", { enum: ["correct", "incorrect"] }).notNull(),
+    observedAt: integer("observed_at", { mode: "timestamp_ms" }).notNull(),
+    localDate: text("local_date").notNull(),
+    policyVersion: integer("policy_version").notNull().default(1),
+  },
+  (t) => [
+    uniqueIndex("study_event_unique").on(
+      t.scheduleId,
+      t.sourceKind,
+      t.sourceEventId,
+    ),
+  ],
+);
+export const studyReviewSessions = sqliteTable(
+  "study_review_sessions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: text("status", {
+      enum: ["open", "consumed", "invalidated"],
+    }).notNull(),
+    snapshot: text("snapshot", { mode: "json" })
+      .$type<import("../study-store").ReviewSnapshot>()
+      .notNull(),
+    submission: text("submission"),
+    result: text("result", { mode: "json" }).$type<
+      import("../study-contracts").ReviewResult
+    >(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (t) => [
+    uniqueIndex("study_open_unique")
+      .on(t.userId)
+      .where(sql`${t.status} = 'open'`),
+  ],
+);

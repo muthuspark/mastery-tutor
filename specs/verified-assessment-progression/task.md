@@ -1,0 +1,18 @@
+- [ ] T1: Address Resolve the two pending decisions, read installed Next.js guides, define canonical contracts and theorem statements, and map acceptance IDs to evidence boundaries
+- [ ] T2: Add migration, private session issuance/reuse and source/review invalidation; verify legacy fixture preservation (AC-1, AC-5, AC-7).
+- [ ] T3: Implement pure coverage, option decoding, integer scoring and progression; verify malformed inputs and status preservation (AC-2, AC-3, AC-4).
+- [ ] T4: Integrate GET/POST atomic consumption, replay, review updates and post-commit enqueue handling; verify route/concurrency regressions (AC-1-AC-7).
+- [ ] T5: Update client identity/recovery and run isolated desktop/mobile persisted quiz flows (AC-5, AC-7).
+- [ ] T6: Add pinned Lean model, named proofs, oracle, transitive axiom audit and independent rechecker; verify deliberate bad-proof fixtures (AC-8).
+- [ ] T7: Implement deterministic differential/adversarial and mutation checks; require proof/model gates in npm and Ralph (AC-9).
+- [ ] T8: Document exact guarantees and run final regression, migration, browser, proof and comparison checks; record Evidence: results (AC-1-AC-10).
+- [ ] T9: Verify AC-1/AC-5: In-memory migrated SQLite route tests establish stable identity, frozen ten/twelve-question membership, stale rejection and key secrecy
+- [ ] T10: Verify AC-2/AC-3: Reject missing identity/subsets/duplicates/extras/foreign/options with zero learning effects; enumerate correct counts at totals 10/11/12 and numeric text/normalization cases
+- [ ] T11: Verify AC-4: Test failed/pass progression, missing prerequisites, duplicate indices, passed successor, empty course and unrelated course preservation; explicit reset is excluded from submission theorem
+- [ ] T12: Verify AC-5/AC-6: Two-connection file-backed SQLite tests race issue/submit/replay; inject persistence and post-commit enqueue failures; assert exactly one attempt and review application, complete rollback on persistence failure, and cross-review invalidation
+- [ ] T13: Verify AC-7: Migrate isolated historical records and compare ownership/counts/scores; run authenticated two-user and desktop/mobile complete/retry/stale-tab browser flows without real AI/mail
+- [ ] T14: Verify AC-8: Build pinned Lean, audit named theorem dependencies transitively and independently recheck stored proofs. Named results cover unique exact coverage, positive-total inclusive integer threshold, allowed transitions, and unchanged state on modeled rejection. Deliberate sorry/custom-axiom fixtures must fail; inspect statements and preconditions
+- [ ] T15: Verify AC-9: Exhaust small canonical inputs and seed larger/adversarial inputs; compare strict decisions/state projections and publish seed/count. Temporary mutations to threshold, subset acceptance, prerequisite checking and passed-status preservation must be detected and cleaned up. Missing tool/output/zero cases fail
+- [ ] T16: Verify AC-9: Fake-command Ralph tests prove proof/model failures block acceptance/commit; run gates directly without starting paid agents
+- [ ] T17: Verify AC-1-AC-10: Run lint, typecheck, full Vitest, production build, proof/model gates and focused browser/isolation checks. Record blockers against affected criteria rather than claiming success
+- [ ] T18: Verify AC-10: Review maintainer documentation for explicit proved-model, sampled-agreement, tested-adapter and runtime-trust categories; no whole-app or teaching-correctness claims

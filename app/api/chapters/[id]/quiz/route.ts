@@ -1,3 +1,4 @@
+import { AssessmentError, openAssessment, issueAssessment, publicAssessment } from "@/lib/assessment-sessions";
 import { authorize } from "@/lib/access";
 import { desc, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -27,6 +28,8 @@ export async function GET(request: Request, context: RouteContext) {
   const chapter = db.select().from(chapters).where(eq(chapters.id, id)).get();
   if (!chapter) return NextResponse.json({ error: { code: "not_found", message: "Chapter not found." } }, { status: 404 });
   if (chapter.status === "locked") return NextResponse.json({ error: { code: "locked", message: "This chapter is locked." } }, { status: 403 });
+  const existing = openAssessment(access.user.id, id);
+  if (existing) return NextResponse.json(publicAssessment(existing), { headers: { "Cache-Control": "no-store" } });
   const reviewed = db.select().from(courses).where(eq(courses.id, chapter.courseId)).get()?.qualityPolicyVersion;
   if (reviewed) {
     if (chapter.quizGenerationStatus === "failed") return NextResponse.json({ error: { code: "generation_failed", message: chapter.quizGenerationError ?? "Could not prepare this quiz. Try again.", retryable: true } }, { status: 503 });
@@ -70,10 +73,11 @@ export async function GET(request: Request, context: RouteContext) {
         .slice(0, 10);
     }
     const exclude = new Set([...current.map((question) => question.id), ...latestAttemptIds]);
-    const delivered = [...current, ...dueReviewQuestions(chapter.courseId, chapter.idx, exclude)]
-      .map(({ id, type, prompt, options, isReview }) => ({ id, type, prompt, options, isReview }));
-    return NextResponse.json({ questions: delivered });
+    const delivered = [...current, ...dueReviewQuestions(chapter.courseId, chapter.idx, exclude)];
+    if (current.length !== 10) return NextResponse.json({ status: "generating", retryable: true }, { status: 202 });
+    return NextResponse.json(publicAssessment(issueAssessment(access.user.id, id, delivered)), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
+    if (error instanceof AssessmentError) return NextResponse.json({ error: { message: error.message } }, { status: error.status });
     return errorResponse(error);
   }
 }

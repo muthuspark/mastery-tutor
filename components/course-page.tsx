@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,6 +11,7 @@ type Chapter = { id: string; idx: number; title: string; status: "locked" | "ope
 type CourseResponse = { course: { topic: string } & PreparationState; chapters: Chapter[]; progress: { passed: number; total: number } };
 
 export function CoursePage() {
+  const studyQueryClient = useQueryClient();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [revisitChapter, setRevisitChapter] = useState<Chapter | null>(null);
@@ -42,6 +43,8 @@ export function CoursePage() {
     try {
       const response = await fetch(`/api/chapters/${revisitChapter.id}/revisit`, { method: "POST" });
       if (!response.ok) throw new Error("Could not reset this chapter");
+      void studyQueryClient.invalidateQueries({ queryKey: ["study"] });
+      void studyQueryClient.invalidateQueries({ queryKey: ["courses"] });
       router.push(`/course/${params.id}/ch/${revisitChapter.idx}`);
     } catch {
       setRevisitError("Could not reset this chapter. Please try again.");

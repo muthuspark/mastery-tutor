@@ -92,6 +92,20 @@
       "when": 1792912798024,
       "tag": "0012_owner_invitations",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1793435168201,
+      "tag": "0013_assessment_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1793435251493,
+      "tag": "0014_calendar_study",
+      "breakpoints": true
     }
   ]
 }

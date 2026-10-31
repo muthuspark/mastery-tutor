@@ -1,0 +1,13 @@
+.study-review h1 { font: 600 2rem/1.25 var(--display); margin-bottom: 1rem; }
+.study-review { overflow-wrap: anywhere; }
+.study-review p { line-height: 1.7; max-width: 75ch; }
+.study-review fieldset, .review-results > section { min-width: 0; border: 0; border-bottom: 1px solid var(--line); padding: 1.5rem 0; }
+.study-review legend { font-size: 1.375rem; font-weight: 600; padding-top: 1.5rem; }
+.review-reason { color: var(--muted); font-size: .9375rem; margin-bottom: .75rem; }
+.review-option { display: flex; align-items: baseline; gap: .75rem; min-height: 44px; padding: .75rem; border-bottom: 1px solid var(--line); cursor: pointer; }
+.review-option:has(input:checked) { outline: 1px solid var(--ink); outline-offset: -1px; }
+.review-option input { flex-shrink: 0; }
+.review-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1.5rem; }
+.review-feedback { white-space: pre-wrap; }
+.review-results h2 { font-size: 1.375rem; font-weight: 600; margin-bottom: .75rem; }
+@media (max-width:767px) { .review-actions > * { width: 100%; white-space: normal; } }

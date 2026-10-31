@@ -1,3 +1,4 @@
+import { invalidateStudySource } from "./study-invalidation";
 import "server-only";
 
 import { and, asc, eq, gte, inArray, lte, or } from "drizzle-orm";
@@ -369,6 +370,7 @@ export function invalidateChapterGeneration(
     if (options.rejectActiveExplanation && tx.select().from(chapterExplanations).where(and(
       eq(chapterExplanations.chapterId, chapterId), inArray(chapterExplanations.status, ["pending", "generating"]),
     )).get()) throw new ActiveChapterExplanationError();
+    invalidateStudySource(tx, chapterId);
     const version = chapter.contentGenerationVersion + 1;
     tx.update(chapters)
       .set({

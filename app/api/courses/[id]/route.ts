@@ -1,3 +1,4 @@
+import { invalidateStudySource } from "@/lib/study-invalidation";
 import { authorize } from "@/lib/access";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -92,6 +93,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const current = tx.select().from(courses).where(eq(courses.id, id)).get();
     if (!current || current.startedAt || current.preparationVersion !== course.preparationVersion) return false;
     for (const chapter of body.data.chapters) {
+      invalidateStudySource(tx, chapter.id);
       tx.update(chapters)
         .set({ title: chapter.title, objectives: chapter.objectives, prerequisites: chapter.prerequisites })
         .where(eq(chapters.id, chapter.id))

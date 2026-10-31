@@ -69,12 +69,12 @@ test("two learners sign in, study, keep private profiles, resume, and sign out a
   const ownerContext = await browser.newContext(); const secondContext = await browser.newContext();
   const owner = await ownerContext.newPage(); const second = await secondContext.newPage();
   await signIn(owner, "owner@example.com"); seedCourse("owner@example.com", "owner");
-  await owner.getByRole("link", { name: /Profile settings/ }).click();
+  await owner.locator(".site-header").getByRole("link", { name: "Profile settings", exact: true }).click();
   await owner.getByLabel(/About me/).fill("Experienced owner"); await owner.getByRole("button", { name: "Save profile" }).click(); await expect(owner.getByText("Profile saved.")).toBeVisible();
   await expect(owner.getByRole("combobox")).toHaveCount(0);
-  await owner.goto("/"); await expect(owner.getByRole("heading", { name: "owner study", level: 2 })).toBeVisible();
+  await owner.goto("/"); await expect(owner.getByRole("region", { name: "Saved learning paths" }).getByText("owner study", { exact: true })).toBeVisible();
   await signIn(second, "second@example.com"); seedCourse("second@example.com", "second");
-  await second.reload(); await expect(second.getByRole("heading", { name: "second study", level: 2 })).toBeVisible(); await expect(second.getByText("owner study")).toHaveCount(0);
+  await second.reload(); await expect(second.getByRole("region", { name: "Saved learning paths" }).getByText("second study", { exact: true })).toBeVisible(); await expect(second.getByText("owner study")).toHaveCount(0);
   await second.goto("/settings"); await expect(second.getByLabel(/About me/)).toHaveValue("");
   await second.getByLabel(/About me/).fill("New learner"); await second.getByRole("button", { name: "Save profile" }).click(); await expect(second.getByText("Profile saved.")).toBeVisible();
   expect((await secondContext.request.get("/api/courses/owner/export")).status()).toBe(404);
@@ -83,7 +83,11 @@ test("two learners sign in, study, keep private profiles, resume, and sign out a
   await expect(owner.getByText("A private lesson for owner.")).toBeVisible();
   await second.goto("/course/second/ch/0"); await expect(second.getByRole("heading", { name: "second lesson", exact: true })).toBeVisible();
   // Quiz evidence persists in the learner's course and remains private.
-  const graded = await ownerContext.request.post("/api/chapters/owner-chapter/attempts", { data: { answers: [{ questionId: "00000000-0000-4000-8000-000000000001", response: "Yes" }] } });
+  const issued = await (await ownerContext.request.get("/api/chapters/owner-chapter/quiz")).json();
+  const graded = await ownerContext.request.post("/api/chapters/owner-chapter/attempts", { data: { assessmentId: issued.assessmentId, answers: issued.questions.map((question: { id: string }) => {
+    const index = Number(question.id.slice(-12)) - 1;
+    return { questionId: question.id, response: ["Yes", "No", "Maybe", "Unknown"][index % 4] };
+  }) } });
   expect(graded.status()).toBe(200);
   expect(await graded.json()).toMatchObject({ passed: true, complete: true });
   await owner.goto("/"); await expect(owner.getByRole("region", { name: "Saved learning paths" }).getByText("100%", { exact: true })).toBeVisible();
