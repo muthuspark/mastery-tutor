@@ -26,7 +26,7 @@ export function InvitationForm() {
       <input id="invitation-email" className="field mt-2" type="email" autoComplete="off" maxLength={254} required value={email} onChange={event => { setEmail(event.target.value); setError(""); setMessage(""); }} disabled={busy} aria-describedby="invitation-help" />
       {error ? <p className="ui mt-4 text-sm" role="alert">{error}</p> : null}
       {message ? <p className="ui mt-4 break-words text-sm text-[var(--success)]" role="status">{message}</p> : null}
-      <button type="submit" className="button-primary mt-5" disabled={busy}>{busy ? "Sending invitation…" : "Send invitation"}</button>
+      <button type="submit" className="button-secondary mt-5" disabled={busy}>{busy ? "Sending invitation…" : "Send invitation"}</button>
     </form>
   </section>;
 }

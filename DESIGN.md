@@ -1,6 +1,6 @@
 # Newton design system
 
-Version: 2026-10-27
+Version: 2026-11-02
 
 Status: approved direction, implemented across the landing page, studies, course index, chapter reader, and profile settings.
 
@@ -8,18 +8,24 @@ This document replaces the previous Nexus template reference. Use it as the sour
 
 ## Direction
 
-Newton is a quiet place to keep learning. The interface combines a white canvas, geometric typography, orange actions, and small pixel-art illustrations. It should feel thoughtful and approachable while giving reading, practice, and saved progress priority.
+Newton is a quiet place to keep learning. The interface combines a warm parchment canvas, geometric typography, orange actions, and small pixel-art illustrations. It should feel thoughtful and approachable while giving reading, practice, and saved progress priority.
 
 Use pixel art as a recognizable brand detail. Keep the working interface clear: readable type, familiar fields, explicit actions, and restrained separators.
 
+## Public entrance update
+
+The landing page follows the approved parchment and pixel-art reference: `#F7F3E8` paper, `#20271E` ink, warm ivory invitation panel, muted olive rules and green field focus. The parchment background applies across all pages, including studies, profile settings, courses, chapters, quizzes, loading, and recovery screens. This direction supersedes the previous white-background and single-screen landing rules below.
+
+Use a stepped orange CTA with a dark orange lower edge, a pixel arrow, and a 3px pressed displacement. Keep field text in regular EB Garamond. Below the hero, show compact book, lantern, and sapling scenes with the learning copy. Stack these naturally on mobile and allow document scrolling. One butterfly flight runs briefly with long pauses; reduced motion keeps it still.
+
 ## Color
 
-All page backgrounds are white, including authentication, studies, courses, chapters, assessments, and settings. Secondary surfaces are neutral light gray. Do not reintroduce cream or warm beige backgrounds through page-specific overrides.
+All pages share the same warm parchment background (`#F7F3E8`), including authentication, studies, courses, chapters, assessments, and settings. Secondary surfaces use a deeper warm parchment (`#EEE9DC`). Define these colors once in app/globals.css so route transitions retain the same canvas.
 
 | Role | Token or value | Use |
 | --- | --- | --- |
-| Page | --color-paper: #fff | Page background and default surface |
-| Secondary surface | --color-paper-2: oklch(0.97 0 0) | Progress panels, practice sections, active rows, supporting notes |
+| Page | --color-paper: #F7F3E8 | Page background and default surface |
+| Secondary surface | --color-paper-2: #EEE9DC | Progress panels, practice sections, active rows, supporting notes |
 | Primary text | oklch(0.23 0.009 145) | Redesigned page text |
 | Secondary text | oklch(0.47 0.012 86) | Supporting copy and metadata |
 | Rule | oklch(0.72 0.018 88 / 45%) | Fine separators and panel outlines |
@@ -102,7 +108,7 @@ Present chapters as one dense full-width directory with aligned chapter numbers,
 
 Use a narrow 48px chapter column, 20px desktop column gaps, and 8px outer cell padding. Keep Status and Action compact at the right, with Read and Retake distributed across the action column. Preserve the full navigation-aligned width rather than adding outer margins.
 
-Keep the course console white and charcoal with neutral separators. Completed progress segments and pixel checks are charcoal; locked chapters use a small pixel lock and readable muted text. Only the first open chapter receives an orange Continue action and a small orange position marker. Other open chapters remain accessible with a text continuation action. Mastered chapters keep separate quiet Read and Retake actions. Locked chapters remain non-navigable. Server-side prerequisite and access rules remain unchanged.
+Keep the course console parchment and charcoal with neutral separators. Completed progress segments and pixel checks are charcoal; locked chapters use a small pixel lock and readable muted text. Only the first open chapter receives an orange Continue action and a small orange position marker. Other open chapters remain accessible with a text continuation action. Mastered chapters keep separate quiet Read and Retake actions. Locked chapters remain non-navigable. Server-side prerequisite and access rules remain unchanged.
 
 Retaking requires the existing confirmation dialog and its explanation of what is reset. Visual updates must preserve saved progress, exports, and prerequisite rules.
 
@@ -110,7 +116,7 @@ Retaking requires the existing confirmation dialog and its explanation of what i
 
 Use a single left-aligned reading column within the navigation-aligned page shell, with text at most 760px wide and no chapter sidebar. Align metadata, title, and lesson body with the shared page gutter. Do not reserve an arrow gutter or render a back-navigation control. Use a compact 32px desktop title and 24px mobile title with quiet chapter and status metadata. Omit introductory taglines.
 
-Place practice scenarios and questions directly on white, without an outer panel. Separate the scenario and bold question through spacing and typography, using natural left-aligned wrapping. Show feedback as smaller supporting text with a fine separator below, without an enclosing box. Answers use radio buttons and thin row separators, with a thin charcoal outline on the selected answer. Reserve orange for the available primary submission action; disabled practice buttons use neutral surfaces and readable muted text.
+Place practice scenarios and questions directly on parchment, without an outer panel. Separate the scenario and bold question through spacing and typography, using natural left-aligned wrapping. Show feedback as smaller supporting text with a fine separator below, without an enclosing box. Answers use radio buttons and thin row separators, with a thin charcoal outline on the selected answer. Reserve orange for the available primary submission action; disabled practice buttons use neutral surfaces and readable muted text.
 
 Keep practice, original explanations, additional explanation levels, and assessment controls in their existing order. Preserve generation, loading, recovery, and explanation-depth behavior.
 
@@ -132,7 +138,7 @@ Owner-only invitations remain a separate section below the learner profile. Pres
 
 Use browser Back and Forward for history navigation. Omit page-level back controls on content, settings, assessment, preparation, and recovery screens. The persistent Newton logo links to studies even on direct entry. Preserve forward course/chapter links, quiz question navigation, and contextual result actions such as Review chapter and View course.
 
-Use the single newton-logo.svg image with a compact, all-lowercase Pixelify Sans Semibold “newton” wordmark and an orange pixel-art apple replacing the “o”. The wordmark is outlined for consistent rendering without loading a font. Preserve its aspect ratio and use the image alt text “Newton”. Authenticated navigation uses Settings and Sign out with matching monochrome 16px pixel icons and 44px interaction heights. Use no button borders or permanent underlines; underline on hover and keyboard focus. Settings opens within the app, so omit an external-link arrow. Authentication shows Private beta.
+Use the single newton-logo.svg image with a compact, all-lowercase Pixelify Sans Semibold “newton” wordmark and an orange pixel-art apple replacing the “o”. The wordmark is outlined for consistent rendering without loading a font. Preserve its aspect ratio and use the image alt text “Newton”. Authenticated navigation uses Settings and Sign out with matching 16px pixel icons. Sign out uses the tertiary button style; Settings remains a navigation link. Settings opens within the app, so omit an external-link arrow. Authentication shows Private beta.
 
 All authenticated routes share the same header geometry, gutters, logo size, and navigation type. Do not override the header or footer independently on a route. The landing page may adjust its composition for its pixel typography and single-screen layout.
 
@@ -140,15 +146,19 @@ Use a slim neutral footer with no divider. Center the single line “Read. Pract
 
 ### Buttons
 
-Use solid orange for the main action and an outline or text treatment for secondary actions. Labels describe the outcome, such as Continue studying, Create study, Save profile, or Export notes.
+Use three explicit tiers, defined in app/buttons.css. Apply a tier class at each call site; never style every button as primary through a blanket element selector.
 
-Use square or subtly stepped edges. A shallow lower edge can reinforce pixel styling, but avoid large decorative shadows. Preserve visible keyboard focus and clear hover, pressed, pending, and disabled states.
+- Primary (`button-primary`): solid orange, warm ivory label, stepped corners, dark orange 5px lower edge, and a 3px press. Use for the next learning action, study creation, login, Save profile, and submitting answers. Default size is 44px high with 15px text and compact padding. Course-row Continue badges are 36px high inside a full-row link, with 5px reserved for their lower edge so they stay inside the row.
+- Secondary (`button-secondary`): parchment fill, a flat olive outline, stepped corners, and a 1px press. Use for Export notes, explanation adjustments, Previous question, Send invitation, resending codes, and dialog cancellation.
+- Tertiary (`button-tertiary`): quiet olive text, no permanent fill or shadow, underline on hover, and a subtle 1px press. Use for Sign out, Read, Retake, hints, Change email, leaving a review, and small inline recovery actions.
 
-Controls should have comfortable touch targets, normally at least 44px high. Long labels wrap on narrow screens.
+Keep the shared pixel geometry on primary and secondary buttons. Keep labels in readable body type, preserve existing pixel icons and arrows, and reserve orange for the main task. Tiers express the action's role in its current context, not the HTML element used to render it. Navigation links can remain plain links.
+
+Keep keyboard focus visible outside the stepped silhouette. Disabled and pending controls retain their tier, reduce opacity, and never depress. Reduced motion removes the press transition. Controls wrap long labels, fit their container, and have touch targets at least 44px high.
 
 ### Fields
 
-Use white fields, thin neutral borders, readable 16px text, and visible labels. Placeholders provide examples rather than replacing labels.
+Use parchment fields, thin neutral borders, readable 16px text, and visible labels. Placeholders provide examples rather than replacing labels.
 
 Keep help text, errors, character counts, and field associations intact. Preserve entered text after a failed request. Show success feedback close to the action.
 
@@ -171,6 +181,7 @@ Approved assets:
 - public/images/newton-under-apple-tree.webp: landing illustration. Do not use it on the course index.
 - public/images/studies-books.webp: supporting illustration for creation and settings.
 - public/images/pixel-apple.svg: compact brand mark.
+- public/images/learning-books.webp, learning-lantern.webp, learning-sapling.webp: detailed transparent pixel illustrations below the landing hero. Generation prompts are in public/images/learning-art.provenance.json.
 
 Keep crisp pixel edges with image-rendering: pixelated. Preserve transparency and aspect ratio. Render raster assets through next/image with appropriate sizes. Preload prominent above-the-fold artwork; supporting illustrations can load normally.
 
@@ -190,7 +201,7 @@ Use short color transitions, typically 150–200ms. Do not add decorative motion
 
 ## Avoid
 
-- Cream or beige page backgrounds.
+- Page-specific background colors that differ from the shared parchment canvas.
 - Pixel or monospace fonts throughout authenticated interfaces.
 - Large decorative illustrations in study and reading layouts.
 - Repetitive card grids, nested panels, gradients used as decoration, and glass effects.

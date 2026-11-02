@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { SiteHeaderFallback } from "../components/site-header-shell";
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test("landing page fits normal viewports and keeps short-screen controls reachable", async ({ page }) => {
+test("landing page keeps its learning sections and authentication controls reachable", async ({ page }) => {
   await page.goto("/login");
   await page.evaluate(() => document.fonts.ready);
   await expect(page.getByRole("img", { name: /Isaac Newton/ })).toBeVisible();
@@ -17,8 +17,8 @@ test("landing page fits normal viewports and keeps short-screen controls reachab
       vertical: document.documentElement.scrollHeight > innerHeight,
     }));
     expect(overflow.horizontal, `${width} × ${height}`).toBe(false);
-    // Short landscape screens deliberately scroll instead of shrinking controls.
-    if (height >= 480) expect(overflow.vertical, `${width} × ${height}`).toBe(false);
+    // The illustrated learning sections continue below the hero on narrow screens.
+    await expect(page.getByRole("heading", { name: "Keep what you learn" })).toBeAttached();
     await page.getByRole("button", { name: "Email me a code" }).scrollIntoViewIfNeeded();
     await expect(page.getByRole("button", { name: "Email me a code" })).toBeInViewport();
   }
@@ -34,7 +34,7 @@ test("landing page fits normal viewports and keeps short-screen controls reachab
   for (const [width, height] of [[375, 667], [320, 568], [844, 390]]) {
     await page.setViewportSize({ width, height });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `Code error at ${width} × ${height}`).toBe(true);
-    if (height >= 480) expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight), `Code error at ${width} × ${height}`).toBe(true);
+
     await page.getByRole("button", { name: "Change email" }).scrollIntoViewIfNeeded();
     await expect(page.getByRole("button", { name: "Change email" })).toBeInViewport();
   }

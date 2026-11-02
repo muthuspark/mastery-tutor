@@ -6,7 +6,7 @@
   font-display: swap;
 }
 .course-index-surface { flex: 1; min-width: 0; }
-.course-index { --container-max: var(--layout-max-wide); --console-columns: 3rem minmax(0, 1fr) 7.5rem 9.5rem; padding-block: 1rem 1.5rem; }
+.course-index { --container-max: var(--layout-max-wide); --console-columns: 3rem minmax(0, 1fr) 7.5rem 12rem; padding-block: 1rem 1.5rem; }
 .course-console-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem 3rem; padding-bottom: 1.25rem; }
 .course-index .course-hero { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; padding: 0; border: 0; }
 .course-index .course-hero h1 { max-width: none; font: 600 1.75rem/1.3 var(--display); letter-spacing: -0.035em; overflow-wrap: anywhere; }
@@ -16,8 +16,6 @@
 .course-index-segments { display: flex; flex-wrap: wrap; gap: 4px; max-width: 16rem; margin-top: 0.625rem; }
 .course-index-segments > span { width: 0.75rem; height: 0.75rem; background: var(--line); }
 .course-index-segments > .is-mastered { background: var(--ink); }
-.course-index .course-toolbar > .button-secondary { min-height: 2.75rem; padding: 0.5rem 0 0.5rem 1.5rem; border: 0; border-left: 1px solid var(--line); background: transparent; font-weight: 500; }
-.course-index .course-toolbar > .button-secondary:hover { text-decoration: underline; }
 .course-index-outline { margin-top: 0; }
 .course-index .chapter-row { display: grid; grid-template-columns: var(--console-columns); align-items: center; column-gap: 1.25rem; }
 .course-index .chapter-list { display: block; margin: 0; padding: 0; border: 0; border-top: 1px solid var(--line); }
@@ -30,16 +28,15 @@
 .chapter-status-icon { width: 0.875rem; height: 0.875rem; flex: 0 0 auto; color: var(--ink); }
 .course-index .chapter-row-actions { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.8125rem; }
 .course-index .chapter-link .chapter-row-actions { justify-content: flex-end; }
-.course-index .chapter-read, .course-index .chapter-retake { min-height: 2.75rem; font-size: 0.8125rem; font-weight: 400; color: var(--muted); }
-.course-index .chapter-read:hover, .course-index .chapter-retake:hover { color: var(--ink); }
+/* The row is the full-size link; keep its decorative CTA and lower edge inside it. */
+.course-index .chapter-console-continue { min-height: 2.25rem; margin-bottom: 5px; padding: 0.375rem 0.875rem; font-size: 0.875rem; white-space: nowrap; }
+.course-index :is(.chapter-read, .chapter-retake) { min-height: 2.75rem; font-size: 0.875rem; }
 .course-index .chapter-link { text-decoration: none; }
 .course-index .chapter-link:hover { background: var(--paper-deep); }
 .course-index .chapter-link[aria-current="step"] { background: transparent; }
 .course-index .chapter-link[aria-current="step"]:hover { background: var(--paper-deep); }
 .course-index .chapter-link[aria-current="step"] .chapter-title { font-weight: 700; }
 .course-index .chapter-link[aria-current="step"] .chapter-index-number::before { content: ""; position: absolute; left: -0.5rem; top: calc(50% - 3px); width: 6px; height: 6px; background: var(--action); }
-.chapter-console-continue { display: inline-flex; align-items: center; justify-content: center; min-height: 2.25rem; padding: 0.375rem 1rem; background: var(--action); color: white; font-size: 0.8125rem; font-weight: 600; box-shadow: 2px 0 0 -1px var(--action), -2px 0 0 -1px var(--action); }
-.chapter-console-open { color: var(--ink); text-decoration: underline; text-underline-offset: 0.2em; }
 .course-index .chapter-row:not(.chapter-link):not(.chapter-row--mastered) .chapter-index-number,
 .course-index .chapter-row:not(.chapter-link):not(.chapter-row--mastered) .chapter-title { color: var(--muted); }
 .course-index .revisit-dialog { border-radius: 0; font-family: var(--sans); }
@@ -53,7 +50,7 @@
   .course-index .chapter-row { column-gap: 0.75rem; }
 }
 @media (max-width: 639px) {
-  .course-index { --console-columns: 2rem minmax(0, 1fr) auto; padding-block: 1rem 1.5rem; }
+  .course-index { --console-columns: 2rem minmax(0, 1fr) 6.5rem; padding-block: 1rem 1.5rem; }
   .course-index .course-hero h1 { font-size: 1.5rem; }
   .course-index .course-toolbar { gap: 1rem; }
   .course-index .course-toolbar > .button-secondary { padding-left: 0.75rem; font-size: 0.75rem; }
@@ -67,7 +64,7 @@
   .course-index .chapter-title { font-size: 0.875rem; }
   .chapter-console-status { grid-column: 2; grid-row: 2; gap: 0.375rem; font-size: 0.6875rem; }
   .chapter-status-icon { width: 0.6875rem; height: 0.6875rem; }
-  .course-index .chapter-row-actions { grid-column: 3; grid-row: 1 / 3; flex-wrap: wrap; justify-content: flex-end; gap: 0 0.625rem; max-width: 6rem; }
-  .course-index .chapter-read, .course-index .chapter-retake { min-height: 2.25rem; font-size: 0.6875rem; }
-  .chapter-console-continue { padding-inline: 0.625rem; font-size: 0.6875rem; }
+  .course-index .chapter-row-actions { grid-column: 3; grid-row: 1 / 3; flex-wrap: wrap; justify-content: flex-end; gap: 0 0.625rem; max-width: 6.5rem; }
+  .course-index :is(.chapter-read, .chapter-retake) { padding-inline: 0.5rem; }
+  .course-index .chapter-console-continue { padding-inline: 0.75rem; }
 }

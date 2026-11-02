@@ -1,183 +1,162 @@
 @import "../fonts/entrance.css";
 
-/* Scope the single-screen composition to the public entrance. */
+/* An orchard on a quiet afternoon: warm paper, olive rules, orange apples. */
 body:has(.login-page) {
-  --ink: oklch(0.23 0.009 145);
-  --muted: oklch(0.47 0.012 86);
-  --line: oklch(0.72 0.018 88 / 65%);
+  --surface: #faf7ef;
+  --ink: #20271e;
+  --muted: #646457;
+  --line: #979b73;
+  --layout-guide: #a4a87e;
   --display: "Newton Pixel", monospace;
-  min-height: 100svh;
-  min-height: 100dvh;
+  background: var(--paper);
   font-family: var(--sans);
 }
-
-body:has(.login-page) .site-header {
-  min-height: 4.5rem;
-  padding-block: 0.75rem;
-}
-
-body:has(.login-page) .site-brand {
-  gap: 0.75rem;
-  font-family: var(--display);
-  font-size: 2rem;
-  font-weight: 600;
-  letter-spacing: 0;
-}
-
-
-
+body:has(.login-page)::before { display: none; }
+body:has(.login-page) .site-header { min-height: 4.25rem; padding-block: 0.75rem; }
 .login-page {
-  --login-column-gap: clamp(2rem, 5vw, 5.5rem);
-  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.96fr);
   align-items: center;
-  gap: var(--login-column-gap);
+  column-gap: clamp(2rem, 4vw, 4rem);
   width: min(calc(100% - 2 * var(--layout-gutter)), var(--layout-max-wide));
   margin-inline: auto;
-  padding-block: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--layout-guide);
   outline: none;
 }
-
-/* Join the outer guides to form a header, two-column entrance, and footer. */
-.login-page::before {
-  content: "";
-  position: absolute;
-  inset-block: 0;
-  inset-inline: 0;
-  border-block: 1px solid var(--layout-guide);
-  pointer-events: none;
-}
-@media (min-width: 768px) {
-  .login-page::before { inset-inline: -1rem; }
-}
-@media (min-width: 901px) and (min-height: 601px) {
-  .login-page::after {
-    content: "";
-    position: absolute;
-    inset-block: 0;
-    left: calc((100% - var(--login-column-gap)) / 1.96 + var(--login-column-gap) / 2);
-    border-left: 1px solid var(--layout-guide);
-    pointer-events: none;
-  }
-}
-
-.login-illustration { display: flex; align-items: center; justify-content: center; min-width: 0; }
-.login-illustration img {
+.login-illustration { position: relative; min-width: 0; max-width: 100%; }
+.login-illustration > img {
   display: block;
   width: 100%;
-  height: min(75svh, 47rem);
-  max-height: calc(100svh - 11rem);
+  height: auto;
+  max-height: 39rem;
   object-fit: contain;
   image-rendering: pixelated;
 }
-
-.login-welcome { min-width: 0; padding-block: 1rem; overflow-wrap: anywhere; }
+.login-butterfly {
+  position: absolute;
+  width: 1.5rem;
+  height: 1.25rem;
+  left: 16%;
+  top: 76%;
+  pointer-events: none;
+}
+/* One four-second flight, followed by twenty seconds of stillness. */
+@media (prefers-reduced-motion: no-preference) {
+  .login-butterfly { animation: orchard-flight 24s linear 8s infinite; }
+}
+@keyframes orchard-flight {
+  0%, 17%, 100% { transform: translate(0, 0); }
+  3% { transform: translate(10px, -12px) rotate(-8deg); }
+  6% { transform: translate(24px, -8px) rotate(6deg); }
+  9% { transform: translate(30px, -20px) rotate(-8deg); }
+  12% { transform: translate(16px, -16px) rotate(6deg); }
+  15% { transform: translate(5px, -8px); }
+}
+.login-welcome { min-width: 0; padding-block: 2rem; overflow-wrap: anywhere; }
 .login-welcome h1 {
   margin: 0;
-  font: 600 clamp(2.25rem, 3.9vw, 4.25rem)/1.12 var(--display);
+  font: 600 clamp(2.25rem, 4.1vw, 4rem)/1.15 var(--display);
   letter-spacing: -0.035em;
   text-wrap: initial;
 }
 .login-welcome h1 span { display: block; }
-.login-page .login-form { max-width: 34rem; margin-top: 1.5rem; }
-.login-description { font-size: clamp(1rem, 1.5vw, 1.35rem); line-height: 1.6; }
-.login-page .login-form label { margin-top: clamp(1.75rem, 5svh, 3.5rem); font-size: 1rem; font-weight: 400; }
-.login-page .field {
-  min-height: 3.5rem;
-  padding: 0.875rem 1.25rem;
-  border: 2px solid oklch(0.65 0.022 90);
-  border-radius: 0;
-  background: transparent;
-  font-size: 1.0625rem;
-  line-height: 1.5;
-  box-shadow: 3px 0 0 -1px var(--paper), -3px 0 0 -1px var(--paper);
+.login-tagline { margin-top: 1rem; font-size: clamp(1.25rem, 2.15vw, 2rem); line-height: 1.4; }
+.login-page .login-form {
+  position: relative;
+  isolation: isolate;
+  margin-top: 1.75rem;
+  max-width: none;
+  padding: 1.75rem;
 }
-.login-page .field::placeholder { color: oklch(0.53 0.014 88); }
-.login-page .field:focus { border-color: var(--ink); }
-.login-page .field[aria-invalid="true"] { border-color: oklch(0.48 0.15 35); }
+/* Two stepped silhouettes form a continuous one-pixel invitation border. */
+.login-page .login-form::before,
+.login-page .login-form::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, calc(100% - 16px) 8px, calc(100% - 8px) 8px, calc(100% - 8px) 16px, 100% 16px, 100% calc(100% - 16px), calc(100% - 8px) calc(100% - 16px), calc(100% - 8px) calc(100% - 8px), calc(100% - 16px) calc(100% - 8px), calc(100% - 16px) 100%, 16px 100%, 16px calc(100% - 8px), 8px calc(100% - 8px), 8px calc(100% - 16px), 0 calc(100% - 16px), 0 16px, 8px 16px, 8px 8px, 16px 8px);
+  background: #858b59;
+}
+.login-page .login-form::after { inset: 1px; background: var(--surface); }
+.login-description { font-size: 1.125rem; line-height: 1.5; }
+.login-page .login-form label { display: flex; align-items: center; gap: 1rem; margin-top: 0; font-size: 1.125rem; font-weight: 400; }
+.login-email-label svg { color: #667044; flex-shrink: 0; }
+.login-page .field {
+  min-height: 3.25rem;
+  padding: 0.625rem 1.25rem;
+  border: 1px solid #a09b86;
+  border-radius: 0;
+  background: var(--paper);
+  font: 400 1.125rem/1.5 var(--sans);
+  box-shadow: none;
+}
+.login-page .field::placeholder { color: #737366; }
+.login-page .field:focus { border-color: #546b38; outline: 2px solid #546b38; outline-offset: 3px; }
+.login-page .field[aria-invalid="true"] { border-color: #a44424; }
 .login-page .login-code { letter-spacing: 0.35em; font-size: 1.25rem; }
 .login-page .button-primary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.75rem;
-  min-height: 3.5rem;
+  grid-template-columns: 1.5rem minmax(0, 1fr) 1.5rem;
+  min-height: 3.25rem;
   margin-top: 1.25rem;
-  padding: 0.875rem 1.25rem;
-  border: 0;
-  border-radius: 0;
-  background: oklch(0.62 0.19 42);
-  color: oklch(0.99 0.008 88);
-  font-size: 1rem;
-  box-shadow: 0 3px 0 oklch(0.47 0.15 40), 3px 0 0 -1px oklch(0.62 0.19 42), -3px 0 0 -1px oklch(0.62 0.19 42);
+  padding: 0.75rem 1.125rem;
+  font-size: 1.125rem;
 }
-.login-page .button-primary:hover:not(:disabled) { background: oklch(0.56 0.18 42); }
-.login-page .button-primary:active:not(:disabled) { background: oklch(0.51 0.16 42); box-shadow: 0 1px 0 oklch(0.47 0.15 40); }
-.login-submit-arrow { pointer-events: none; }
+.login-page .button-primary > span { grid-column: 2; }
+.login-submit-arrow { grid-column: 3; pointer-events: none; }
 .login-recovery { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1rem; margin-top: 1rem; }
 .login-recovery button { min-height: 2.75rem; padding-block: 0.5rem; font-size: 1rem; text-underline-offset: 0.2em; cursor: pointer; }
-.login-recovery button:hover:not(:disabled) { color: var(--ink); }
-.login-page .login-invitation { margin-top: 1.5rem; font-size: 0.875rem; }
-.login-page [role="alert"] { margin-top: 1rem; padding: 0.625rem 0.875rem; font-size: 0.875rem; }
-.login-page:has(.login-code) .login-form label { margin-top: 1.5rem; }
-.login-page:has(.login-code) .login-description { font-size: 1rem; }
 
-body:has(.login-page) .site-footer {
-  width: min(calc(100% - 2 * var(--layout-gutter)), var(--layout-max-wide));
-  margin: 0 auto;
-  padding: 0;
-  background: transparent;
-  color: var(--muted);
-}
-body:has(.login-page) .site-footer-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  min-height: 3.5rem;
-  font-size: 0.75rem;
-  padding-block: 0;
-}
+.login-page .login-invitation { margin-top: 1.25rem; font-size: 1rem; }
+.login-page [role="alert"] { margin-top: 1rem; font-size: 1rem; }
+.login-page:has(.login-code) .login-form label { margin-top: 1rem; }
+.learning-world { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--layout-guide); margin-top: 1.5rem; padding-block: 1.75rem 1rem; }
+.learning-world > section { min-width: 0; overflow-wrap: anywhere; text-align: center; padding: 0 1.5rem; }
+.learning-world > section + section { border-left: 1px solid #c9ccac; }
+.learning-world .learning-world-art { width: 13rem; height: 7rem; object-fit: contain; image-rendering: pixelated; margin: 0 auto 0.75rem; }
+.learning-world h2 { font: 500 clamp(1.25rem, 1.7vw, 1.5rem)/1.2 var(--display); letter-spacing: -0.025em; }
+.learning-world p { margin: 0.75rem auto 0; font-size: 1.25rem; line-height: 1.3; color: var(--muted); }
+body:has(.login-page) .site-footer { background: transparent; }
+body:has(.login-page) .footer-books { display: none; }
+body:has(.login-page) .site-footer-content { min-height: 2.5rem; padding-block: 0.5rem; }
 
-/* Stack when two readable columns no longer fit, including portrait tablets. */
 @media (max-width: 900px) {
-  body:has(.login-page) .site-header { min-height: 3.75rem; padding-block: 0.5rem; }
-  .login-page { grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: center; gap: 1rem; padding-block: 1.25rem; }
-  .login-illustration img { width: auto; height: clamp(8rem, 26svh, 17rem); max-width: 100%; }
-  .login-welcome { width: min(100%, 28rem); padding: 0; }
-  .login-welcome h1 { font-size: clamp(1.85rem, 7.4vw, 2.75rem); line-height: 1.1; }
-  .login-page .login-form { margin-top: 0.75rem; }
-  .login-description { font-size: 1rem; }
-  .login-page .login-form label { margin-top: 1.25rem; font-size: 1rem; }
-  .login-page .field { min-height: 3rem; padding: 0.625rem 1rem; font-size: 1rem; }
-  .login-page .button-primary { min-height: 3rem; margin-top: 1rem; font-size: 1rem; }
-  .login-page .login-invitation { margin-top: 1rem; font-size: 0.875rem; }
-  .login-page:has(.login-code) .login-illustration img { height: min(17svh, 9rem); }
-  .login-page:has([role="alert"]) .login-illustration img { height: min(16svh, 8rem); }
-  .login-page:has(.login-code) .login-form label { margin-top: 0.75rem; }
-  .login-page [role="alert"] { padding: 0.5rem 0; font-size: 1rem; }
-  body:has(.login-page) .site-footer-content { min-height: 2.75rem; font-size: 0.75rem; }
+  .login-page { grid-template-columns: minmax(0, 1fr); justify-items: center; padding-top: 1rem; }
+  .login-illustration { width: min(100%, 17rem); }
+  .login-welcome { width: min(100%, 32rem); padding-block: 1rem; }
+  .login-welcome h1 { font-size: clamp(1.85rem, 6.4vw, 3rem); }
+  .login-tagline { font-size: 1.25rem; margin-top: 0.75rem; }
+  .login-page .login-form { margin-top: 1.25rem; padding: 1.5rem; }
+  .learning-world { width: 100%; margin-top: 1rem; }
+  .learning-world > section { padding-inline: 0.75rem; }
+  .learning-world .learning-world-art { width: 11rem; max-width: 100%; height: 6rem; }
+  .learning-world p { font-size: 1.125rem; }
+  .login-page:has(.login-code) .login-illustration,
+  .login-page:has([role="alert"]) .login-illustration { width: 8rem; }
 }
-
-/* Reclaim artwork before reducing readable text or touch targets.
-   Normal document scrolling keeps errors, enlarged text, and keyboard states reachable. */
+@media (max-width: 540px) {
+  .login-illustration { width: 12rem; }
+  .login-page .login-form { padding: 1.25rem; }
+  .login-page .button-primary { padding-inline: 0.75rem; font-size: 1.125rem; }
+  .learning-world { grid-template-columns: 1fr; padding-block: 0.5rem; }
+  .learning-world > section { display: grid; grid-template-columns: min(6rem, 22vw) minmax(0, 1fr); column-gap: min(1rem, 4vw); text-align: left; padding: 1.25rem 0; }
+  .learning-world > section + section { border-left: 0; border-top: 1px solid #c9ccac; }
+  .learning-world .learning-world-art { grid-row: span 2; width: 100%; height: 4rem; margin: 0; align-self: center; }
+  .learning-world h2 { font-size: 1.25rem; }
+  .learning-world p { margin: 0.5rem 0 0; font-size: 1.125rem; }
+  .learning-world br { display: none; }
+}
 @media (max-height: 700px) and (max-width: 900px) {
-  .login-illustration img { height: 18svh; }
-  .login-page { gap: 0.75rem; padding-block: 1rem; }
+  .login-illustration { width: 8rem; }
   .login-page:has(.login-code) .login-illustration,
   .login-page:has([role="alert"]) .login-illustration { display: none; }
 }
-
 @media (max-height: 600px) {
-  .login-page { grid-template-columns: minmax(0, 1fr); align-content: center; justify-items: center; gap: 0; padding-block: 1rem; }
   .login-illustration { display: none; }
-  .login-welcome { width: min(100%, 28rem); padding: 0; }
-  .login-welcome h1 { font-size: 2rem; line-height: 1.1; }
-  .login-page .login-form { margin-top: 0.75rem; }
-  .login-description, .login-page:has(.login-code) .login-description { font-size: 1rem; }
-  .login-page .login-form label { margin-top: 1rem; }
-  .login-page .field { min-height: 3rem; padding: 0.625rem 1rem; font-size: 1rem; }
-  .login-page .button-primary { min-height: 3rem; margin-top: 1rem; padding-block: 0.625rem; font-size: 1rem; }
-  .login-page .login-invitation { margin-top: 1rem; font-size: 0.875rem; }
-  .login-page [role="alert"] { padding: 0.5rem 0; font-size: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-page .button-primary { transition: none; }
 }

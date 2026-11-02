@@ -42,7 +42,10 @@ export function MermaidContent({ html }: MermaidContentProps) {
     if (!blocks?.length) return;
 
     void import("mermaid").then(async ({ default: mermaid }) => {
-      mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "base", themeVariables: { primaryColor: "#ffffff", primaryTextColor: "#141413", primaryBorderColor: "#87867f", lineColor: "#3d3d3a", secondaryColor: "#f5f5f5", tertiaryColor: "#f5f5f5", fontFamily: "EB Garamond, Georgia, serif" } });
+      const theme = getComputedStyle(document.documentElement);
+      const paper = theme.getPropertyValue("--color-paper").trim();
+      const inset = theme.getPropertyValue("--color-paper-2").trim();
+      mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "base", themeVariables: { primaryColor: paper, primaryTextColor: "#141413", primaryBorderColor: "#87867f", lineColor: "#3d3d3a", secondaryColor: inset, tertiaryColor: inset, fontFamily: "EB Garamond, Georgia, serif" } });
       await Promise.all(Array.from(blocks).map(async (block, index) => {
         try {
           const { svg } = await mermaid.render(`newton-diagram-${diagramId}-${Date.now()}-${index}`, block.dataset.chart ?? "");

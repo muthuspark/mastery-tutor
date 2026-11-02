@@ -1,13 +1,14 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 @import "./fonts/body.css";
+@import "./buttons.css";
 
-/* White surfaces, fine ink rules, and orange emphasis. */
+/* Warm parchment surfaces, fine ink rules, and orange emphasis. */
 :root {
   color-scheme: light;
-  /* White page background and neutral inset surfaces. */
-  --color-paper: #eeeeee;
-  --color-paper-2: oklch(0.97 0 0);
+  /* Shared parchment canvas and a slightly deeper warm inset surface. */
+  --color-paper: #f7f3e8;
+  --color-paper-2: #eee9dc;
   --color-ink: oklch(0.23 0.009 145);
   --color-text-muted: oklch(0.47 0.012 86);
   --color-text-soft: oklch(0.503938 0.013914 106.889);
@@ -94,12 +95,6 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); font-weight: 600; text-wra
 }
 :where(a, button, input, textarea, select, [tabindex]):focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
 :where(button, input, textarea, select):disabled { cursor: default; opacity: 0.5; }
-.button-primary, .button-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 3rem; padding: 0.75rem 1.125rem; font-family: var(--sans); font-size: 0.875rem; font-weight: 600; line-height: 1.3; text-align: center; text-decoration: none; cursor: pointer; transition: background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out; }
-.button-primary { border: 1px solid transparent; border-radius: var(--radius-control); background: var(--action); color: white; box-shadow: 0 3px 0 oklch(0.47 0.15 40), 3px 0 0 -1px var(--action), -3px 0 0 -1px var(--action); }
-.button-primary:hover:not(:disabled) { background: oklch(0.54 0.16 42); }
-.button-primary:active:not(:disabled) { background: oklch(0.51 0.16 42); box-shadow: 0 1px 0 oklch(0.47 0.15 40); }
-.button-secondary { border: 1px solid var(--line); border-radius: var(--radius-control); background: transparent; color: var(--ink); }
-.button-secondary:hover:not(:disabled) { border-color: var(--accent); background: var(--paper-deep); }
 .chapter-action-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1rem; margin-top: 1rem; }
 .chapter-adjustment-group { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; min-width: 0; }
 .chapter-adjustment-group > p { margin: 0; color: var(--ink); font-size: 0.875rem; font-weight: 600; }
@@ -110,8 +105,6 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); font-weight: 600; text-wra
 .chapter-segment-button + .chapter-segment-button { border-left: 1px solid var(--line); }
 .chapter-segment-button:hover:not([aria-disabled="true"]) { background: var(--paper-deep); }
 .chapter-quiz-cta { flex: 0 0 auto; margin-left: auto; white-space: nowrap; }
-.text-button { min-height: 2.75rem; padding: 0.25rem 0; border: 0; background: transparent; color: var(--muted); font-family: var(--sans); font-size: 0.8125rem; text-decoration: underline; text-underline-offset: 0.25em; cursor: pointer; }
-.text-button:hover { color: var(--ink); text-decoration-color: var(--accent); }
 .field { display: block; width: 100%; min-width: 0; min-height: 3rem; padding: 1rem; border: 1px solid oklch(0.65 0.022 90); border-radius: var(--radius-control); background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 1rem; line-height: 1.8; resize: vertical; }
 .field::placeholder { color: var(--muted); opacity: 1; }
 .field:focus { border-color: var(--ink); outline: 2px solid var(--ink); outline-offset: 2px; }
@@ -160,11 +153,9 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); font-weight: 600; text-wra
 .agent-control p { max-width: 55ch; font-size: var(--text-meta, 0.875rem); line-height: 1.5; text-wrap: pretty; }
 .agent-control a { display: inline-block; text-decoration-thickness: 1px; }
 .new-course-form .agent-select { min-height: 2.75rem; padding: 0.6rem 0.75rem; font-family: var(--sans); font-size: 0.8125rem; line-height: 1.4; cursor: pointer; }
-.course-begin { flex-shrink: 0; min-width: 7.5rem; border-color: var(--accent); color: var(--ink); font-size: var(--text-body, 1rem); font-weight: 500; line-height: 1.5; }
+.course-begin { flex-shrink: 0; min-width: 7.5rem; font-size: var(--text-body, 1rem); }
 .studies-section { min-width: 0; padding: 1.75rem; border: 1px solid var(--line); border-radius: var(--radius-panel); }
 .learning-workspace--empty { grid-template-columns: minmax(0, 1.85fr) minmax(19rem, 1fr); }
-.learning-workspace--empty .course-begin { background: var(--action); color: var(--paper); }
-.learning-workspace--empty .course-begin:hover:not(:disabled) { background: var(--ink); }
 .studies-list { margin-top: 1.25rem; }
 .study-link { display: block; padding-block: 1.25rem; border-top: 1px solid var(--line); text-decoration: none; }
 .study-link:last-child { padding-bottom: 0; }
@@ -206,7 +197,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--display); font-weight: 600; text-wra
 .chapter-title { font-family: var(--serif); font-size: 1.5rem; line-height: 1.3; }
 .chapter-link[aria-current="step"] { background: var(--surface); color: var(--ink); }
 .chapter-link:hover { background: var(--paper-deep); }
-.chapter-read, .text-button.chapter-retake { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0.25rem 0.125rem; overflow-wrap: anywhere; }
+.chapter-read, .chapter-retake { display: inline-flex; align-items: center; min-height: 2.75rem; padding: 0.25rem 0.125rem; overflow-wrap: anywhere; }
 .chapter-read { font-weight: 600; text-decoration: underline; text-underline-offset: 0.2em; }
 .chapter-row--mastered .chapter-row-actions > span { color: var(--muted); font-weight: 600; }
 

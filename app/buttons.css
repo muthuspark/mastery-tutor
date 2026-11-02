@@ -1,0 +1,77 @@
+/* Choose the tier at the call site. Shared geometry keeps actions in one world. */
+:is(.button-primary, .button-secondary, .button-tertiary) {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 1.125rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--button-ink);
+  box-shadow: none;
+  font-family: var(--sans);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  text-decoration: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  transition: transform 80ms ease-out, color 150ms ease-out;
+}
+.button-primary {
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.9375rem;
+  --button-ink: #fff4d9;
+  --button-face: #d65209;
+  --button-hover: #bd4506;
+  --button-edge: #8e350f;
+  --button-depth: 5px;
+  --button-press: 3px;
+}
+.button-secondary {
+  --button-ink: #3e4b30;
+  --button-face: var(--paper);
+  --button-hover: #eeeeda;
+  --button-edge: #858b67;
+  --button-depth: 0px;
+  --button-press: 1px;
+  font-weight: 500;
+}
+:is(.button-primary, .button-secondary)::before,
+:is(.button-primary, .button-secondary)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, calc(100% - 10px) 5px, calc(100% - 5px) 5px, calc(100% - 5px) 10px, 100% 10px, 100% calc(100% - 10px), calc(100% - 5px) calc(100% - 10px), calc(100% - 5px) calc(100% - 5px), calc(100% - 10px) calc(100% - 5px), calc(100% - 10px) 100%, 10px 100%, 10px calc(100% - 5px), 5px calc(100% - 5px), 5px calc(100% - 10px), 0 calc(100% - 10px), 0 10px, 5px 10px, 5px 5px, 10px 5px);
+}
+:is(.button-primary, .button-secondary)::before { background: var(--button-edge); transform: translateY(var(--button-depth)); }
+:is(.button-primary, .button-secondary)::after { inset: 1px 1px 0; background: var(--button-face); }
+.button-secondary::after { inset: 1px; }
+:is(.button-primary, .button-secondary):hover:not(:disabled):not([aria-disabled="true"])::after { background: var(--button-hover); }
+:is(.button-primary, .button-secondary):active:not(:disabled):not([aria-disabled="true"]) { transform: translateY(var(--button-press)); }
+:is(.button-primary, .button-secondary):active:not(:disabled):not([aria-disabled="true"])::before { transform: translateY(max(0px, calc(var(--button-depth) - var(--button-press)))); }
+.button-tertiary {
+  --button-ink: #536044;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.5rem;
+  font-weight: 400;
+  text-underline-offset: 0.22em;
+}
+.button-tertiary:hover:not(:disabled):not([aria-disabled="true"]) { color: var(--ink); text-decoration: underline; }
+.button-tertiary:active:not(:disabled):not([aria-disabled="true"]) { transform: translateY(1px); }
+:is(.button-primary, .button-secondary, .button-tertiary):focus-visible { outline: 2px solid #546b38; outline-offset: 5px; }
+:is(.button-primary, .button-secondary, .button-tertiary):is(:disabled, [aria-disabled="true"]) { opacity: 0.5; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) {
+  :is(.button-primary, .button-secondary, .button-tertiary) { transition: none; }
+}

@@ -53,18 +53,17 @@ export function LoginForm() {
       <label className="ui mt-6 block text-sm font-bold" htmlFor="login-code">Login code</label>
       <input ref={codeRef} id="login-code" className="field mt-2 login-code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))} disabled={busy} aria-invalid={!!error} aria-describedby={error ? "code-help login-error" : "code-help"} />
     </> : <>
-      <p className="login-description text-[var(--muted)]">Your private space to keep learning.</p>
-      <label className="ui mt-6 block text-sm font-bold" htmlFor="login-email">Email address</label>
+      <label className="ui login-email-label" htmlFor="login-email"><svg aria-hidden="true" viewBox="0 0 24 18" width="26" height="20" fill="none" shapeRendering="crispEdges"><path d="M1 1h22v16H1z" stroke="currentColor"/><path fill="currentColor" d="M2 2h2v2H2zm2 2h3v2H4zm3 2h3v2H7zm3 2h4v2h-4zm4-2h3v2h-3zm3-2h3v2h-3zm3-2h2v2h-2zM2 14h2v2H2zm2-2h3v2H4zm3-2h2v2H7zm13 4h2v2h-2zm-3-2h3v2h-3zm-2-2h2v2h-2z"/></svg>Email address</label>
       <input ref={emailRef} id="login-email" className="field mt-2" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} disabled={busy} aria-invalid={!!error} aria-describedby={error ? "login-error" : undefined} />
     </>}
     {error ? <p id="login-error" role="alert" className="ui mt-4 text-sm text-[var(--accent-dark)]">{error}</p> : null}
     <button type="submit" className="button-primary mt-4 w-full" disabled={busy || (!sent && cooldown > 0)}>
       <span>{busy ? (sent ? "Signing in…" : "Sending code…") : sent ? "Sign in" : cooldown ? `Try again in ${cooldown}s` : "Email me a code"}</span>
-      <svg className="login-submit-arrow" aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none"><path d="M4 12h15M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2" /></svg>
+      <svg className="login-submit-arrow" aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="currentColor" shapeRendering="crispEdges"><path d="M13 4h3v3h3v3h3v3h-3v3h-3v3h-3v-3h3v-3H2v-3h14V7h-3z" /></svg>
     </button>
     {sent ? <div className="login-recovery ui">
-      <button type="button" className="underline disabled:opacity-50" disabled={busy || cooldown > 0} onClick={() => void requestCode()}>{cooldown ? `Resend in ${cooldown}s` : "Resend code"}</button>
-      <button type="button" className="underline" disabled={busy} onClick={() => { setSent(false); setCode(""); setError(""); setCooldown(0); setTimeout(() => emailRef.current?.focus(), 0); }}>Change email</button>
+      <button type="button" className="button-secondary" disabled={busy || cooldown > 0} onClick={() => void requestCode()}>{cooldown ? `Resend in ${cooldown}s` : "Resend code"}</button>
+      <button type="button" className="button-tertiary" disabled={busy} onClick={() => { setSent(false); setCode(""); setError(""); setCooldown(0); setTimeout(() => emailRef.current?.focus(), 0); }}>Change email</button>
     </div> : null}
     {!sent ? <p className="login-invitation ui mt-8 text-sm text-[var(--muted)]">Access is by invitation.</p> : null}
   </form>;

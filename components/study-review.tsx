@@ -116,7 +116,7 @@ export function StudyReview({ id }: { id: string }) {
               Try again
             </button>
           )}
-          <Link href="/" className="button-secondary">
+          <Link href="/" className="button-tertiary">
             View today’s study
           </Link>
         </div>
@@ -230,7 +230,7 @@ export function StudyReview({ id }: { id: string }) {
               Refresh review
             </button>
           ) : null}
-          <Link href="/" className="button-secondary">
+          <Link href="/" className="button-tertiary">
             Leave review
           </Link>
         </div>

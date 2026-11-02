@@ -244,7 +244,7 @@ export function ChapterPage() {
         </div>
         <Link href={`/course/${params.id}/ch/${params.idx}/quiz`} className="button-primary ui chapter-quiz-cta">Check your understanding →</Link>
       </div>
-      {showRetryButton ? <button type="button" onClick={() => { if (!requestInFlight) retryExplanation.mutate(); }} aria-disabled={requestInFlight} className="text-button mt-2 aria-disabled:cursor-wait aria-disabled:opacity-60">
+      {showRetryButton ? <button type="button" onClick={() => { if (!requestInFlight) retryExplanation.mutate(); }} aria-disabled={requestInFlight} className="button-tertiary mt-2 aria-disabled:cursor-wait aria-disabled:opacity-60">
         {retryExplanation.isPending || activeExplanation ? "Retrying explanation…" : "Retry explanation"}
       </button> : retryAccepted ? <p className="mt-2 text-sm text-[var(--muted)]" role="status">Explanation added</p> : null}
       {timeline?.failedRequest && !activeExplanation ? <p className="mt-2 text-sm text-[var(--accent-dark)]">The new explanation could not be prepared. Your accepted text is unchanged.</p> : null}
@@ -253,7 +253,7 @@ export function ChapterPage() {
       {requestExplanation.isError || retryExplanation.isError ? <p role="alert" className="mt-3 text-sm text-[var(--accent-dark)]">{requestExplanation.error?.message ?? retryExplanation.error?.message}</p> : null}
       {explanationQuery.isError ? <div role="alert" className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--accent-dark)]">
         <span>Could not refresh explanation status. Your accepted text remains available.</span>
-        <button type="button" className="text-button" onClick={() => void explanationQuery.refetch()}>Retry status check</button>
+        <button type="button" className="button-tertiary" onClick={() => void explanationQuery.refetch()}>Retry status check</button>
       </div> : null}
     </section>
 

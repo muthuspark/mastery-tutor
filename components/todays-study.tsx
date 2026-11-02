@@ -59,7 +59,7 @@ export function TodaysStudy() {
           <p role="alert">
             Could not load today’s study.{" "}
             <button
-              className="text-button"
+              className="button-tertiary"
               onClick={() => void query.refetch()}
             >
               Try again
@@ -185,7 +185,7 @@ export function TodaysStudy() {
       {query.isError && data ? (
         <p role="alert">
           Could not refresh your recommendations.{" "}
-          <button className="text-button" onClick={() => void query.refetch()}>
+          <button className="button-tertiary" onClick={() => void query.refetch()}>
             Try again
           </button>
         </p>

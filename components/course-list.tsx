@@ -28,7 +28,7 @@ export function CourseList({ children, initialCourses, today }: { children?: Rea
       {today && !empty ? today : isLoading ? <div className="resume-skeleton" aria-hidden="true" /> : featured ? <FeaturedStudy course={featured} /> : null}
       {empty ? children : null}
       <section id="saved-studies" className="studies-section" aria-label="Saved learning paths">
-        {isLoading ? <p className="loading-state ui mt-8 text-sm text-[var(--muted)]" role="status">Loading your studies…</p> : isError ? <p className="ui mt-5 text-sm text-[var(--accent-dark)]" role="alert">Could not load your studies. <button className="text-button min-h-11 text-sm!" onClick={() => void refetch()}>Try again</button></p> : courses.length === 0 ? <p className="empty-studies text-[var(--muted)]">Your saved studies and progress will appear here.</p> : (
+        {isLoading ? <p className="loading-state ui mt-8 text-sm text-[var(--muted)]" role="status">Loading your studies…</p> : isError ? <p className="ui mt-5 text-sm text-[var(--accent-dark)]" role="alert">Could not load your studies. <button className="button-tertiary min-h-11 text-sm!" onClick={() => void refetch()}>Try again</button></p> : courses.length === 0 ? <p className="empty-studies text-[var(--muted)]">Your saved studies and progress will appear here.</p> : (
           <div className="studies-list">
             {courses.map((course) => {
               const { passed, total } = course.progress;

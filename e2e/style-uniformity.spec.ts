@@ -51,6 +51,13 @@ test("crawls page families and checks the shared visual system", async ({ page }
         footerBackground: getComputedStyle(footer).backgroundColor,
         buttonRadius: button ? getComputedStyle(button).borderRadius : null,
         overflow: document.documentElement.scrollWidth > innerWidth,
+        buttonSkins: [...document.querySelectorAll("main button, main .button-primary, main .button-secondary, main .button-tertiary, .site-header button")].map(control => ({
+          label: control.textContent?.trim(),
+          tier: ["primary", "secondary", "tertiary"].find(tier => control.classList.contains(`button-${tier}`)),
+          fill: getComputedStyle(control, "::after").backgroundColor,
+          corners: getComputedStyle(control, "::after").clipPath,
+          edge: getComputedStyle(control, "::before").transform,
+        })),
       };
     });
     records.push({ page: name, width, ...styles });
@@ -64,14 +71,33 @@ test("crawls page families and checks the shared visual system", async ({ page }
       await page.goto(path);
       if (title) await expect(page.getByRole("heading", { level: 1, name: title, exact: true })).toBeVisible();
       const styles = await inspect(name, width);
+      if (name === "course") {
+        await expect(page.getByRole("link", { name: "Export notes" })).toHaveClass(/button-secondary/);
+        await expect(page.getByRole("button", { name: "Sign out", exact: true })).toHaveClass(/button-tertiary/);
+        await expect(page.locator(".chapter-console-continue")).toHaveClass(/button-primary/);
+        await expect(page.getByRole("button", { name: /Retake mastery check/ })).toHaveClass(/button-tertiary/);
+      }
       referenceHeader ??= styles.header;
       if (!process.env.STYLE_AUDIT_BASELINE) {
-        expect(styles.background, name).toBe("rgb(255, 255, 255)");
+        expect(styles.background, name).toBe("rgb(247, 243, 232)");
         expect(styles.bodyFont, name).toContain("EB Garamond");
         expect(styles.headingFont, name).toContain("Roboto Condensed");
         expect(styles.header, name).toEqual(referenceHeader);
         expect(styles.footerBackground, name).toBe("rgba(0, 0, 0, 0)");
         expect(styles.overflow, name).toBe(false);
+        for (const button of styles.buttonSkins) {
+          const action = `${name}: ${button.label}`;
+          expect(button.tier, action).toBeDefined();
+          if (button.tier === "tertiary") {
+            expect(button.fill, action).toBe("rgba(0, 0, 0, 0)");
+            expect(button.corners, action).toBe("none");
+            expect(button.edge, action).toBe("none");
+          } else {
+            expect(button.fill, action).toBe(button.tier === "primary" ? "rgb(214, 82, 9)" : "rgb(247, 243, 232)");
+            expect(button.corners, action).toContain("polygon(");
+            expect(button.edge, action).toBe(`matrix(1, 0, 0, 1, 0, ${button.tier === "primary" ? 5 : 0})`);
+          }
+        }
         if (styles.buttonRadius !== null) expect(styles.buttonRadius, name).toBe("0px");
       }
       if (name === "quiz") {
@@ -91,7 +117,7 @@ test("crawls page families and checks the shared visual system", async ({ page }
   writeFileSync("test-results/style-audit.json", JSON.stringify(records, null, 2));
 });
 
-test("login retains its approved pixel typography within the white visual system", async ({ browser }) => {
+test("login retains its approved pixel typography within the parchment visual system", async ({ browser }) => {
   const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
   const page = await context.newPage();
   await page.route("**/api/auth/email-otp/send-verification-otp", route => route.fulfill({ json: { success: true } }));
@@ -101,7 +127,7 @@ test("login retains its approved pixel typography within the white visual system
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     const styles = await page.evaluate(() => ({ background: getComputedStyle(document.body).backgroundColor, font: getComputedStyle(document.querySelector("h1")!).fontFamily, bodyFont: getComputedStyle(document.body).fontFamily, overflow: document.documentElement.scrollWidth > innerWidth }));
-    expect(styles.background).toBe("rgb(255, 255, 255)");
+    expect(styles.background).toBe("rgb(247, 243, 232)");
     expect(styles.font).toContain("Newton Pixel");
     expect(styles.bodyFont).toContain("EB Garamond");
     expect(styles.overflow).toBe(false);

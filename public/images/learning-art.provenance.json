@@ -1,0 +1,19 @@
+{
+  "tool": "built-in image_gen",
+  "reference": "User-provided landing page screenshot, bottom-row illustrations",
+  "transparent_background": true,
+  "assets": [
+    {
+      "path": "public/images/learning-books.webp",
+      "prompt": "Use case: illustration-story. Create a single isolated transparent-background pixel-art website illustration. The supplied screenshot is a STYLE AND SUBJECT REFERENCE ONLY: match the detailed miniature illustrations along its bottom row, not the UI or typography. Rich hand-placed tiny square pixels, botanical storybook pixel art, carefully shaded forms, subtle antique texture, olive and moss greens, warm brown, aged gold, cream, small orange accents. NOT a flat vector icon, NOT huge blocky pixels, NOT a 3D render. Composition: a small centered vignette with a thin irregular patch of grass/soil at the bottom, all edges fully visible, no text, no UI, no background rectangle. Frame tightly with only 5% transparent margin around the subject. Output landscape 3:2 composition. Three stacked antique leather-bound books, two dark olive green and one ochre brown, gold tooling on the spines, curved cream page edges on the right, a bright small orange apple with two green leaves beside the books on the right, little tufts of grass. Closely match the left miniature in the screenshot."
+    },
+    {
+      "path": "public/images/learning-lantern.webp",
+      "prompt": "Use case: illustration-story. Create a single isolated transparent-background pixel-art website illustration. The supplied screenshot is a STYLE AND SUBJECT REFERENCE ONLY: match the detailed miniature illustrations along its bottom row, not the UI or typography. Rich hand-placed tiny square pixels, botanical storybook pixel art, carefully shaded forms, subtle antique texture, olive and moss greens, warm brown, aged gold, cream, small orange accents. NOT a flat vector icon, NOT huge blocky pixels, NOT a 3D render. Composition: a small centered vignette with a thin irregular patch of grass/soil at the bottom, all edges fully visible, no text, no UI, no background rectangle. Frame tightly with only 5% transparent margin around the subject. Output landscape 3:2 composition. A single small antique brass lantern, upright with a rounded carrying handle, dark bronze cap and frame, golden glass panes containing a warm glowing candle, on a little patch of moss with tiny pale daisies to either side. Closely match the center miniature in the screenshot. Narrow lantern and wider natural ground patch."
+    },
+    {
+      "path": "public/images/learning-sapling.webp",
+      "prompt": "Use case: illustration-story. Create a single isolated transparent-background pixel-art website illustration. The supplied screenshot is a STYLE AND SUBJECT REFERENCE ONLY: match the detailed miniature illustrations along its bottom row, not the UI or typography. Rich hand-placed tiny square pixels, botanical storybook pixel art, carefully shaded forms, subtle antique texture, olive and moss greens, warm brown, aged gold, cream, small orange accents. NOT a flat vector icon, NOT huge blocky pixels, NOT a 3D render. Composition: a small centered vignette with a thin irregular patch of grass/soil at the bottom, all edges fully visible, no text, no UI, no background rectangle. Frame tightly with only 5% transparent margin around the subject. Output landscape 3:2 composition. A tiny young sapling growing from a low mound of rich brown soil, one slender stem and two textured green leaves spreading diagonally upward, a few little grass blades and tiny pebbles around the mound. Closely match the right miniature in the screenshot. Delicate natural leaf veins and finely dithered pixel shading."
+    }
+  ]
+}

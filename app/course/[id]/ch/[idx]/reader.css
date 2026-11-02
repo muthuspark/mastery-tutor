@@ -27,7 +27,6 @@
 .chapter-reader .socratic-feedback > .assessment-body { margin-top: 0.25rem; }
 .chapter-reader p.socratic-feedback { margin-top: 1rem; }
 .chapter-reader .socratic-feedback .assessment-body, .chapter-reader p.socratic-feedback { color: var(--muted); font-size: 0.9375rem; line-height: 1.75; }
-.chapter-reader .socratic-session .button-primary:disabled { background: var(--paper-deep); border-color: var(--line); color: var(--muted); box-shadow: none; opacity: 1; cursor: default; }
 .chapter-reader .socratic-session summary { display: list-item; min-height: 2.75rem; padding-block: 0.75rem; }
 .chapter-reader .reader-content > section > h2 { font-family: var(--display); font-size: 1.375rem; font-weight: 600; letter-spacing: -0.035em; }
 .chapter-reader .prose-editorial { font-family: var(--sans); font-size: 1.0625rem; line-height: 1.85; }
@@ -43,9 +42,6 @@
 .chapter-reader .chapter-action-row { gap: 1.25rem; }
 .chapter-reader .chapter-adjustment-group { flex-wrap: wrap; gap: 0.75rem; }
 .chapter-reader .chapter-adjustment-buttons { flex-wrap: wrap; gap: 0.75rem; border: 0; background: transparent; }
-.chapter-reader .chapter-explanation-button { border: 1px solid var(--line); border-inline-color: transparent; border-radius: 0; background: #fff; color: var(--ink); box-shadow: 0 2px 0 var(--line); }
-.chapter-reader .chapter-explanation-button:hover { border-color: var(--line); border-inline-color: transparent; background: #fff; }
-.chapter-reader .chapter-explanation-button:active:not([aria-disabled="true"]) { box-shadow: 0 1px 0 var(--line); }
 
 @media (max-width: 767px) {
   .chapter-reader { padding-block: 1rem 2.5rem; }

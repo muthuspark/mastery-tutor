@@ -40,7 +40,7 @@ export function NewCourseForm() {
         <label className="sr-only" htmlFor="topic">What do you want to learn?</label>
         <textarea ref={topicRef} id="topic" name="topic" required rows={4} value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="e.g. Learn Python from scratch" className="field" disabled={isSubmitting} aria-invalid={error ? true : undefined} aria-describedby={error ? "course-topic-help course-form-error" : "course-topic-help"} />
         <div className="course-form-actions">
-          <button type="submit" disabled={isSubmitting} className="button-secondary course-begin">{isSubmitting ? "Starting your study…" : "Start a study →"}</button>
+          <button type="submit" disabled={isSubmitting} className="button-primary course-begin">{isSubmitting ? "Starting your study…" : "Start a study →"}</button>
         </div>
         {error ? <p id="course-form-error" className="ui mt-4 text-sm text-[var(--accent-dark)]" role="alert">{error}</p> : null}
       </form>

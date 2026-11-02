@@ -29,10 +29,6 @@
 .studies-page .course-topic-label { margin-bottom: 0.875rem; font-size: 0.9375rem; }
 .studies-page .new-course-form textarea { min-height: 7.5rem; padding: 1rem; border-color: oklch(0.65 0.022 90); border-radius: 0; font-size: 0.9375rem; line-height: 1.6; }
 .studies-page .course-form-actions { margin-top: 1.125rem; }
-.studies-page .course-begin { min-height: 3rem; border-color: var(--action); border-radius: 0; background: transparent; color: oklch(0.51 0.16 42); font-size: 0.9375rem; font-weight: 600; box-shadow: 2px 0 0 -1px var(--action), -2px 0 0 -1px var(--action); }
-.studies-page .course-begin:hover:not(:disabled) { background: var(--paper-deep); color: var(--ink); }
-.studies-page .learning-workspace--empty .course-begin { background: var(--action); color: var(--paper); }
-.studies-page .learning-workspace--empty .course-begin:hover:not(:disabled) { background: var(--ink); }
 
 @media (min-width: 1024px) {
   .studies-page .course-creation { border-left-color: var(--layout-guide); }
